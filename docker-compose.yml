@@ -1,0 +1,46 @@
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app
+      - ./supportFiles:/supportFiles:ro
+      - ./database:/database
+      - backend_uv_cache:/app/.venv
+    environment:
+      - DATABASE_URL=sqlite:////database/database.sqlite
+      - JWT_SECRET=${JWT_SECRET:-super-secret-key-that-is-at-least-32-characters-long}
+      - APP_ENV=${APP_ENV:-development}
+      - NEOESPA_SUPPORT_DIR=/supportFiles
+    command:
+      - sh
+      - -lc
+      - uv sync --frozen --no-dev && uv run uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    depends_on: []
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend:/app
+      - frontend_node_modules:/app/node_modules
+      - frontend_next:/app/.next
+    environment:
+      - NEXT_PUBLIC_API_BASE_URL=http://localhost:8000
+      - BACKEND_URL=http://backend:8000
+      - WATCHPACK_POLLING=true
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+volumes:
+  backend_uv_cache:
+  frontend_node_modules:
+  frontend_next:

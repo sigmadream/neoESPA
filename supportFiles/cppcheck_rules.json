@@ -1,0 +1,5 @@
+{
+    "std": "c99",
+    "enable": "invalidPrintfArgType_sint,duplicateExpression,unreadVariable,syntaxError,shadowVariable,CastAddressToIntegerAtReturn,knownConditionTrueFalse,unusedVariable,invalidScanfArgType_int,nullPointer,wrongPrintfScanfArgNum",
+    "suppress": ""
+}

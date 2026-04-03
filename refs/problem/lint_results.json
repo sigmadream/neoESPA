@@ -1,0 +1,3154 @@
+{
+  "parserName": "pylint-parser",
+  "parserVersion": "0.0.1",
+  "runTime": "2025-04-02T16:09:09.554353",
+  "files": {
+    "HW04_fname.py": {
+      "lint": [
+        {
+          "severity": "convention",
+          "neo_severity": "style",
+          "rule": "invalid-name",
+          "message": {
+            "eng": "Module name \"HW04_fname\" doesn't conform to snake_case naming style",
+            "kor": "Module 이름 \"HW04_fname\"이(가) snake_case naming style에 부합하지 않습니다."
+          },
+          "externalURL": "https://pylint.readthedocs.io/en/stable/user_guide/messages/convention/invalid-name.html",
+          "lineStart": "1",
+          "lineEnd": "1",
+          "columnStart": "0",
+          "columnEnd": "0"
+        },
+        {
+          "severity": "convention",
+          "neo_severity": "style",
+          "rule": "missing-function-docstring",
+          "message": {
+            "eng": "Missing function or method docstring",
+            "kor": "함수 또는 메소드 문서화 문자열이 누락되었습니다"
+          },
+          "externalURL": "https://pylint.readthedocs.io/en/stable/user_guide/messages/convention/missing-function-docstring.html",
+          "lineStart": "1",
+          "lineEnd": "1",
+          "columnStart": "0",
+          "columnEnd": "17"
+        },
+        {
+          "severity": "convention",
+          "neo_severity": "style",
+          "rule": "missing-function-docstring",
+          "message": {
+            "eng": "Missing function or method docstring",
+            "kor": "함수 또는 메소드 문서화 문자열이 누락되었습니다"
+          },
+          "externalURL": "https://pylint.readthedocs.io/en/stable/user_guide/messages/convention/missing-function-docstring.html",
+          "lineStart": "8",
+          "lineEnd": "8",
+          "columnStart": "0",
+          "columnEnd": "13"
+        },
+        {
+          "severity": "convention",
+          "neo_severity": "style",
+          "rule": "missing-function-docstring",
+          "message": {
+            "eng": "Missing function or method docstring",
+            "kor": "함수 또는 메소드 문서화 문자열이 누락되었습니다"
+          },
+          "externalURL": "https://pylint.readthedocs.io/en/stable/user_guide/messages/convention/missing-function-docstring.html",
+          "lineStart": "14",
+          "lineEnd": "14",
+          "columnStart": "0",
+          "columnEnd": "8"
+        }
+      ],
+      "code": "def remove_vowels(word):\r\n    s = \"\"\r\n    for c in word:\r\n        if c not in \"aeiou\":\r\n            s += c\r\n    return s\r\n\r\ndef trim_last(word):\r\n    for i, c in enumerate(word):\r\n        if c in \"aeiou\":\r\n            return word[:i]\r\n    return word\r\n\r\ndef main():\r\n    words = input().strip().split()\r\n    for i in range(len(words)):\r\n        words[i] = words[i].lower()\r\n    if len(words) == 1:\r\n        result = remove_vowels(words[0])\r\n    else:\r\n        result = remove_vowels(words[0])\r\n        for i in range(1, len(words) - 1):\r\n            result += \"_\" + words[i]\r\n        result += \"_\" + trim_last(words[-1])\r\n    print(result)\r\n\r\nif __name__ == \"__main__\":\r\n    main()\r\n",
+      "token": {
+        "ncloc": 25,
+        "count": 220,
+        "list": [
+          {
+            "type_code": 1,
+            "type_name": "NAME",
+            "string": "def",
+            "start": [
+              1,
+              0
+            ],
+            "end": [
+              1,
+              3
+            ],
+            "line": "def remove_vowels(word):"
+          },
+          {
+            "type_code": 1,
+            "type_name": "NAME",
+            "string": "remove_vowels",
+            "start": [
+              1,
+              4
+            ],
+            "end": [
+              1,
+              17
+            ],
+            "line": "def remove_vowels(word):"
+          },
+          {
+            "type_code": 54,
+            "type_name": "OP",
+            "string": "(",
+            "start": [
+              1,
+              17
+            ],
+            "end": [
+              1,
+              18
+            ],
+            "line": "def remove_vowels(word):"
+          },
+          {
+            "type_code": 1,
+            "type_name": "NAME",
+            "string": "word",
+            "start": [
+              1,
+              18
+            ],
+            "end": [
+              1,
+              22
+            ],
+            "line": "def remove_vowels(word):"
+          },
+          {
+            "type_code": 54,
+            "type_name": "OP",
+            "string": ")",
+            "start": [
+              1,
+              22
+            ],
+            "end": [
+              1,
+              23
+            ],
+            "line": "def remove_vowels(word):"
+          },
+          {
+            "type_code": 54,
+            "type_name": "OP",
+            "string": ":",
+            "start": [
+              1,
+              23
+            ],
+            "end": [
+              1,
+              24
+            ],
+            "line": "def remove_vowels(word):"
+          },
+          {
+            "type_code": 4,
+            "type_name": "NEWLINE",
+            "string": "\r\n",
+            "start": [
+              1,
+              24
+            ],
+            "end": [
+              1,
+              26
+            ],
+            "line": "def remove_vowels(word):"
+          },
+          {
+            "type_code": 5,
+            "type_name": "INDENT",
+            "string": "    ",
+            "start": [
+              2,
+              0
+            ],
+            "end": [
+              2,
+              4
+            ],
+            "line": "s = \"\""
+          },
+          {
+            "type_code": 1,
+            "type_name": "NAME",
+            "string": "s",
+            "start": [
+              2,
+              4
+            ],
+            "end": [
+              2,
+              5
+            ],
+            "line": "s = \"\""
+          },
+          {
+            "type_code": 54,
+            "type_name": "OP",
+            "string": "=",
+            "start": [
+              2,
+              6
+            ],
+            "end": [
+              2,
+              7
+            ],
+            "line": "s = \"\""
+          },
+          {
+            "type_code": 3,
+            "type_name": "STRING",
+            "string": "\"\"",
+            "start": [
+              2,
+              8
+            ],
+            "end": [
+              2,
+              10
+            ],
+            "line": "s = \"\""
+          },
+          {
+            "type_code": 4,
+            "type_name": "NEWLINE",
+            "string": "\r\n",
+            "start": [
+              2,
+              10
+            ],
+            "end": [
+              2,
+              12
+            ],
+            "line": "s = \"\""
+          },
+          {
+            "type_code": 1,
+            "type_name": "NAME",
+            "string": "for",
+            "start": [
+              3,
+              4
+            ],
+            "end": [
+              3,
+              7
+            ],
+            "line": "for c in word:"
+          },
+          {
+            "type_code": 1,
+            "type_name": "NAME",
+            "string": "c",
+            "start": [
+              3,
+              8
+            ],
+            "end": [
+              3,
+              9
+            ],
+            "line": "for c in word:"
+          },
+          {
+            "type_code": 1,
+            "type_name": "NAME",
+            "string": "in",
+            "start": [
+              3,
+              10
+            ],
+            "end": [
+              3,
+              12
+            ],
+            "line": "for c in word:"
+          },
+          {
+            "type_code": 1,
+            "type_name": "NAME",
+            "string": "word",
+            "start": [
+              3,
+              13
+            ],
+            "end": [
+              3,
+              17
+            ],
+            "line": "for c in word:"
+          },
+          {
+            "type_code": 54,
+            "type_name": "OP",
+            "string": ":",
+            "start": [
+              3,
+              17
+            ],
+            "end": [
+              3,
+              18
+            ],
+            "line": "for c in word:"
+          },
+          {
+            "type_code": 4,
+            "type_name": "NEWLINE",
+            "string": "\r\n",
+            "start": [
+              3,
+              18
+            ],
+            "end": [
+              3,
+              20
+            ],
+            "line": "for c in word:"
+          },
+          {
+            "type_code": 5,
+            "type_name": "INDENT",
+            "string": "        ",
+            "start": [
+              4,
+              0
+            ],
+            "end": [
+              4,
+              8
+            ],
+            "line": "if c not in \"aeiou\":"
+          },
+          {
+            "type_code": 1,
+            "type_name": "NAME",
+            "string": "if",
+            "start": [
+              4,
+              8
+            ],
+            "end": [
+              4,
+              10
+            ],
+            "line": "if c not in \"aeiou\":"
+          },
+          {
+            "type_code": 1,
+            "type_name": "NAME",
+            "string": "c",
+            "start": [
+              4,
+              11
+            ],
+            "end": [
+              4,
+              12
+            ],
+            "line": "if c not in \"aeiou\":"
+          },
+          {
+            "type_code": 1,
+            "type_name": "NAME",
+            "string": "not",
+            "start": [
+              4,
+              13
+            ],
+            "end": [
+              4,
+              16
+            ],
+            "line": "if c not in \"aeiou\":"
+          },
+          {
+            "type_code": 1,
+            "type_name": "NAME",
+            "string": "in",
+            "start": [
+              4,
+              17
+            ],
+            "end": [
+              4,
+              19
+            ],
+            "line": "if c not in \"aeiou\":"
+          },
+          {
+            "type_code": 3,
+            "type_name": "STRING",
+            "string": "\"aeiou\"",
+            "start": [
+              4,
+              20
+            ],
+            "end": [
+              4,
+              27
+            ],
+            "line": "if c not in \"aeiou\":"
+          },
+          {
+            "type_code": 54,
+            "type_name": "OP",
+            "string": ":",
+            "start": [
+              4,
+              27
+            ],
+            "end": [
+              4,
+              28
+            ],
+            "line": "if c not in \"aeiou\":"
+          },
+          {
+            "type_code": 4,
+            "type_name": "NEWLINE",
+            "string": "\r\n",
+            "start": [
+              4,
+              28
+            ],
+            "end": [
+              4,
+              30
+            ],
+            "line": "if c not in \"aeiou\":"
+          },
+          {
+            "type_code": 5,
+            "type_name": "INDENT",
+            "string": "            ",
+            "start": [
+              5,
+              0
+            ],
+            "end": [
+              5,
+              12
+            ],
+            "line": "s += c"
+          },
+          {
+            "type_code": 1,
+            "type_name": "NAME",
+            "string": "s",
+            "start": [
+              5,
+              12
+            ],
+            "end": [
+              5,
+              13
+            ],
+            "line": "s += c"
+          },
+          {
+            "type_code": 54,
+            "type_name": "OP",
+            "string": "+=",
+            "start": [
+              5,
+              14
+            ],
+            "end": [
+              5,
+              16
+            ],
+            "line": "s += c"
+          },
+          {
+            "type_code": 1,
+            "type_name": "NAME",
+            "string": "c",
+            "start": [
+              5,
+              17
+            ],
+            "end": [
+              5,
+              18
+            ],
+            "line": "s += c"
+          },
+          {
+            "type_code": 4,
+            "type_name": "NEWLINE",
+            "string": "\r\n",
+            "start": [
+              5,
+              18
+            ],
+            "end": [
+              5,
+              20
+            ],
+            "line": "s += c"
+          },
+          {
+            "type_code": 6,
+            "type_name": "DEDENT",
+            "string": "",
+            "start": [
+              6,
+              4
+            ],
+            "end": [
+              6,
+              4
+            ],
+            "line": "return s"
+          },
+          {
+            "type_code": 6,
+            "type_name": "DEDENT",
+            "string": "",
+            "start": [
+              6,
+              4
+            ],
+            "end": [
+              6,
+              4
+            ],
+            "line": "return s"
+          },
+          {
+            "type_code": 1,
+            "type_name": "NAME",
+            "string": "return",
+            "start": [
+              6,
+              4
+            ],
+            "end": [
+              6,
+              10
+            ],
+            "line": "return s"
+          },
+          {
+            "type_code": 1,
+            "type_name": "NAME",
+            "string": "s",
+            "start": [
+              6,
+              11
+            ],
+            "end": [
+              6,
+              12
+            ],
+            "line": "return s"
+          },
+          {
+            "type_code": 4,
+            "type_name": "NEWLINE",
+            "string": "\r\n",
+            "start": [
+              6,
+              12
+            ],
+            "end": [
+              6,
+              14
+            ],
+            "line": "return s"
+          },
+          {
+            "type_code": 6,
+            "type_name": "DEDENT",
+            "string": "",
+            "start": [
+              8,
+              0
+            ],
+            "end": [
+              8,
+              0
+            ],
+            "line": "def trim_last(word):"
+          },
+          {
+            "type_code": 1,
+            "type_name": "NAME",
+            "string": "def",
+            "start": [
+              8,
+              0
+            ],
+            "end": [
+              8,
+              3
+            ],
+            "line": "def trim_last(word):"
+          },
+          {
+            "type_code": 1,
+            "type_name": "NAME",
+            "string": "trim_last",
+            "start": [
+              8,
+              4
+            ],
+            "end": [
+              8,
+              13
+            ],
+            "line": "def trim_last(word):"
+          },
+          {
+            "type_code": 54,
+            "type_name": "OP",
+            "string": "(",
+            "start": [
+              8,
+              13
+            ],
+            "end": [
+              8,
+              14
+            ],
+            "line": "def trim_last(word):"
+          },
+          {
+            "type_code": 1,
+            "type_name": "NAME",
+            "string": "word",
+            "start": [
+              8,
+              14
+            ],
+            "end": [
+              8,
+              18
+            ],
+            "line": "def trim_last(word):"
+          },
+          {
+            "type_code": 54,
+            "type_name": "OP",
+            "string": ")",
+            "start": [
+              8,
+              18
+            ],
+            "end": [
+              8,
+              19
+            ],
+            "line": "def trim_last(word):"
+          },
+          {
+            "type_code": 54,
+            "type_name": "OP",
+            "string": ":",
+            "start": [
+              8,
+              19
+            ],
+            "end": [
+              8,
+              20
+            ],
+            "line": "def trim_last(word):"
+          },
+          {
+            "type_code": 4,
+            "type_name": "NEWLINE",
+            "string": "\r\n",
+            "start": [
+              8,
+              20
+            ],
+            "end": [
+              8,
+              22
+            ],
+            "line": "def trim_last(word):"
+          },
+          {
+            "type_code": 5,
+            "type_name": "INDENT",
+            "string": "    ",
+            "start": [
+              9,
+              0
+            ],
+            "end": [
+              9,
+              4
+            ],
+            "line": "for i, c in enumerate(word):"
+          },
+          {
+            "type_code": 1,
+            "type_name": "NAME",
+            "string": "for",
+            "start": [
+              9,
+              4
+            ],
+            "end": [
+              9,
+              7
+            ],
+            "line": "for i, c in enumerate(word):"
+          },
+          {
+            "type_code": 1,
+            "type_name": "NAME",
+            "string": "i",
+            "start": [
+              9,
+              8
+            ],
+            "end": [
+              9,
+              9
+            ],
+            "line": "for i, c in enumerate(word):"
+          },
+          {
+            "type_code": 54,
+            "type_name": "OP",
+            "string": ",",
+            "start": [
+              9,
+              9
+            ],
+            "end": [
+              9,
+              10
+            ],
+            "line": "for i, c in enumerate(word):"
+          },
+          {
+            "type_code": 1,
+            "type_name": "NAME",
+            "string": "c",
+            "start": [
+              9,
+              11
+            ],
+            "end": [
+              9,
+              12
+            ],
+            "line": "for i, c in enumerate(word):"
+          },
+          {
+            "type_code": 1,
+            "type_name": "NAME",
+            "string": "in",
+            "start": [
+              9,
+              13
+            ],
+            "end": [
+              9,
+              15
+            ],
+            "line": "for i, c in enumerate(word):"
+          },
+          {
+            "type_code": 1,
+            "type_name": "NAME",
+            "string": "enumerate",
+            "start": [
+              9,
+              16
+            ],
+            "end": [
+              9,
+              25
+            ],
+            "line": "for i, c in enumerate(word):"
+          },
+          {
+            "type_code": 54,
+            "type_name": "OP",
+            "string": "(",
+            "start": [
+              9,
+              25
+            ],
+            "end": [
+              9,
+              26
+            ],
+            "line": "for i, c in enumerate(word):"
+          },
+          {
+            "type_code": 1,
+            "type_name": "NAME",
+            "string": "word",
+            "start": [
+              9,
+              26
+            ],
+            "end": [
+              9,
+              30
+            ],
+            "line": "for i, c in enumerate(word):"
+          },
+          {
+            "type_code": 54,
+            "type_name": "OP",
+            "string": ")",
+            "start": [
+              9,
+              30
+            ],
+            "end": [
+              9,
+              31
+            ],
+            "line": "for i, c in enumerate(word):"
+          },
+          {
+            "type_code": 54,
+            "type_name": "OP",
+            "string": ":",
+            "start": [
+              9,
+              31
+            ],
+            "end": [
+              9,
+              32
+            ],
+            "line": "for i, c in enumerate(word):"
+          },
+          {
+            "type_code": 4,
+            "type_name": "NEWLINE",
+            "string": "\r\n",
+            "start": [
+              9,
+              32
+            ],
+            "end": [
+              9,
+              34
+            ],
+            "line": "for i, c in enumerate(word):"
+          },
+          {
+            "type_code": 5,
+            "type_name": "INDENT",
+            "string": "        ",
+            "start": [
+              10,
+              0
+            ],
+            "end": [
+              10,
+              8
+            ],
+            "line": "if c in \"aeiou\":"
+          },
+          {
+            "type_code": 1,
+            "type_name": "NAME",
+            "string": "if",
+            "start": [
+              10,
+              8
+            ],
+            "end": [
+              10,
+              10
+            ],
+            "line": "if c in \"aeiou\":"
+          },
+          {
+            "type_code": 1,
+            "type_name": "NAME",
+            "string": "c",
+            "start": [
+              10,
+              11
+            ],
+            "end": [
+              10,
+              12
+            ],
+            "line": "if c in \"aeiou\":"
+          },
+          {
+            "type_code": 1,
+            "type_name": "NAME",
+            "string": "in",
+            "start": [
+              10,
+              13
+            ],
+            "end": [
+              10,
+              15
+            ],
+            "line": "if c in \"aeiou\":"
+          },
+          {
+            "type_code": 3,
+            "type_name": "STRING",
+            "string": "\"aeiou\"",
+            "start": [
+              10,
+              16
+            ],
+            "end": [
+              10,
+              23
+            ],
+            "line": "if c in \"aeiou\":"
+          },
+          {
+            "type_code": 54,
+            "type_name": "OP",
+            "string": ":",
+            "start": [
+              10,
+              23
+            ],
+            "end": [
+              10,
+              24
+            ],
+            "line": "if c in \"aeiou\":"
+          },
+          {
+            "type_code": 4,
+            "type_name": "NEWLINE",
+            "string": "\r\n",
+            "start": [
+              10,
+              24
+            ],
+            "end": [
+              10,
+              26
+            ],
+            "line": "if c in \"aeiou\":"
+          },
+          {
+            "type_code": 5,
+            "type_name": "INDENT",
+            "string": "            ",
+            "start": [
+              11,
+              0
+            ],
+            "end": [
+              11,
+              12
+            ],
+            "line": "return word[:i]"
+          },
+          {
+            "type_code": 1,
+            "type_name": "NAME",
+            "string": "return",
+            "start": [
+              11,
+              12
+            ],
+            "end": [
+              11,
+              18
+            ],
+            "line": "return word[:i]"
+          },
+          {
+            "type_code": 1,
+            "type_name": "NAME",
+            "string": "word",
+            "start": [
+              11,
+              19
+            ],
+            "end": [
+              11,
+              23
+            ],
+            "line": "return word[:i]"
+          },
+          {
+            "type_code": 54,
+            "type_name": "OP",
+            "string": "[",
+            "start": [
+              11,
+              23
+            ],
+            "end": [
+              11,
+              24
+            ],
+            "line": "return word[:i]"
+          },
+          {
+            "type_code": 54,
+            "type_name": "OP",
+            "string": ":",
+            "start": [
+              11,
+              24
+            ],
+            "end": [
+              11,
+              25
+            ],
+            "line": "return word[:i]"
+          },
+          {
+            "type_code": 1,
+            "type_name": "NAME",
+            "string": "i",
+            "start": [
+              11,
+              25
+            ],
+            "end": [
+              11,
+              26
+            ],
+            "line": "return word[:i]"
+          },
+          {
+            "type_code": 54,
+            "type_name": "OP",
+            "string": "]",
+            "start": [
+              11,
+              26
+            ],
+            "end": [
+              11,
+              27
+            ],
+            "line": "return word[:i]"
+          },
+          {
+            "type_code": 4,
+            "type_name": "NEWLINE",
+            "string": "\r\n",
+            "start": [
+              11,
+              27
+            ],
+            "end": [
+              11,
+              29
+            ],
+            "line": "return word[:i]"
+          },
+          {
+            "type_code": 6,
+            "type_name": "DEDENT",
+            "string": "",
+            "start": [
+              12,
+              4
+            ],
+            "end": [
+              12,
+              4
+            ],
+            "line": "return word"
+          },
+          {
+            "type_code": 6,
+            "type_name": "DEDENT",
+            "string": "",
+            "start": [
+              12,
+              4
+            ],
+            "end": [
+              12,
+              4
+            ],
+            "line": "return word"
+          },
+          {
+            "type_code": 1,
+            "type_name": "NAME",
+            "string": "return",
+            "start": [
+              12,
+              4
+            ],
+            "end": [
+              12,
+              10
+            ],
+            "line": "return word"
+          },
+          {
+            "type_code": 1,
+            "type_name": "NAME",
+            "string": "word",
+            "start": [
+              12,
+              11
+            ],
+            "end": [
+              12,
+              15
+            ],
+            "line": "return word"
+          },
+          {
+            "type_code": 4,
+            "type_name": "NEWLINE",
+            "string": "\r\n",
+            "start": [
+              12,
+              15
+            ],
+            "end": [
+              12,
+              17
+            ],
+            "line": "return word"
+          },
+          {
+            "type_code": 6,
+            "type_name": "DEDENT",
+            "string": "",
+            "start": [
+              14,
+              0
+            ],
+            "end": [
+              14,
+              0
+            ],
+            "line": "def main():"
+          },
+          {
+            "type_code": 1,
+            "type_name": "NAME",
+            "string": "def",
+            "start": [
+              14,
+              0
+            ],
+            "end": [
+              14,
+              3
+            ],
+            "line": "def main():"
+          },
+          {
+            "type_code": 1,
+            "type_name": "NAME",
+            "string": "main",
+            "start": [
+              14,
+              4
+            ],
+            "end": [
+              14,
+              8
+            ],
+            "line": "def main():"
+          },
+          {
+            "type_code": 54,
+            "type_name": "OP",
+            "string": "(",
+            "start": [
+              14,
+              8
+            ],
+            "end": [
+              14,
+              9
+            ],
+            "line": "def main():"
+          },
+          {
+            "type_code": 54,
+            "type_name": "OP",
+            "string": ")",
+            "start": [
+              14,
+              9
+            ],
+            "end": [
+              14,
+              10
+            ],
+            "line": "def main():"
+          },
+          {
+            "type_code": 54,
+            "type_name": "OP",
+            "string": ":",
+            "start": [
+              14,
+              10
+            ],
+            "end": [
+              14,
+              11
+            ],
+            "line": "def main():"
+          },
+          {
+            "type_code": 4,
+            "type_name": "NEWLINE",
+            "string": "\r\n",
+            "start": [
+              14,
+              11
+            ],
+            "end": [
+              14,
+              13
+            ],
+            "line": "def main():"
+          },
+          {
+            "type_code": 5,
+            "type_name": "INDENT",
+            "string": "    ",
+            "start": [
+              15,
+              0
+            ],
+            "end": [
+              15,
+              4
+            ],
+            "line": "words = input().strip().split()"
+          },
+          {
+            "type_code": 1,
+            "type_name": "NAME",
+            "string": "words",
+            "start": [
+              15,
+              4
+            ],
+            "end": [
+              15,
+              9
+            ],
+            "line": "words = input().strip().split()"
+          },
+          {
+            "type_code": 54,
+            "type_name": "OP",
+            "string": "=",
+            "start": [
+              15,
+              10
+            ],
+            "end": [
+              15,
+              11
+            ],
+            "line": "words = input().strip().split()"
+          },
+          {
+            "type_code": 1,
+            "type_name": "NAME",
+            "string": "input",
+            "start": [
+              15,
+              12
+            ],
+            "end": [
+              15,
+              17
+            ],
+            "line": "words = input().strip().split()"
+          },
+          {
+            "type_code": 54,
+            "type_name": "OP",
+            "string": "(",
+            "start": [
+              15,
+              17
+            ],
+            "end": [
+              15,
+              18
+            ],
+            "line": "words = input().strip().split()"
+          },
+          {
+            "type_code": 54,
+            "type_name": "OP",
+            "string": ")",
+            "start": [
+              15,
+              18
+            ],
+            "end": [
+              15,
+              19
+            ],
+            "line": "words = input().strip().split()"
+          },
+          {
+            "type_code": 54,
+            "type_name": "OP",
+            "string": ".",
+            "start": [
+              15,
+              19
+            ],
+            "end": [
+              15,
+              20
+            ],
+            "line": "words = input().strip().split()"
+          },
+          {
+            "type_code": 1,
+            "type_name": "NAME",
+            "string": "strip",
+            "start": [
+              15,
+              20
+            ],
+            "end": [
+              15,
+              25
+            ],
+            "line": "words = input().strip().split()"
+          },
+          {
+            "type_code": 54,
+            "type_name": "OP",
+            "string": "(",
+            "start": [
+              15,
+              25
+            ],
+            "end": [
+              15,
+              26
+            ],
+            "line": "words = input().strip().split()"
+          },
+          {
+            "type_code": 54,
+            "type_name": "OP",
+            "string": ")",
+            "start": [
+              15,
+              26
+            ],
+            "end": [
+              15,
+              27
+            ],
+            "line": "words = input().strip().split()"
+          },
+          {
+            "type_code": 54,
+            "type_name": "OP",
+            "string": ".",
+            "start": [
+              15,
+              27
+            ],
+            "end": [
+              15,
+              28
+            ],
+            "line": "words = input().strip().split()"
+          },
+          {
+            "type_code": 1,
+            "type_name": "NAME",
+            "string": "split",
+            "start": [
+              15,
+              28
+            ],
+            "end": [
+              15,
+              33
+            ],
+            "line": "words = input().strip().split()"
+          },
+          {
+            "type_code": 54,
+            "type_name": "OP",
+            "string": "(",
+            "start": [
+              15,
+              33
+            ],
+            "end": [
+              15,
+              34
+            ],
+            "line": "words = input().strip().split()"
+          },
+          {
+            "type_code": 54,
+            "type_name": "OP",
+            "string": ")",
+            "start": [
+              15,
+              34
+            ],
+            "end": [
+              15,
+              35
+            ],
+            "line": "words = input().strip().split()"
+          },
+          {
+            "type_code": 4,
+            "type_name": "NEWLINE",
+            "string": "\r\n",
+            "start": [
+              15,
+              35
+            ],
+            "end": [
+              15,
+              37
+            ],
+            "line": "words = input().strip().split()"
+          },
+          {
+            "type_code": 1,
+            "type_name": "NAME",
+            "string": "for",
+            "start": [
+              16,
+              4
+            ],
+            "end": [
+              16,
+              7
+            ],
+            "line": "for i in range(len(words)):"
+          },
+          {
+            "type_code": 1,
+            "type_name": "NAME",
+            "string": "i",
+            "start": [
+              16,
+              8
+            ],
+            "end": [
+              16,
+              9
+            ],
+            "line": "for i in range(len(words)):"
+          },
+          {
+            "type_code": 1,
+            "type_name": "NAME",
+            "string": "in",
+            "start": [
+              16,
+              10
+            ],
+            "end": [
+              16,
+              12
+            ],
+            "line": "for i in range(len(words)):"
+          },
+          {
+            "type_code": 1,
+            "type_name": "NAME",
+            "string": "range",
+            "start": [
+              16,
+              13
+            ],
+            "end": [
+              16,
+              18
+            ],
+            "line": "for i in range(len(words)):"
+          },
+          {
+            "type_code": 54,
+            "type_name": "OP",
+            "string": "(",
+            "start": [
+              16,
+              18
+            ],
+            "end": [
+              16,
+              19
+            ],
+            "line": "for i in range(len(words)):"
+          },
+          {
+            "type_code": 1,
+            "type_name": "NAME",
+            "string": "len",
+            "start": [
+              16,
+              19
+            ],
+            "end": [
+              16,
+              22
+            ],
+            "line": "for i in range(len(words)):"
+          },
+          {
+            "type_code": 54,
+            "type_name": "OP",
+            "string": "(",
+            "start": [
+              16,
+              22
+            ],
+            "end": [
+              16,
+              23
+            ],
+            "line": "for i in range(len(words)):"
+          },
+          {
+            "type_code": 1,
+            "type_name": "NAME",
+            "string": "words",
+            "start": [
+              16,
+              23
+            ],
+            "end": [
+              16,
+              28
+            ],
+            "line": "for i in range(len(words)):"
+          },
+          {
+            "type_code": 54,
+            "type_name": "OP",
+            "string": ")",
+            "start": [
+              16,
+              28
+            ],
+            "end": [
+              16,
+              29
+            ],
+            "line": "for i in range(len(words)):"
+          },
+          {
+            "type_code": 54,
+            "type_name": "OP",
+            "string": ")",
+            "start": [
+              16,
+              29
+            ],
+            "end": [
+              16,
+              30
+            ],
+            "line": "for i in range(len(words)):"
+          },
+          {
+            "type_code": 54,
+            "type_name": "OP",
+            "string": ":",
+            "start": [
+              16,
+              30
+            ],
+            "end": [
+              16,
+              31
+            ],
+            "line": "for i in range(len(words)):"
+          },
+          {
+            "type_code": 4,
+            "type_name": "NEWLINE",
+            "string": "\r\n",
+            "start": [
+              16,
+              31
+            ],
+            "end": [
+              16,
+              33
+            ],
+            "line": "for i in range(len(words)):"
+          },
+          {
+            "type_code": 5,
+            "type_name": "INDENT",
+            "string": "        ",
+            "start": [
+              17,
+              0
+            ],
+            "end": [
+              17,
+              8
+            ],
+            "line": "words[i] = words[i].lower()"
+          },
+          {
+            "type_code": 1,
+            "type_name": "NAME",
+            "string": "words",
+            "start": [
+              17,
+              8
+            ],
+            "end": [
+              17,
+              13
+            ],
+            "line": "words[i] = words[i].lower()"
+          },
+          {
+            "type_code": 54,
+            "type_name": "OP",
+            "string": "[",
+            "start": [
+              17,
+              13
+            ],
+            "end": [
+              17,
+              14
+            ],
+            "line": "words[i] = words[i].lower()"
+          },
+          {
+            "type_code": 1,
+            "type_name": "NAME",
+            "string": "i",
+            "start": [
+              17,
+              14
+            ],
+            "end": [
+              17,
+              15
+            ],
+            "line": "words[i] = words[i].lower()"
+          },
+          {
+            "type_code": 54,
+            "type_name": "OP",
+            "string": "]",
+            "start": [
+              17,
+              15
+            ],
+            "end": [
+              17,
+              16
+            ],
+            "line": "words[i] = words[i].lower()"
+          },
+          {
+            "type_code": 54,
+            "type_name": "OP",
+            "string": "=",
+            "start": [
+              17,
+              17
+            ],
+            "end": [
+              17,
+              18
+            ],
+            "line": "words[i] = words[i].lower()"
+          },
+          {
+            "type_code": 1,
+            "type_name": "NAME",
+            "string": "words",
+            "start": [
+              17,
+              19
+            ],
+            "end": [
+              17,
+              24
+            ],
+            "line": "words[i] = words[i].lower()"
+          },
+          {
+            "type_code": 54,
+            "type_name": "OP",
+            "string": "[",
+            "start": [
+              17,
+              24
+            ],
+            "end": [
+              17,
+              25
+            ],
+            "line": "words[i] = words[i].lower()"
+          },
+          {
+            "type_code": 1,
+            "type_name": "NAME",
+            "string": "i",
+            "start": [
+              17,
+              25
+            ],
+            "end": [
+              17,
+              26
+            ],
+            "line": "words[i] = words[i].lower()"
+          },
+          {
+            "type_code": 54,
+            "type_name": "OP",
+            "string": "]",
+            "start": [
+              17,
+              26
+            ],
+            "end": [
+              17,
+              27
+            ],
+            "line": "words[i] = words[i].lower()"
+          },
+          {
+            "type_code": 54,
+            "type_name": "OP",
+            "string": ".",
+            "start": [
+              17,
+              27
+            ],
+            "end": [
+              17,
+              28
+            ],
+            "line": "words[i] = words[i].lower()"
+          },
+          {
+            "type_code": 1,
+            "type_name": "NAME",
+            "string": "lower",
+            "start": [
+              17,
+              28
+            ],
+            "end": [
+              17,
+              33
+            ],
+            "line": "words[i] = words[i].lower()"
+          },
+          {
+            "type_code": 54,
+            "type_name": "OP",
+            "string": "(",
+            "start": [
+              17,
+              33
+            ],
+            "end": [
+              17,
+              34
+            ],
+            "line": "words[i] = words[i].lower()"
+          },
+          {
+            "type_code": 54,
+            "type_name": "OP",
+            "string": ")",
+            "start": [
+              17,
+              34
+            ],
+            "end": [
+              17,
+              35
+            ],
+            "line": "words[i] = words[i].lower()"
+          },
+          {
+            "type_code": 4,
+            "type_name": "NEWLINE",
+            "string": "\r\n",
+            "start": [
+              17,
+              35
+            ],
+            "end": [
+              17,
+              37
+            ],
+            "line": "words[i] = words[i].lower()"
+          },
+          {
+            "type_code": 6,
+            "type_name": "DEDENT",
+            "string": "",
+            "start": [
+              18,
+              4
+            ],
+            "end": [
+              18,
+              4
+            ],
+            "line": "if len(words) == 1:"
+          },
+          {
+            "type_code": 1,
+            "type_name": "NAME",
+            "string": "if",
+            "start": [
+              18,
+              4
+            ],
+            "end": [
+              18,
+              6
+            ],
+            "line": "if len(words) == 1:"
+          },
+          {
+            "type_code": 1,
+            "type_name": "NAME",
+            "string": "len",
+            "start": [
+              18,
+              7
+            ],
+            "end": [
+              18,
+              10
+            ],
+            "line": "if len(words) == 1:"
+          },
+          {
+            "type_code": 54,
+            "type_name": "OP",
+            "string": "(",
+            "start": [
+              18,
+              10
+            ],
+            "end": [
+              18,
+              11
+            ],
+            "line": "if len(words) == 1:"
+          },
+          {
+            "type_code": 1,
+            "type_name": "NAME",
+            "string": "words",
+            "start": [
+              18,
+              11
+            ],
+            "end": [
+              18,
+              16
+            ],
+            "line": "if len(words) == 1:"
+          },
+          {
+            "type_code": 54,
+            "type_name": "OP",
+            "string": ")",
+            "start": [
+              18,
+              16
+            ],
+            "end": [
+              18,
+              17
+            ],
+            "line": "if len(words) == 1:"
+          },
+          {
+            "type_code": 54,
+            "type_name": "OP",
+            "string": "==",
+            "start": [
+              18,
+              18
+            ],
+            "end": [
+              18,
+              20
+            ],
+            "line": "if len(words) == 1:"
+          },
+          {
+            "type_code": 2,
+            "type_name": "NUMBER",
+            "string": "1",
+            "start": [
+              18,
+              21
+            ],
+            "end": [
+              18,
+              22
+            ],
+            "line": "if len(words) == 1:"
+          },
+          {
+            "type_code": 54,
+            "type_name": "OP",
+            "string": ":",
+            "start": [
+              18,
+              22
+            ],
+            "end": [
+              18,
+              23
+            ],
+            "line": "if len(words) == 1:"
+          },
+          {
+            "type_code": 4,
+            "type_name": "NEWLINE",
+            "string": "\r\n",
+            "start": [
+              18,
+              23
+            ],
+            "end": [
+              18,
+              25
+            ],
+            "line": "if len(words) == 1:"
+          },
+          {
+            "type_code": 5,
+            "type_name": "INDENT",
+            "string": "        ",
+            "start": [
+              19,
+              0
+            ],
+            "end": [
+              19,
+              8
+            ],
+            "line": "result = remove_vowels(words[0])"
+          },
+          {
+            "type_code": 1,
+            "type_name": "NAME",
+            "string": "result",
+            "start": [
+              19,
+              8
+            ],
+            "end": [
+              19,
+              14
+            ],
+            "line": "result = remove_vowels(words[0])"
+          },
+          {
+            "type_code": 54,
+            "type_name": "OP",
+            "string": "=",
+            "start": [
+              19,
+              15
+            ],
+            "end": [
+              19,
+              16
+            ],
+            "line": "result = remove_vowels(words[0])"
+          },
+          {
+            "type_code": 1,
+            "type_name": "NAME",
+            "string": "remove_vowels",
+            "start": [
+              19,
+              17
+            ],
+            "end": [
+              19,
+              30
+            ],
+            "line": "result = remove_vowels(words[0])"
+          },
+          {
+            "type_code": 54,
+            "type_name": "OP",
+            "string": "(",
+            "start": [
+              19,
+              30
+            ],
+            "end": [
+              19,
+              31
+            ],
+            "line": "result = remove_vowels(words[0])"
+          },
+          {
+            "type_code": 1,
+            "type_name": "NAME",
+            "string": "words",
+            "start": [
+              19,
+              31
+            ],
+            "end": [
+              19,
+              36
+            ],
+            "line": "result = remove_vowels(words[0])"
+          },
+          {
+            "type_code": 54,
+            "type_name": "OP",
+            "string": "[",
+            "start": [
+              19,
+              36
+            ],
+            "end": [
+              19,
+              37
+            ],
+            "line": "result = remove_vowels(words[0])"
+          },
+          {
+            "type_code": 2,
+            "type_name": "NUMBER",
+            "string": "0",
+            "start": [
+              19,
+              37
+            ],
+            "end": [
+              19,
+              38
+            ],
+            "line": "result = remove_vowels(words[0])"
+          },
+          {
+            "type_code": 54,
+            "type_name": "OP",
+            "string": "]",
+            "start": [
+              19,
+              38
+            ],
+            "end": [
+              19,
+              39
+            ],
+            "line": "result = remove_vowels(words[0])"
+          },
+          {
+            "type_code": 54,
+            "type_name": "OP",
+            "string": ")",
+            "start": [
+              19,
+              39
+            ],
+            "end": [
+              19,
+              40
+            ],
+            "line": "result = remove_vowels(words[0])"
+          },
+          {
+            "type_code": 4,
+            "type_name": "NEWLINE",
+            "string": "\r\n",
+            "start": [
+              19,
+              40
+            ],
+            "end": [
+              19,
+              42
+            ],
+            "line": "result = remove_vowels(words[0])"
+          },
+          {
+            "type_code": 6,
+            "type_name": "DEDENT",
+            "string": "",
+            "start": [
+              20,
+              4
+            ],
+            "end": [
+              20,
+              4
+            ],
+            "line": "else:"
+          },
+          {
+            "type_code": 1,
+            "type_name": "NAME",
+            "string": "else",
+            "start": [
+              20,
+              4
+            ],
+            "end": [
+              20,
+              8
+            ],
+            "line": "else:"
+          },
+          {
+            "type_code": 54,
+            "type_name": "OP",
+            "string": ":",
+            "start": [
+              20,
+              8
+            ],
+            "end": [
+              20,
+              9
+            ],
+            "line": "else:"
+          },
+          {
+            "type_code": 4,
+            "type_name": "NEWLINE",
+            "string": "\r\n",
+            "start": [
+              20,
+              9
+            ],
+            "end": [
+              20,
+              11
+            ],
+            "line": "else:"
+          },
+          {
+            "type_code": 5,
+            "type_name": "INDENT",
+            "string": "        ",
+            "start": [
+              21,
+              0
+            ],
+            "end": [
+              21,
+              8
+            ],
+            "line": "result = remove_vowels(words[0])"
+          },
+          {
+            "type_code": 1,
+            "type_name": "NAME",
+            "string": "result",
+            "start": [
+              21,
+              8
+            ],
+            "end": [
+              21,
+              14
+            ],
+            "line": "result = remove_vowels(words[0])"
+          },
+          {
+            "type_code": 54,
+            "type_name": "OP",
+            "string": "=",
+            "start": [
+              21,
+              15
+            ],
+            "end": [
+              21,
+              16
+            ],
+            "line": "result = remove_vowels(words[0])"
+          },
+          {
+            "type_code": 1,
+            "type_name": "NAME",
+            "string": "remove_vowels",
+            "start": [
+              21,
+              17
+            ],
+            "end": [
+              21,
+              30
+            ],
+            "line": "result = remove_vowels(words[0])"
+          },
+          {
+            "type_code": 54,
+            "type_name": "OP",
+            "string": "(",
+            "start": [
+              21,
+              30
+            ],
+            "end": [
+              21,
+              31
+            ],
+            "line": "result = remove_vowels(words[0])"
+          },
+          {
+            "type_code": 1,
+            "type_name": "NAME",
+            "string": "words",
+            "start": [
+              21,
+              31
+            ],
+            "end": [
+              21,
+              36
+            ],
+            "line": "result = remove_vowels(words[0])"
+          },
+          {
+            "type_code": 54,
+            "type_name": "OP",
+            "string": "[",
+            "start": [
+              21,
+              36
+            ],
+            "end": [
+              21,
+              37
+            ],
+            "line": "result = remove_vowels(words[0])"
+          },
+          {
+            "type_code": 2,
+            "type_name": "NUMBER",
+            "string": "0",
+            "start": [
+              21,
+              37
+            ],
+            "end": [
+              21,
+              38
+            ],
+            "line": "result = remove_vowels(words[0])"
+          },
+          {
+            "type_code": 54,
+            "type_name": "OP",
+            "string": "]",
+            "start": [
+              21,
+              38
+            ],
+            "end": [
+              21,
+              39
+            ],
+            "line": "result = remove_vowels(words[0])"
+          },
+          {
+            "type_code": 54,
+            "type_name": "OP",
+            "string": ")",
+            "start": [
+              21,
+              39
+            ],
+            "end": [
+              21,
+              40
+            ],
+            "line": "result = remove_vowels(words[0])"
+          },
+          {
+            "type_code": 4,
+            "type_name": "NEWLINE",
+            "string": "\r\n",
+            "start": [
+              21,
+              40
+            ],
+            "end": [
+              21,
+              42
+            ],
+            "line": "result = remove_vowels(words[0])"
+          },
+          {
+            "type_code": 1,
+            "type_name": "NAME",
+            "string": "for",
+            "start": [
+              22,
+              8
+            ],
+            "end": [
+              22,
+              11
+            ],
+            "line": "for i in range(1, len(words) - 1):"
+          },
+          {
+            "type_code": 1,
+            "type_name": "NAME",
+            "string": "i",
+            "start": [
+              22,
+              12
+            ],
+            "end": [
+              22,
+              13
+            ],
+            "line": "for i in range(1, len(words) - 1):"
+          },
+          {
+            "type_code": 1,
+            "type_name": "NAME",
+            "string": "in",
+            "start": [
+              22,
+              14
+            ],
+            "end": [
+              22,
+              16
+            ],
+            "line": "for i in range(1, len(words) - 1):"
+          },
+          {
+            "type_code": 1,
+            "type_name": "NAME",
+            "string": "range",
+            "start": [
+              22,
+              17
+            ],
+            "end": [
+              22,
+              22
+            ],
+            "line": "for i in range(1, len(words) - 1):"
+          },
+          {
+            "type_code": 54,
+            "type_name": "OP",
+            "string": "(",
+            "start": [
+              22,
+              22
+            ],
+            "end": [
+              22,
+              23
+            ],
+            "line": "for i in range(1, len(words) - 1):"
+          },
+          {
+            "type_code": 2,
+            "type_name": "NUMBER",
+            "string": "1",
+            "start": [
+              22,
+              23
+            ],
+            "end": [
+              22,
+              24
+            ],
+            "line": "for i in range(1, len(words) - 1):"
+          },
+          {
+            "type_code": 54,
+            "type_name": "OP",
+            "string": ",",
+            "start": [
+              22,
+              24
+            ],
+            "end": [
+              22,
+              25
+            ],
+            "line": "for i in range(1, len(words) - 1):"
+          },
+          {
+            "type_code": 1,
+            "type_name": "NAME",
+            "string": "len",
+            "start": [
+              22,
+              26
+            ],
+            "end": [
+              22,
+              29
+            ],
+            "line": "for i in range(1, len(words) - 1):"
+          },
+          {
+            "type_code": 54,
+            "type_name": "OP",
+            "string": "(",
+            "start": [
+              22,
+              29
+            ],
+            "end": [
+              22,
+              30
+            ],
+            "line": "for i in range(1, len(words) - 1):"
+          },
+          {
+            "type_code": 1,
+            "type_name": "NAME",
+            "string": "words",
+            "start": [
+              22,
+              30
+            ],
+            "end": [
+              22,
+              35
+            ],
+            "line": "for i in range(1, len(words) - 1):"
+          },
+          {
+            "type_code": 54,
+            "type_name": "OP",
+            "string": ")",
+            "start": [
+              22,
+              35
+            ],
+            "end": [
+              22,
+              36
+            ],
+            "line": "for i in range(1, len(words) - 1):"
+          },
+          {
+            "type_code": 54,
+            "type_name": "OP",
+            "string": "-",
+            "start": [
+              22,
+              37
+            ],
+            "end": [
+              22,
+              38
+            ],
+            "line": "for i in range(1, len(words) - 1):"
+          },
+          {
+            "type_code": 2,
+            "type_name": "NUMBER",
+            "string": "1",
+            "start": [
+              22,
+              39
+            ],
+            "end": [
+              22,
+              40
+            ],
+            "line": "for i in range(1, len(words) - 1):"
+          },
+          {
+            "type_code": 54,
+            "type_name": "OP",
+            "string": ")",
+            "start": [
+              22,
+              40
+            ],
+            "end": [
+              22,
+              41
+            ],
+            "line": "for i in range(1, len(words) - 1):"
+          },
+          {
+            "type_code": 54,
+            "type_name": "OP",
+            "string": ":",
+            "start": [
+              22,
+              41
+            ],
+            "end": [
+              22,
+              42
+            ],
+            "line": "for i in range(1, len(words) - 1):"
+          },
+          {
+            "type_code": 4,
+            "type_name": "NEWLINE",
+            "string": "\r\n",
+            "start": [
+              22,
+              42
+            ],
+            "end": [
+              22,
+              44
+            ],
+            "line": "for i in range(1, len(words) - 1):"
+          },
+          {
+            "type_code": 5,
+            "type_name": "INDENT",
+            "string": "            ",
+            "start": [
+              23,
+              0
+            ],
+            "end": [
+              23,
+              12
+            ],
+            "line": "result += \"_\" + words[i]"
+          },
+          {
+            "type_code": 1,
+            "type_name": "NAME",
+            "string": "result",
+            "start": [
+              23,
+              12
+            ],
+            "end": [
+              23,
+              18
+            ],
+            "line": "result += \"_\" + words[i]"
+          },
+          {
+            "type_code": 54,
+            "type_name": "OP",
+            "string": "+=",
+            "start": [
+              23,
+              19
+            ],
+            "end": [
+              23,
+              21
+            ],
+            "line": "result += \"_\" + words[i]"
+          },
+          {
+            "type_code": 3,
+            "type_name": "STRING",
+            "string": "\"_\"",
+            "start": [
+              23,
+              22
+            ],
+            "end": [
+              23,
+              25
+            ],
+            "line": "result += \"_\" + words[i]"
+          },
+          {
+            "type_code": 54,
+            "type_name": "OP",
+            "string": "+",
+            "start": [
+              23,
+              26
+            ],
+            "end": [
+              23,
+              27
+            ],
+            "line": "result += \"_\" + words[i]"
+          },
+          {
+            "type_code": 1,
+            "type_name": "NAME",
+            "string": "words",
+            "start": [
+              23,
+              28
+            ],
+            "end": [
+              23,
+              33
+            ],
+            "line": "result += \"_\" + words[i]"
+          },
+          {
+            "type_code": 54,
+            "type_name": "OP",
+            "string": "[",
+            "start": [
+              23,
+              33
+            ],
+            "end": [
+              23,
+              34
+            ],
+            "line": "result += \"_\" + words[i]"
+          },
+          {
+            "type_code": 1,
+            "type_name": "NAME",
+            "string": "i",
+            "start": [
+              23,
+              34
+            ],
+            "end": [
+              23,
+              35
+            ],
+            "line": "result += \"_\" + words[i]"
+          },
+          {
+            "type_code": 54,
+            "type_name": "OP",
+            "string": "]",
+            "start": [
+              23,
+              35
+            ],
+            "end": [
+              23,
+              36
+            ],
+            "line": "result += \"_\" + words[i]"
+          },
+          {
+            "type_code": 4,
+            "type_name": "NEWLINE",
+            "string": "\r\n",
+            "start": [
+              23,
+              36
+            ],
+            "end": [
+              23,
+              38
+            ],
+            "line": "result += \"_\" + words[i]"
+          },
+          {
+            "type_code": 6,
+            "type_name": "DEDENT",
+            "string": "",
+            "start": [
+              24,
+              8
+            ],
+            "end": [
+              24,
+              8
+            ],
+            "line": "result += \"_\" + trim_last(words[-1])"
+          },
+          {
+            "type_code": 1,
+            "type_name": "NAME",
+            "string": "result",
+            "start": [
+              24,
+              8
+            ],
+            "end": [
+              24,
+              14
+            ],
+            "line": "result += \"_\" + trim_last(words[-1])"
+          },
+          {
+            "type_code": 54,
+            "type_name": "OP",
+            "string": "+=",
+            "start": [
+              24,
+              15
+            ],
+            "end": [
+              24,
+              17
+            ],
+            "line": "result += \"_\" + trim_last(words[-1])"
+          },
+          {
+            "type_code": 3,
+            "type_name": "STRING",
+            "string": "\"_\"",
+            "start": [
+              24,
+              18
+            ],
+            "end": [
+              24,
+              21
+            ],
+            "line": "result += \"_\" + trim_last(words[-1])"
+          },
+          {
+            "type_code": 54,
+            "type_name": "OP",
+            "string": "+",
+            "start": [
+              24,
+              22
+            ],
+            "end": [
+              24,
+              23
+            ],
+            "line": "result += \"_\" + trim_last(words[-1])"
+          },
+          {
+            "type_code": 1,
+            "type_name": "NAME",
+            "string": "trim_last",
+            "start": [
+              24,
+              24
+            ],
+            "end": [
+              24,
+              33
+            ],
+            "line": "result += \"_\" + trim_last(words[-1])"
+          },
+          {
+            "type_code": 54,
+            "type_name": "OP",
+            "string": "(",
+            "start": [
+              24,
+              33
+            ],
+            "end": [
+              24,
+              34
+            ],
+            "line": "result += \"_\" + trim_last(words[-1])"
+          },
+          {
+            "type_code": 1,
+            "type_name": "NAME",
+            "string": "words",
+            "start": [
+              24,
+              34
+            ],
+            "end": [
+              24,
+              39
+            ],
+            "line": "result += \"_\" + trim_last(words[-1])"
+          },
+          {
+            "type_code": 54,
+            "type_name": "OP",
+            "string": "[",
+            "start": [
+              24,
+              39
+            ],
+            "end": [
+              24,
+              40
+            ],
+            "line": "result += \"_\" + trim_last(words[-1])"
+          },
+          {
+            "type_code": 54,
+            "type_name": "OP",
+            "string": "-",
+            "start": [
+              24,
+              40
+            ],
+            "end": [
+              24,
+              41
+            ],
+            "line": "result += \"_\" + trim_last(words[-1])"
+          },
+          {
+            "type_code": 2,
+            "type_name": "NUMBER",
+            "string": "1",
+            "start": [
+              24,
+              41
+            ],
+            "end": [
+              24,
+              42
+            ],
+            "line": "result += \"_\" + trim_last(words[-1])"
+          },
+          {
+            "type_code": 54,
+            "type_name": "OP",
+            "string": "]",
+            "start": [
+              24,
+              42
+            ],
+            "end": [
+              24,
+              43
+            ],
+            "line": "result += \"_\" + trim_last(words[-1])"
+          },
+          {
+            "type_code": 54,
+            "type_name": "OP",
+            "string": ")",
+            "start": [
+              24,
+              43
+            ],
+            "end": [
+              24,
+              44
+            ],
+            "line": "result += \"_\" + trim_last(words[-1])"
+          },
+          {
+            "type_code": 4,
+            "type_name": "NEWLINE",
+            "string": "\r\n",
+            "start": [
+              24,
+              44
+            ],
+            "end": [
+              24,
+              46
+            ],
+            "line": "result += \"_\" + trim_last(words[-1])"
+          },
+          {
+            "type_code": 6,
+            "type_name": "DEDENT",
+            "string": "",
+            "start": [
+              25,
+              4
+            ],
+            "end": [
+              25,
+              4
+            ],
+            "line": "print(result)"
+          },
+          {
+            "type_code": 1,
+            "type_name": "NAME",
+            "string": "print",
+            "start": [
+              25,
+              4
+            ],
+            "end": [
+              25,
+              9
+            ],
+            "line": "print(result)"
+          },
+          {
+            "type_code": 54,
+            "type_name": "OP",
+            "string": "(",
+            "start": [
+              25,
+              9
+            ],
+            "end": [
+              25,
+              10
+            ],
+            "line": "print(result)"
+          },
+          {
+            "type_code": 1,
+            "type_name": "NAME",
+            "string": "result",
+            "start": [
+              25,
+              10
+            ],
+            "end": [
+              25,
+              16
+            ],
+            "line": "print(result)"
+          },
+          {
+            "type_code": 54,
+            "type_name": "OP",
+            "string": ")",
+            "start": [
+              25,
+              16
+            ],
+            "end": [
+              25,
+              17
+            ],
+            "line": "print(result)"
+          },
+          {
+            "type_code": 4,
+            "type_name": "NEWLINE",
+            "string": "\r\n",
+            "start": [
+              25,
+              17
+            ],
+            "end": [
+              25,
+              19
+            ],
+            "line": "print(result)"
+          },
+          {
+            "type_code": 6,
+            "type_name": "DEDENT",
+            "string": "",
+            "start": [
+              27,
+              0
+            ],
+            "end": [
+              27,
+              0
+            ],
+            "line": "if __name__ == \"__main__\":"
+          },
+          {
+            "type_code": 1,
+            "type_name": "NAME",
+            "string": "if",
+            "start": [
+              27,
+              0
+            ],
+            "end": [
+              27,
+              2
+            ],
+            "line": "if __name__ == \"__main__\":"
+          },
+          {
+            "type_code": 1,
+            "type_name": "NAME",
+            "string": "__name__",
+            "start": [
+              27,
+              3
+            ],
+            "end": [
+              27,
+              11
+            ],
+            "line": "if __name__ == \"__main__\":"
+          },
+          {
+            "type_code": 54,
+            "type_name": "OP",
+            "string": "==",
+            "start": [
+              27,
+              12
+            ],
+            "end": [
+              27,
+              14
+            ],
+            "line": "if __name__ == \"__main__\":"
+          },
+          {
+            "type_code": 3,
+            "type_name": "STRING",
+            "string": "\"__main__\"",
+            "start": [
+              27,
+              15
+            ],
+            "end": [
+              27,
+              25
+            ],
+            "line": "if __name__ == \"__main__\":"
+          },
+          {
+            "type_code": 54,
+            "type_name": "OP",
+            "string": ":",
+            "start": [
+              27,
+              25
+            ],
+            "end": [
+              27,
+              26
+            ],
+            "line": "if __name__ == \"__main__\":"
+          },
+          {
+            "type_code": 4,
+            "type_name": "NEWLINE",
+            "string": "\r\n",
+            "start": [
+              27,
+              26
+            ],
+            "end": [
+              27,
+              28
+            ],
+            "line": "if __name__ == \"__main__\":"
+          },
+          {
+            "type_code": 5,
+            "type_name": "INDENT",
+            "string": "    ",
+            "start": [
+              28,
+              0
+            ],
+            "end": [
+              28,
+              4
+            ],
+            "line": "main()"
+          },
+          {
+            "type_code": 1,
+            "type_name": "NAME",
+            "string": "main",
+            "start": [
+              28,
+              4
+            ],
+            "end": [
+              28,
+              8
+            ],
+            "line": "main()"
+          },
+          {
+            "type_code": 54,
+            "type_name": "OP",
+            "string": "(",
+            "start": [
+              28,
+              8
+            ],
+            "end": [
+              28,
+              9
+            ],
+            "line": "main()"
+          },
+          {
+            "type_code": 54,
+            "type_name": "OP",
+            "string": ")",
+            "start": [
+              28,
+              9
+            ],
+            "end": [
+              28,
+              10
+            ],
+            "line": "main()"
+          },
+          {
+            "type_code": 4,
+            "type_name": "NEWLINE",
+            "string": "\r\n",
+            "start": [
+              28,
+              10
+            ],
+            "end": [
+              28,
+              12
+            ],
+            "line": "main()"
+          },
+          {
+            "type_code": 6,
+            "type_name": "DEDENT",
+            "string": "",
+            "start": [
+              29,
+              0
+            ],
+            "end": [
+              29,
+              0
+            ],
+            "line": ""
+          }
+        ]
+      }
+    }
+  }
+}

@@ -1,0 +1,12 @@
+APP_NAME="neoESPA"
+APP_VERSION="Alpha 6.0"
+APP_CLASS_NAME="template_Programming_2024_001"
+APP_DEVELOPER_MAIL="pllab@pusan.ac.kr"
+APP_ENV="development"
+
+DATABASE_URL="sqlite:////database/database.sqlite"
+JWT_SECRET="your-secret-key-here"
+
+PROGRAM_LANG="c"
+CODE_EXTENSION="c"
+COLLAB_LANG="c"

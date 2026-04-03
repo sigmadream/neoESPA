@@ -1,0 +1,1090 @@
+{
+    "AbstractClassWithoutAbstractMethod": {
+        "eng": "This abstract class does not have any abstract methods",
+        "kor": "이 추상 클래스에는 추상 메서드가 없습니다"
+    },
+    "AccessorClassGeneration": {
+        "eng": "Avoid instantiation through private constructors from outside of the constructor's class.",
+        "kor": "생성자 클래스 외부에서의 개인 생성자를 통한 인스턴스화를 피하세요."
+    },
+    "AccessorMethodGeneration": {
+        "eng": "Consider giving this member package visibility to access it from (.+) without a synthetic accessor method",
+        "kor": "이 멤버에 대한 패키지 접근 권한을 부여하여, 합성 접근자 메서드 없이 %s에서 접근할 수 있도록 고려해보세요."
+    },
+    "ArrayIsStoredDirectly": {
+        "eng": "The user-supplied array (.+) is stored directly.",
+        "kor": "사용자가 제공한 배열 %s이(가) 직접 저장됩니다."
+    },
+    "AvoidMessageDigestField": {
+        "eng": "You shouldn't declare a field of MessageDigest type, because unsynchronized access could cause problems.",
+        "kor": "동기화되지 않은 액세스로 인해 문제가 발생할 수 있으므로 MessageDigest 유형의 필드를 선언하지 않아야 합니다."
+    },
+    "AvoidPrintStackTrace": {
+        "eng": "Avoid printStackTrace\\(\\); use a logger call instead.",
+        "kor": "printStackTrace()를 피하고 로거 호출을 대신 사용하세요."
+    },
+    "AvoidReassigningCatchVariables": {
+        "eng": "Avoid reassigning caught exception (.+)",
+        "kor": "잡은 예외 %s을(를) 재할당하는 것을 피하세요"
+    },
+    "AvoidReassigningLoopVariables": {
+        "eng": "Avoid reassigning the loop control variable (.+)",
+        "kor": "루프 제어 변수 %s을(를) 재할당하는 것을 피하세요"
+    },
+    "AvoidReassigningParameters": {
+        "eng": "Avoid reassigning parameters such as (.+)",
+        "kor": "%s과(와) 같은 매개변수를 재할당하는 것을 피하세요"
+    },
+    "AvoidStringBufferField": {
+        "eng": "StringBuffers can grow quite a lot, and so may become a source of memory leak \\(if the owning class has a long life time\\).",
+        "kor": "StringBuffer는 크게 커질 수 있으며, 따라서 소유 클래스가 오랜 기간 유지되는 경우 메모리 누수의 원인이 될 수 있습니다."
+    },
+    "AvoidUsingHardCodedIP": {
+        "eng": "Do not hard code the IP address (.+)",
+        "kor": "IP 주소 %s을(를) 하드 코딩하지 마세요"
+    },
+    "CheckResultSet": {
+        "eng": "Always check the return of one of the navigation method \\(next,previous,first,last\\) of a ResultSet.",
+        "kor": "ResultSet의 네비게이션 메서드 (next, previous, first, last) 중 하나의 반환값을 항상 확인하세요."
+    },
+    "ConstantsInInterface": {
+        "eng": "Using constants in interfaces is a bad practice.",
+        "kor": "인터페이스에서 상수를 사용하는 것은 좋지 않은 방법입니다."
+    },
+    "DefaultLabelNotLastInSwitchStmt": {
+        "eng": "The default label should be the last label in a switch statement",
+        "kor": "기본 레이블은 switch 문에서 마지막 레이블이어야 합니다"
+    },
+    "DoubleBraceInitialization": {
+        "eng": "Double-brace initialization should be avoided",
+        "kor": "이중 중괄호 초기화는 피해야 합니다"
+    },
+    "ForLoopCanBeForeach": {
+        "eng": "This 'for' loop can be replaced by a 'foreach' loop",
+        "kor": "이 'for' 루프는 'foreach' 루프로 대체할 수 있습니다"
+    },
+    "ForLoopVariableCount": {
+        "eng": "Too many control variables in the 'for' statement",
+        "kor": "'for' 문에서 제어 변수가 너무 많습니다"
+    },
+    "GuardLogStatement": {
+        "eng": "Logger calls should be surrounded by log level guards.",
+        "kor": "로거 호출은 로그 레벨 가드로 둘러싸여야 합니다."
+    },
+    "JUnit4SuitesShouldUseSuiteAnnotation": {
+        "eng": "JUnit 4 indicates test suites via annotations, not the suite method.",
+        "kor": "JUnit 4는 테스트 스위트를 스위트 메서드가 아닌 주석을 통해 나타냅니다."
+    },
+    "JUnit4TestShouldUseAfterAnnotation": {
+        "eng": "JUnit 4 tests that clean up tests should use the @After annotation, JUnit5 tests should use @AfterEach or @AfterAll",
+        "kor": "테스트를 정리하는 JUnit 4 테스트는 @After 어노테이션을 사용해야 하며, JUnit5 테스트는 @AfterEach 또는 @AfterAll을 사용해야 합니다."
+    },
+    "JUnit4TestShouldUseBeforeAnnotation": {
+        "eng": "JUnit 4 tests that set up tests should use the @Before annotation, JUnit5 tests should use @BeforeEach or @BeforeAll",
+        "kor": "테스트를 설정하는 JUnit 4 테스트는 @Before 어노테이션을 사용해야 하며, JUnit5 테스트는 @BeforeEach 또는 @BeforeAll을 사용해야 합니다."
+    },
+    "JUnit4TestShouldUseTestAnnotation": {
+        "eng": "Unit tests that execute tests should use the @Test annotation. In case of JUnit 5, test methods might use @RepeatedTest, @TestFactory, @TestTemplate or @ParameterizedTest annotations instead.",
+        "kor": "테스트를 실행하는 단위 테스트는 @Test 어노테이션을 사용해야 합니다. JUnit 5의 경우, 테스트 메서드는 대신 @RepeatedTest, @TestFactory, @TestTemplate 또는 @ParameterizedTest 어노테이션을 사용할 수 있습니다."
+    },
+    "JUnit5TestShouldBePackagePrivate": {
+        "eng": "JUnit 5 tests should be package-private.",
+        "kor": "JUnit 5 테스트는 패키지-private이어야 합니다."
+    },
+    "JUnitAssertionsShouldIncludeMessage": {
+        "eng": "JUnit assertions should include a message",
+        "kor": "JUnit 어설션에는 메시지를 포함해야 합니다"
+    },
+    "JUnitTestContainsTooManyAsserts": {
+        "eng": "Unit tests should not contain more than (.+) assert(s).",
+        "kor": "단위 테스트는 %s개 이상의 어설션을 포함해서는 안 됩니다."
+    },
+    "JUnitTestsShouldIncludeAssert": {
+        "eng": "JUnit tests should include assert() or fail()",
+        "kor": "JUnit 테스트에는 assert() 또는 fail()을 포함해야 합니다"
+    },
+    "JUnitUseExpected": {
+        "eng": "In JUnit4, use the @Test\\(expected\\) annotation to denote tests that should throw exceptions",
+        "kor": "JUnit4에서는 예외를 던져야 하는 테스트를 나타내기 위해 @Test(expected) 어노테이션을 사용하세요"
+    },
+    "LiteralsFirstInComparisons": {
+        "eng": "Position literals first in String comparisons",
+        "kor": "문자열 비교에서 리터럴을 먼저 배치하세요"
+    },
+    "LooseCoupling": {
+        "eng": "Avoid using implementation types like (.+); use the interface instead",
+        "kor": "%s과(와) 같은 구현 유형을 사용하지 마세요. 대신 인터페이스를 사용하세요"
+    },
+    "MethodReturnsInternalArray": {
+        "eng": "Returning (.+) may expose an internal array.",
+        "kor": "%s을(를) 반환하면 내부 배열이 노출될 수 있습니다."
+    },
+    "MissingOverride": {
+        "eng": "The method (.+) is missing an @Override annotation.",
+        "kor": "메서드 %s에 @Override 어노테이션이 누락되었습니다."
+    },
+    "OneDeclarationPerLine": {
+        "eng": "Use one line for each declaration, it enhances code readability.",
+        "kor": "선언당 한 줄을 사용하면 코드 가독성이 향상됩니다."
+    },
+    "PreserveStackTrace": {
+        "eng": "Thrown exception does not preserve the stack trace of exception (.+) on all code paths",
+        "kor": "던져진 예외가 모든 코드 경로에서 예외 %s의 스택 트레이스를 보존하지 않습니다"
+    },
+    "PrimitiveWrapperInstantiation": {
+        "eng": "Do not use new (.+)\\(...\\), prefer (.+).valueOf\\(...\\)",
+        "kor": "new %s(...)를 사용하지 마세요. %s.valueOf(...)를 선호하세요"
+    },
+    "ReplaceEnumerationWithIterator": {
+        "eng": "Consider replacing this Enumeration with the newer java.util.Iterator",
+        "kor": "이 열거형을 최신의 java.util.Iterator로 대체하는 것을 고려하세요"
+    },
+    "ReplaceHashtableWithMap": {
+        "eng": "Consider replacing this Hashtable with the newer java.util.Map",
+        "kor": "이 Hashtable을 최신의 java.util.Map으로 대체하는 것을 고려하세요"
+    },
+    "ReplaceVectorWithList": {
+        "eng": "Consider replacing this Vector with the newer java.util.List",
+        "kor": "이 Vector을 최신의 java.util.List로 대체하는 것을 고려하세요"
+    },
+    "SimplifiableTestAssertion": {
+        "eng": "Assertion may be simplified using (.+)",
+        "kor": "단언문을 %s을(를) 사용하여 간소화할 수 있습니다"
+    },
+    "SwitchStmtsShouldHaveDefault": {
+        "eng": "Switch statements should be exhaustive, add a default case \\(or missing enum branches\\)",
+        "kor": "switch 문은 모든 경우를 다루어야 합니다. 기본 케이스(또는 누락된 enum 분기)를 추가하세요"
+    },
+    "SystemPrintln": {
+        "eng": "Usage of System.out\/err",
+        "kor": "System.out\/err 사용"
+    },
+    "UnusedAssignment": {
+        "eng": "The value assigned to this variable is never used or always overwritten",
+        "kor": "이 변수에 할당된 값은 사용되지 않거나 항상 덮어쓰입니다"
+    },
+    "UnusedFormalParameter": {
+        "eng": "Avoid unused (.+) parameters such as (.+).",
+        "kor": "사용되지 않는 %s 매개변수들의(%s과(와) 같은) 사용을 피하세요."
+    },
+    "UnusedLocalVariable": {
+        "eng": "Avoid unused local variables such as (.+).",
+        "kor": "%s과(와) 같은 사용되지 않는 지역 변수를 피하세요."
+    },
+    "UnusedPrivateField": {
+        "eng": "Avoid unused private fields such as (.+).",
+        "kor": "%s과(와) 같은 사용되지 않는 개인 필드를 피하세요."
+    },
+    "UnusedPrivateMethod": {
+        "eng": "Avoid unused private methods such as (.+).",
+        "kor": "%s과(와) 같은 사용되지 않는 개인 메서드를 피하세요."
+    },
+    "UseCollectionIsEmpty": {
+        "eng": "Substitute calls to size\\(\\) == 0 \\(or size\\(\\) != 0, size\\(\\) > 0, size\\(\\) < 1\\) with calls to isEmpty\\(\\)",
+        "kor": "size() == 0 (또는 size() != 0, size() > 0, size() < 1) 호출을 isEmpty() 호출로 대체하세요"
+    },
+    "UseStandardCharsets": {
+        "eng": "Please use StandardCharsets constants",
+        "kor": "표준 문자셋 상수를 사용하세요"
+    },
+    "UseTryWithResources": {
+        "eng": "Consider using a try-with-resources statement instead of explicitly closing the resource",
+        "kor": "리소스를 명시적으로 닫는 대신 try-with-resources 문을 사용하는 것을 고려하세요"
+    },
+    "UseVarargs": {
+        "eng": "Consider using varargs for methods or constructors which take an array the last parameter.",
+        "kor": "마지막 매개변수로 배열을 받는 메서드나 생성자에 대해 가변인수를 사용하는 것을 고려하세요."
+    },
+    "WhileLoopWithLiteralBoolean": {
+        "eng": "The loop can be simplified.",
+        "kor": "루프를 간소화할 수 있습니다."
+    },
+    "AtLeastOneConstructor": {
+        "eng": "Each class should declare at least one constructor",
+        "kor": "각 클래스는 최소한 하나의 생성자를 선언해야 합니다"
+    },
+    "AvoidDollarSigns": {
+        "eng": "Avoid using dollar signs in variable\/method\/class\/interface names",
+        "kor": "변수/메서드/클래스/인터페이스 이름에 달러 기호를 사용하지 마세요"
+    },
+    "AvoidProtectedFieldInFinalClass": {
+        "eng": "Avoid protected fields in a final class. Change to private or package access.",
+        "kor": "최종 클래스에서 protected 필드를 피하세요. private 또는 패키지 접근으로 변경하세요."
+    },
+    "AvoidProtectedMethodInFinalClassNotExtending": {
+        "eng": "Avoid protected methods in a final class that doesn't extend anything other than Object. Change to private or package access.",
+        "kor": "Object 이외의 것을 확장하지 않는 최종 클래스에서 protected 메서드를 피하세요. private 또는 패키지 접근으로 변경하세요."
+    },
+    "AvoidUsingNativeCode": {
+        "eng": "The use of native code is not recommended.",
+        "kor": "네이티브 코드 사용은 권장되지 않습니다."
+    },
+    "BooleanGetMethodName": {
+        "eng": "A 'getX\\(\\)' method which returns a boolean should be named 'isX\\(\\)'",
+        "kor": "boolean을 반환하는 'getX()' 메서드는 'isX()'로 명명되어야 합니다"
+    },
+    "CallSuperInConstructor": {
+        "eng": "It is a good practice to call super\\(\\) in a constructor",
+        "kor": "생성자에서 super()를 호출하는 것이 좋은 습관입니다"
+    },
+    "ClassNamingConventions": {
+        "eng": "The (.+) name (.+) doesn't match (.+)",
+        "kor": "%s 이름 %s이(가) %s와 일치하지 않습니다"
+    },
+    "CommentDefaultAccessModifier": {
+        "eng": "Missing commented default access modifier on (.+) (.+)",
+        "kor": "%s %s에 주석 처리된 기본 액세스 한정자가 누락되었습니다"
+    },
+    "ConfusingTernary": {
+        "eng": "Avoid if \\(x != y\\) ..; else ..;",
+        "kor": "if (x != y) ..; else ..; 형태는 피하세요"
+    },
+    "ControlStatementBraces": {
+        "eng": "This statement should have braces",
+        "kor": "이 문장에는 중괄호가 있어야 합니다"
+    },
+    "EmptyMethodInAbstractClassShouldBeAbstract": {
+        "eng": "An empty method in an abstract class should be abstract instead",
+        "kor": "추상 클래스의 빈 메서드는 추상이어야 합니다"
+    },
+    "EmptyControlStatement": {
+        "eng": "This control statement has an empty branch",
+        "kor": "이 제어문에는 빈 분기가 있습니다"
+    },
+    "ExtendsObject": {
+        "eng": "No need to explicitly extend Object.",
+        "kor": "명시적으로 Object를 확장할 필요가 없습니다."
+    },
+    "FieldDeclarationsShouldBeAtStartOfClass": {
+        "eng": "Fields should be declared at the top of the class, before any method declarations, constructors, initializers or inner classes.",
+        "kor": "필드는 클래스의 맨 위에 선언되어야 합니다. 메서드 선언, 생성자, 초기화 블록 또는 내부 클래스보다 앞에 있어야 합니다."
+    },
+    "FieldNamingConventions": {
+        "eng": "The (.+) name (.+) doesn't match (.+)",
+        "kor": "%s 이름 %s이(가) %s와 일치하지 않습니다"
+    },
+    "FinalParameterInAbstractMethod": {
+        "eng": "Final parameter in abstract method",
+        "kor": "추상 메서드에서 최종 매개변수"
+    },
+    "ForLoopShouldBeWhileLoop": {
+        "eng": "This for loop could be simplified to a while loop",
+        "kor": "이 for 루프를 while 루프로 간단히 만들 수 있습니다"
+    },
+    "FormalParameterNamingConventions": {
+        "eng": "The (.+) name (.+) doesn't match (.+)",
+        "kor": "%s 이름 %s이(가) %s와 일치하지 않습니다"
+    },
+    "GenericsNaming": {
+        "eng": "Generics names should be a one letter long and upper case.",
+        "kor": "일련의 이름은 한 글자로 작성되어야 하며 대문자여야 합니다."
+    },
+    "IdenticalCatchBranches": {
+        "eng": "'catch' branch identical to (.+) branch",
+        "kor": "'catch' 분기가 %s 분기와 동일합니다"
+    },
+    "LinguisticNaming": {
+        "eng": "Linguistics Antipattern - Method name and return type is inconsistent linguistically",
+        "kor": "언어학적 명명 앤티 패턴 - 메서드 이름과 반환 유형이 언어적으로 일관되지 않습니다"
+    },
+    "LocalHomeNamingConvention": {
+        "eng": "The Local Home interface of a Session EJB should be suffixed by 'LocalHome'",
+        "kor": "세션 EJB의 로컬 홈 인터페이스는 'LocalHome'으로 접미사를 붙여야 합니다"
+    },
+    "LocalInterfaceSessionNamingConvention": {
+        "eng": "The Local Interface of a Session EJB should be suffixed by 'Local'",
+        "kor": "세션 EJB의 로컬 인터페이스는 'Local'로 접미사를 붙여야 합니다"
+    },
+    "LocalVariableCouldBeFinal": {
+        "eng": "Local variable (.+) could be declared final",
+        "kor": "로컬 변수 %s를 final로 선언할 수 있습니다"
+    },
+    "LocalVariableNamingConventions": {
+        "eng": "The (.+) name (.+) doesn't match (.+)",
+        "kor": "%s 이름 %s이(가) %s와 일치하지 않습니다"
+    },
+    "LongVariable": {
+        "eng": "Avoid excessively long variable names like (.+)",
+        "kor": "%s과(와) 같이 지나치게 긴 변수 이름을 피하세요"
+    },
+    "MDBAndSessionBeanNamingConvention": {
+        "eng": "SessionBean or MessageBean should be suffixed by Bean",
+        "kor": "SessionBean 또는 MessageBean은 Bean으로 접미사를 붙여야 합니다"
+    },
+    "MethodArgumentCouldBeFinal": {
+        "eng": "Parameter (.+) is not assigned and could be declared final",
+        "kor": "매개변수 %s이(가) 할당되지 않았으며 final로 선언될 수 있습니다"
+    },
+    "MethodNamingConventions": {
+        "eng": "The (.+) name (.+) doesn't match (.+)",
+        "kor": "%s 이름 %s이(가) %s와 일치하지 않습니다"
+    },
+    "NoPackage": {
+        "eng": "All classes, interfaces, enums and annotations must belong to a named package",
+        "kor": "모든 클래스, 인터페이스, 열거형 및 어노테이션은 이름이 지정된 패키지에 속해야 합니다"
+    },
+    "UseUnderscoresInNumericLiterals": {
+        "eng": "Number (.+) should separate every third digit with an underscore",
+        "kor": "%s은(는) 세 자리마다 밑줄로 구분되어야 합니다"
+    },
+    "OnlyOneReturn": {
+        "eng": "A method should have only one exit point, and that should be the last statement in the method",
+        "kor": "메서드는 하나의 종료 지점만 가져야 하며, 그것은 메서드의 마지막 문장이어야 합니다"
+    },
+    "PackageCase": {
+        "eng": "Package name contains upper case characters",
+        "kor": "패키지 이름에 대문자 문자가 포함되어 있습니다"
+    },
+    "PrematureDeclaration": {
+        "eng": "Declaration of (.+) can be moved closer to its usages",
+        "kor": "%s의 선언이 사용 지점에 더 가깝게 이동할 수 있습니다"
+    },
+    "RemoteInterfaceNamingConvention": {
+        "eng": "Remote Interface of a Session EJB should NOT be suffixed",
+        "kor": "세션 EJB의 원격 인터페이스는 접미사를 붙이지 않아야 합니다"
+    },
+    "RemoteSessionInterfaceNamingConvention": {
+        "eng": "Remote Home interface of a Session EJB should be suffixed by 'Home'",
+        "kor": "세션 EJB의 원격 홈 인터페이스는 'Home'으로 접미사를 붙여야 합니다"
+    },
+    "ShortClassName": {
+        "eng": "Avoid short class names like (.+)",
+        "kor": "%s과(와) 같이 짧은 클래스 이름을 피하세요"
+    },
+    "ShortMethodName": {
+        "eng": "Avoid using short method names",
+        "kor": "짧은 메서드 이름 사용을 피하세요"
+    },
+    "ShortVariable": {
+        "eng": "Avoid variables with short names like (.+)",
+        "kor": "%s과(와) 같은 짧은 이름의 변수를 피하세요"
+    },
+    "TooManyStaticImports": {
+        "eng": "Too many static imports may lead to messy code",
+        "kor": "너무 많은 정적 임포트는 코드를 엉망으로 만들 수 있습니다"
+    },
+    "UnnecessaryAnnotationValueElement": {
+        "eng": "Avoid the use of value in annotations when it's the only element",
+        "kor": "어노테이션에서 유일한 요소일 때 값 사용을 피하세요"
+    },
+    "UnnecessaryBoxing": {
+        "eng": "Unnecessary (.+)",
+        "kor": "불필요한 %s"
+    },
+    "UnnecessaryCast": {
+        "eng": "Unnecessary cast \\((.+)\\)",
+        "kor": "불필요한 캐스트 \\(%s\\)"
+    },
+    "UnnecessaryConstructor": {
+        "eng": "Avoid unnecessary constructors - the compiler will generate these for you",
+        "kor": "불필요한 생성자를 피하세요 - 컴파일러가 대신 생성할 것입니다"
+    },
+    "UnnecessaryFullyQualifiedName": {
+        "eng": "Unnecessary qualifier (.+): (.+) is already in scope(.+)",
+        "kor": "불필요한 한정자 %s: %s은(는) 이미 스코프에 있습니다 %s"
+    },
+    "UnnecessaryImport": {
+        "eng": "Unnecessary import (.+)",
+        "kor": "불필요한 임포트 %s"
+    },
+    "UnnecessaryLocalBeforeReturn": {
+        "eng": "Consider simply returning the value vs storing it in local variable (.+)",
+        "kor": "로컬 변수 %s에 저장하는 대신 값만 반환하는 것을 고려하세요"
+    },
+    "UnnecessaryModifier": {
+        "eng": "Unnecessary modifier(.+) on (.+) '(.+)'(.+)",
+        "kor": "불필요한 수정자%s: %s '%s'%s"
+    },
+    "UnnecessaryReturn": {
+        "eng": "Unnecessary return statement",
+        "kor": "불필요한 반환 문"
+    },
+    "UnnecessarySemicolon": {
+        "eng": "Unnecessary semicolon",
+        "kor": "불필요한 세미콜론"
+    },
+    "UseDiamondOperator": {
+        "eng": "Explicit type arguments can be replaced by a diamond: (.+)",
+        "kor": "명시적 유형 인수는 다이아몬드로 대체할 수 있습니다: %s"
+    },
+    "UseExplicitTypes": {
+        "eng": "Use Explicit Types",
+        "kor": "명시적 유형 사용"
+    },
+    "UselessParentheses": {
+        "eng": "Useless parentheses.",
+        "kor": "불필요한 괄호입니다."
+    },
+    "UselessQualifiedThis": {
+        "eng": "Useless qualified this usage in the same class.",
+        "kor": "동일한 클래스 내에서 불필요한 한정된 this 사용입니다."
+    },
+    "UseShortArrayInitializer": {
+        "eng": "Array initialization can be written shorter",
+        "kor": "배열 초기화를 더 짧게 작성할 수 있습니다"
+    },
+    "AbstractClassWithoutAnyMethod": {
+        "eng": "No abstract method which means that the keyword is most likely used to prevent instantiation. Use a private or protected constructor instead.",
+        "kor": "추상 메서드가 없으므로 이 키워드는 아마도 인스턴스화를 방지하기 위해 사용됩니다. 대신 private 또는 protected 생성자를 사용하세요."
+    },
+    "AvoidCatchingGenericException": {
+        "eng": "Avoid catching generic exceptions such as NullPointerException, RuntimeException, Exception in try-catch block",
+        "kor": "NullPointerException, RuntimeException, Exception과 같은 일반적인 예외를 try-catch 블록에서 잡는 것을 피하세요"
+    },
+    "AvoidDeeplyNestedIfStmts": {
+        "eng": "Deeply nested if..then statements are hard to read",
+        "kor": "깊게 중첩된 if..then 문은 읽기 어렵습니다"
+    },
+    "AvoidRethrowingException": {
+        "eng": "A catch statement that catches an exception only to rethrow it should be avoided.",
+        "kor": "예외를 잡아서 다시 던지는 catch 문을 피해야 합니다."
+    },
+    "AvoidThrowingNewInstanceOfSameException": {
+        "eng": "A catch statement that catches an exception only to wrap it in a new instance of the same type of exception and throw it should be avoided",
+        "kor": "예외를 잡아서 동일한 유형의 새로운 인스턴스로 래핑한 다음 던지는 catch 문을 피하세요"
+    },
+    "AvoidThrowingNullPointerException": {
+        "eng": "Avoid throwing null pointer exceptions.",
+        "kor": "null 포인터 예외를 던지지 마세요."
+    },
+    "AvoidThrowingRawExceptionTypes": {
+        "eng": "Avoid throwing raw exception types.",
+        "kor": "원시 예외 유형을 던지지 마세요."
+    },
+    "AvoidUncheckedExceptionsInSignatures": {
+        "eng": "A method or constructor should not explicitly declare unchecked exceptions in its 'throws' clause",
+        "kor": "메서드나 생성자는 'throws' 절에서 명시적으로 확인되지 않은 예외를 선언해서는 안 됩니다"
+    },
+    "ClassWithOnlyPrivateConstructorsShouldBeFinal": {
+        "eng": "This class has only private constructors and may be final",
+        "kor": "이 클래스에는 private 생성자만 있으며 최종일 수 있습니다"
+    },
+    "CollapsibleIfStatements": {
+        "eng": "This if statement could be combined with its parent",
+        "kor": "이 if 문은 부모와 결합될 수 있습니다"
+    },
+    "CouplingBetweenObjects": {
+        "eng": "High amount of different objects as members denotes a high coupling",
+        "kor": "멤버로서의 다양한 객체 수가 많을수록 결합도가 높은 것을 나타냅니다"
+    },
+    "CognitiveComplexity": {
+        "eng": "The (.+) (.+) has a cognitive complexity of (.+), current threshold is (.+)",
+        "kor": "%s %s의 인지 복잡도는 %s이며, 현재 임계값은 %s입니다"
+    },
+    "CyclomaticComplexity": {
+        "eng": "The (.+) (.+) has a(.+) cyclomatic complexity of (.+).",
+        "kor": "%s %s의 순환 복잡성은 %s입니다."
+    },
+    "DataClass": {
+        "eng": "The class (.+) is suspected to be a Data Class \\(WOC=(.+), NOPA=(.+), NOAM=(.+), WMC=(.+)\\)",
+        "kor": "클래스 %s는 데이터 클래스로 의심됩니다 (WOC=%s, NOPA=%s, NOAM=%s, WMC=%s)"
+    },
+    "DoNotExtendJavaLangError": {
+        "eng": "Exceptions should not extend java.lang.Error",
+        "kor": "예외는 java.lang.Error를 확장해서는 안 됩니다"
+    },
+    "ExceptionAsFlowControl": {
+        "eng": "Exception thrown at line (.+) is caught in this block.",
+        "kor": "%s 라인에서 발생한 예외가 이 블록에서 잡힙니다."
+    },
+    "ExcessiveImports": {
+        "eng": "A high number of imports can indicate a high degree of coupling within an object.",
+        "kor": "높은 수의 임포트는 객체 내의 결합도가 높을 수 있음을 나타낼 수 있습니다."
+    },
+    "ExcessiveParameterList": {
+        "eng": "Avoid long parameter lists.",
+        "kor": "긴 매개변수 목록을 피하세요."
+    },
+    "ExcessivePublicCount": {
+        "eng": "This class has a bunch of public methods and attributes",
+        "kor": "이 클래스에는 많은 공개 메서드와 속성이 있습니다"
+    },
+    "FinalFieldCouldBeStatic": {
+        "eng": "This final field could be made static",
+        "kor": "이 final 필드를 static으로 만들 수 있습니다"
+    },
+    "GodClass": {
+        "eng": "Possible God Class \\(WMC=(.+), TCC=(.+), ATFD=(.+)\\)",
+        "kor": "가능한 God 클래스 (WMC=%s, TCC=%s, ATFD=%s)"
+    },
+    "ImmutableField": {
+        "eng": "Field (.+) may be declared final",
+        "kor": "필드 %s를 final로 선언할 수 있습니다"
+    },
+    "InvalidJavaBean": {
+        "eng": "The bean (.+) is missing a getter for property (.+).",
+        "kor": "빈 %s에는 %s 속성의 게터가 누락되었습니다."
+    },
+    "LawOfDemeter": {
+        "eng": "Potential violation of the law of Demeter \\((.+)\\)",
+        "kor": "Demeter 법칙의 잠재적 위반 (%s)"
+    },
+    "LogicInversion": {
+        "eng": "Use opposite operator instead of the logic complement operator.",
+        "kor": "논리 보완 연산자 대신 반대 연산자를 사용하세요."
+    },
+    "LoosePackageCoupling": {
+        "eng": "Use of (.+) outside of package hierarchy (.+) is not recommended; use recommended classes instead",
+        "kor": "%s은(는) 패키지 계층 %s 외부에서 사용이 권장되지 않습니다. 권장되는 클래스를 사용하세요."
+    },
+    "NcssCount": {
+        "eng": "The (.+) (.+) has a NCSS line count of (.+).",
+        "kor": "%s %s의 NCSS 라인 수는 %s입니다."
+    },
+    "NPathComplexity": {
+        "eng": "The (.+) (.+) has an NPath complexity of (.+), current threshold is (.+)",
+        "kor": "%s %s의 NPath 복잡성은 %s이며, 현재 임계값은 %s입니다"
+    },
+    "SignatureDeclareThrowsException": {
+        "eng": "A method\/constructor should not explicitly throw java.lang.Exception",
+        "kor": "메서드/생성자는 명시적으로 java.lang.Exception을 던져서는 안 됩니다"
+    },
+    "SimplifiedTernary": {
+        "eng": "This conditional expression can be simplified with || or &&",
+        "kor": "이 조건식은 || 또는 &&로 간단히 표현할 수 있습니다"
+    },
+    "SimplifyBooleanExpressions": {
+        "eng": "Avoid unnecessary comparisons in boolean expressions",
+        "kor": "불리언 표현식에서 불필요한 비교를 피하세요"
+    },
+    "SimplifyBooleanReturns": {
+        "eng": "This if statement can be replaced by (.+)",
+        "kor": "이 if 문은 %s로 대체될 수 있습니다"
+    },
+    "SimplifyConditional": {
+        "eng": "No need to check for null before an instanceof",
+        "kor": "instanceof 이전에 null을 확인할 필요가 없습니다"
+    },
+    "SingularField": {
+        "eng": "Perhaps (.+) could be replaced by a local variable.",
+        "kor": "아마도 %s은(는) 로컬 변수로 대체될 수 있습니다."
+    },
+    "SwitchDensity": {
+        "eng": "A high ratio of statements to labels in a switch statement. Consider refactoring.",
+        "kor": "switch 문에서 문장 대 레이블의 비율이 높습니다. 리팩토링을 고려하세요."
+    },
+    "TooManyFields": {
+        "eng": "Too many fields",
+        "kor": "필드가 너무 많습니다"
+    },
+    "TooManyMethods": {
+        "eng": "This class has too many methods, consider refactoring it.",
+        "kor": "이 클래스에는 메서드가 너무 많습니다. 리팩토링을 고려하세요."
+    },
+    "UselessOverridingMethod": {
+        "eng": "Overriding method merely calls super",
+        "kor": "재정의된 메서드는 단순히 super를 호출합니다"
+    },
+    "UseObjectForClearerAPI": {
+        "eng": "Rather than using a lot of String arguments, consider using a container object for those values.",
+        "kor": "많은 문자열 인수 대신 해당 값을 포함하는 컨테이너 객체를 사용하는 것이 좋습니다."
+    },
+    "UseUtilityClass": {
+        "eng": "All methods are static. Consider using a utility class instead. Alternatively, you could add a private constructor or make the class abstract to silence this warning.",
+        "kor": "모든 메서드가 정적입니다. 대신 유틸리티 클래스를 사용하는 것이 좋습니다. 또는 이 경고를 제거하기 위해 private 생성자를 추가하거나 클래스를 추상화할 수도 있습니다."
+    },
+    "MutableStaticState": {
+        "eng": "Do not use non-final non-private static fields",
+        "kor": "최종이 아닌 비-개인 정적 필드를 사용하지 마세요"
+    },
+    "CommentContent": {
+        "eng": "Invalid words or phrases found",
+        "kor": "잘못된 단어나 구문이 발견되었습니다"
+    },
+    "CommentRequired": {
+        "eng": "Comment is required",
+        "kor": "주석이 필요합니다"
+    },
+    "CommentSize": {
+        "eng": "Comment is too large",
+        "kor": "주석이 너무 큽니다"
+    },
+    "UncommentedEmptyConstructor": {
+        "eng": "Document empty constructor",
+        "kor": "빈 생성자에 주석을 달아주세요"
+    },
+    "UncommentedEmptyMethodBody": {
+        "eng": "Document empty method body",
+        "kor": "빈 메서드 본문에 주석을 달아주세요"
+    },
+    "AssignmentInOperand": {
+        "eng": "Avoid assignments in operands",
+        "kor": "피연산자에서 대입을 피하세요"
+    },
+    "AssignmentToNonFinalStatic": {
+        "eng": "Possible unsafe assignment to non-final static field (.+) in a constructor.",
+        "kor": "생성자에서 비종결 static 필드 %s에 대한 잠재적으로 안전하지 않은 할당입니다."
+    },
+    "AvoidAccessibilityAlteration": {
+        "eng": "You should not modify visibility of constructors, methods or fields using setAccessible()",
+        "kor": "setAccessible()를 사용하여 생성자, 메서드 또는 필드의 가시성을 수정하지 마세요"
+    },
+    "AvoidAssertAsIdentifier": {
+        "eng": "Avoid using assert as an identifier; it became a reserved word in JDK 1.4",
+        "kor": "assert를 식별자로 사용하지 마세요; JDK 1.4에서 예약된 단어가 되었습니다"
+    },
+    "AvoidBranchingStatementAsLastInLoop": {
+        "eng": "Avoid using a branching statement as the last in a loop.",
+        "kor": "루프의 마지막으로 분기문을 사용하지 마세요"
+    },
+    "AvoidCallingFinalize": {
+        "eng": "Avoid calling finalize\\(\\) explicitly",
+        "kor": "명시적으로 finalize()를 호출하지 마세요"
+    },
+    "AvoidCatchingNPE": {
+        "eng": "Avoid catching NullPointerException; consider removing the cause of the NPE.",
+        "kor": "NullPointerException을 잡는 것을 피하세요; NPE의 원인을 제거하는 것을 고려하세요."
+    },
+    "AvoidCatchingThrowable": {
+        "eng": "A catch statement should never catch throwable since it includes errors.",
+        "kor": "catch 문에서는 throwable을 잡으면 안 됩니다. 왜냐하면 에러를 포함하기 때문입니다."
+    },
+    "AvoidDecimalLiteralsInBigDecimalConstructor": {
+        "eng": "Avoid creating BigDecimal with a decimal (float\/double) literal. Use a String literal",
+        "kor": "십진 (float/double) 리터럴을 사용하여 BigDecimal을 만들지 마세요. 문자열 리터럴을 사용하세요"
+    },
+    "AvoidDuplicateLiterals": {
+        "eng": "The String literal (.+) appears (.+) times in this file; the first occurrence is on line (.+)",
+        "kor": "이 파일에서 문자열 리터럴 %s이(가) %s번 나타납니다. 첫 번째 발생은 %s행입니다."
+    },
+    "AvoidEnumAsIdentifier": {
+        "eng": "Avoid using enum as an identifier; it's a reserved word in JDK 1.5",
+        "kor": "식별자로 enum을 사용하지 마세요; JDK 1.5에서 예약된 단어입니다"
+    },
+    "AvoidFieldNameMatchingMethodName": {
+        "eng": "Field (.+) has the same name as a method",
+        "kor": "필드 %s은(는) 메서드와 같은 이름을 가지고 있습니다"
+    },
+    "AvoidFieldNameMatchingTypeName": {
+        "eng": "It is somewhat confusing to have a field name matching the declaring class name",
+        "kor": "필드 이름이 선언된 클래스 이름과 일치하는 것은 다소 혼란스러울 수 있습니다"
+    },
+    "AvoidInstanceofChecksInCatchClause": {
+        "eng": "An instanceof check is being performed on the caught exception. Create a separate catch clause for this exception type.",
+        "kor": "잡힌 예외에서 instanceof 검사가 수행됩니다. 이 예외 유형에 대한 별도의 catch 절을 만드세요."
+    },
+    "AvoidLiteralsInIfCondition": {
+        "eng": "Avoid using literals in if statements",
+        "kor": "if 문에서 리터럴 사용을 피하세요"
+    },
+    "AvoidLosingExceptionInformation": {
+        "eng": "Avoid statements in a catch block that invoke accessors on the exception without using the information",
+        "kor": "예외 정보를 사용하지 않고 catch 블록에서 예외의 액세서를 호출하는 문을 피하세요"
+    },
+    "AvoidMultipleUnaryOperators": {
+        "eng": "Using multiple unary operators may be a bug, and\/or is confusing.",
+        "kor": "여러 단항 연산자를 사용하는 것은 버그일 수 있으며 또는 혼란스러울 수 있습니다."
+    },
+    "AvoidUsingOctalValues": {
+        "eng": "Do not start a literal by 0 unless it's an octal value",
+        "kor": "8진 값이 아닌 한 리터럴을 0으로 시작하지 마세요"
+    },
+    "BrokenNullCheck": {
+        "eng": "This expression will throw a NullPointerException",
+        "kor": "이 표현식은 NullPointerException을 throw할 것입니다"
+    },
+    "CallSuperFirst": {
+        "eng": "super should be called at the start of the method",
+        "kor": "super는 메서드의 시작 부분에서 호출되어야 합니다"
+    },
+    "CallSuperLast": {
+        "eng": "super should be called at the end of the method",
+        "kor": "super는 메서드의 끝에서 호출되어야 합니다"
+    },
+    "CheckSkipResult": {
+        "eng": "Check the value returned by the skip\\(\\) method of an InputStream to see if the requested number of bytes has been skipped.",
+        "kor": "InputStream의 skip() 메서드가 반환한 값을 확인하여 요청한 바이트 수가 건너뛰어졌는지 확인하세요."
+    },
+    "ClassCastExceptionWithToArray": {
+        "eng": "This usage of the Collection.toArray\\(\\) method will throw a ClassCastException.",
+        "kor": "Collection.toArray() 메서드의 이 사용법은 ClassCastException을 throw합니다."
+    },
+    "CloneMethodMustBePublic": {
+        "eng": "clone\\(\\) method must be public if the class implements Cloneable",
+        "kor": "클래스가 Cloneable을 구현하는 경우 clone() 메서드는 public이어야 합니다"
+    },
+    "CloneMethodMustImplementCloneable": {
+        "eng": "clone\\(\\) method should be implemented only if implementing Cloneable interface",
+        "kor": "Cloneable 인터페이스를 구현하는 경우에만 clone() 메서드를 구현해야 합니다"
+    },
+    "CloneMethodReturnTypeMustMatchClassName": {
+        "eng": "The return type of the clone\\(\\) method must be the class name when implements Cloneable",
+        "kor": "Cloneable을 구현하는 경우 clone() 메서드의 반환 유형은 클래스 이름과 일치해야 합니다"
+    },
+    "CloseResource": {
+        "eng": "Ensure that resources like this (.+) object are closed after use",
+        "kor": "이 %s 객체와 같은 리소스는 사용 후에 닫혀야 합니다"
+    },
+    "CompareObjectsWithEquals": {
+        "eng": "Use equals\\(\\) to compare object references.",
+        "kor": "객체 참조를 비교할 때는 equals()를 사용하세요."
+    },
+    "ComparisonWithNaN": {
+        "eng": "Comparisons with NaN always return false",
+        "kor": "NaN과의 비교는 항상 false를 반환합니다"
+    },
+    "ConstructorCallsOverridableMethod": {
+        "eng": "Overridable (.+) called during object construction(.+)",
+        "kor": "객체 생성 중에 재정의 가능한 %s이 호출되었습니다%s"
+    },
+    "DetachedTestCase": {
+        "eng": "Probable detached JUnit test case.",
+        "kor": "분리된 JUnit 테스트 케이스가 있을 가능성이 있습니다."
+    },
+    "DoNotCallGarbageCollectionExplicitly": {
+        "eng": "Do not explicitly trigger a garbage collection.",
+        "kor": "명시적으로 가비지 수집을 트리거하지 마세요."
+    },
+    "DoNotExtendJavaLangThrowable": {
+        "eng": "Exceptions should not extend java.lang.Throwable",
+        "kor": "예외는 java.lang.Throwable을 확장해서는 안 됩니다"
+    },
+    "DoNotHardCodeSDCard": {
+        "eng": "Do not hardcode \/sdcard.",
+        "kor": "/sdcard를 하드코딩하지 마세요."
+    },
+    "DoNotTerminateVM": {
+        "eng": "System.exit\\(\\) should not be used in J2EE\/JEE apps",
+        "kor": "J2EE/JEE 애플리케이션에서는 System.exit()을 사용하지 마세요."
+    },
+    "DoNotThrowExceptionInFinally": {
+        "eng": "A throw statement in a finally block makes the control flow hard to understand.",
+        "kor": "finally 블록에서 throw 문을 사용하면 제어 흐름을 이해하기 어려워집니다."
+    },
+    "DontImportSun": {
+        "eng": "Avoid importing anything from the 'sun.' packages",
+        "kor": "'sun.' 패키지에서 무언가를 가져오지 마세요."
+    },
+    "DontUseFloatTypeForLoopIndices": {
+        "eng": "Don't use floating point for loop indices. If you must use floating point, use double.",
+        "kor": "루프 인덱스에 부동 소수점을 사용하지 마세요. 부동 소수점을 사용해야 한다면 double을 사용하세요."
+    },
+    "EmptyCatchBlock": {
+        "eng": "Avoid empty catch blocks",
+        "kor": "빈 catch 블록을 피하세요"
+    },
+    "EmptyFinalizer": {
+        "eng": "Avoid empty finalize methods",
+        "kor": "빈 finalize 메서드를 피하세요"
+    },
+    "EqualsNull": {
+        "eng": "Avoid using equals\\(\\) to compare against null",
+        "kor": "null과 비교할 때 equals()를 사용하지 마세요"
+    },
+    "FinalizeDoesNotCallSuperFinalize": {
+        "eng": "Last statement in finalize method should be a call to super.finalize\\(\\)",
+        "kor": "finalize 메서드의 마지막 문은 super.finalize()를 호출해야 합니다"
+    },
+    "FinalizeOnlyCallsSuperFinalize": {
+        "eng": "Finalize should do something besides just calling super.finalize\\(\\)",
+        "kor": "finalize는 super.finalize()만 호출하는 것 외에도 무언가를 해야 합니다"
+    },
+    "FinalizeOverloaded": {
+        "eng": "Finalize methods should not be overloaded",
+        "kor": "finalize 메서드는 오버로드해서는 안 됩니다"
+    },
+    "FinalizeShouldBeProtected": {
+        "eng": "If you override finalize\\(\\), make it protected",
+        "kor": "finalize()를 재정의하는 경우 protected로 만드세요"
+    },
+    "IdempotentOperations": {
+        "eng": "Avoid idempotent operations \\(like assigning a variable to itself\\).",
+        "kor": "멱등 연산(변수를 자기 자신에게 할당하는 것과 같은)을 피하세요."
+    },
+    "ImplicitSwitchFallThrough": {
+        "eng": "This switch case may be reached by fallthrough from the previous case",
+        "kor": "이 switch case는 이전 case로부터 fallthrough로 도달될 수 있습니다"
+    },
+    "InstantiationToGetClass": {
+        "eng": "Avoid instantiating an object just to call getClass\\(\\) on it; use the .class public member instead",
+        "kor": "getClass()를 호출하기 위해 객체를 인스턴스화하지 마세요. 대신 .class public 멤버를 사용하세요"
+    },
+    "InvalidLogMessageFormat": {
+        "eng": "Invalid message format",
+        "kor": "잘못된 메시지 형식"
+    },
+    "JumbledIncrementer": {
+        "eng": "Avoid modifying an outer loop incrementer in an inner loop for update expression",
+        "kor": "내부 루프에서 외부 루프 증가자를 수정하는 것을 피하세요"
+    },
+    "JUnitSpelling": {
+        "eng": "You may have misspelled a JUnit framework method \\(setUp or tearDown\\)",
+        "kor": "JUnit 프레임워크 메서드(setUp 또는 tearDown)를 잘못 입력한 것 같습니다"
+    },
+    "JUnitStaticSuite": {
+        "eng": "You have a suite\\(\\) method that is not both public and static, so JUnit won't call it to get your TestSuite.  Is that what you wanted to do?",
+        "kor": "suite() 메서드가 공개 및 정적이 아니기 때문에 JUnit은 이를 호출하여 TestSuite를 가져오지 않습니다. 이것이 의도한 동작인가요?"
+    },
+    "MethodWithSameNameAsEnclosingClass": {
+        "eng": "A method should not have the same name as its containing class",
+        "kor": "메서드는 포함하는 클래스와 동일한 이름을 가져서는 안 됩니다"
+    },
+    "MisplacedNullCheck": {
+        "eng": "The null check here is misplaced; if the variable (.+) is null there will be a NullPointerException",
+        "kor": "여기서의 null 체크가 잘못되었습니다; 변수 %s가 null이면 NullPointerException이 발생합니다"
+    },
+    "MissingSerialVersionUID": {
+        "eng": "Classes implementing Serializable should set a serialVersionUID",
+        "kor": "Serializable을 구현하는 클래스는 serialVersionUID를 설정해야 합니다"
+    },
+    "MissingStaticMethodInNonInstantiatableClass": {
+        "eng": "Class cannot be instantiated and does not provide any static methods or fields",
+        "kor": "클래스를 인스턴스화할 수 없으며 정적 메서드나 필드를 제공하지 않습니다"
+    },
+    "MoreThanOneLogger": {
+        "eng": "Class contains more than one logger.",
+        "kor": "클래스에 여러 개의 로거가 포함되어 있습니다."
+    },
+    "NonCaseLabelInSwitchStatement": {
+        "eng": "A non-case label was present in a switch statement",
+        "kor": "switch 문에 비 case 레이블이 있습니다"
+    },
+    "NonSerializableClass": {
+        "eng": "The field (.+) of serializable class (.+) is of non-serializable type (.+).",
+        "kor": "필드 %s(직렬화 가능한 클래스 %s)은(는) 직렬화 가능하지 않은 타입 %s입니다."
+    },
+    "NonStaticInitializer": {
+        "eng": "Non-static initializers are confusing",
+        "kor": "정적이지 않은 초기화자는 혼란스럽습니다"
+    },
+    "NullAssignment": {
+        "eng": "Assigning an Object to null is a code smell.  Consider refactoring.",
+        "kor": "객체를 null에 할당하는 것은 코드 냄새입니다. 리팩터링을 고려하세요."
+    },
+    "OverrideBothEqualsAndHashcode": {
+        "eng": "Ensure you override both equals\\(\\) and hashCode\\(\\)",
+        "kor": "equals()와 hashCode()를 둘 다 재정의하세요"
+    },
+    "ProperCloneImplementation": {
+        "eng": "Object clone\\(\\) should be implemented with super.clone\\(\\)",
+        "kor": "Object의 clone()은 super.clone()으로 구현되어야 합니다"
+    },
+    "ProperLogger": {
+        "eng": "Logger should be defined private static final and have the correct class",
+        "kor": "로거는 private static final로 정의되어야 하며 올바른 클래스여야 합니다"
+    },
+    "ReturnEmptyCollectionRatherThanNull": {
+        "eng": "Return an empty collection rather than 'null'.",
+        "kor": "null 대신 빈 컬렉션을 반환하세요."
+    },
+    "ReturnFromFinallyBlock": {
+        "eng": "Avoid returning from a finally block",
+        "kor": "finally 블록에서의 반환을 피하세요"
+    },
+    "SimpleDateFormatNeedsLocale": {
+        "eng": "When instantiating a SimpleDateFormat object, specify a Locale",
+        "kor": "SimpleDateFormat 객체를 인스턴스화할 때는 Locale을 지정하세요"
+    },
+    "SingleMethodSingleton": {
+        "eng": "Class contains multiple getInstance methods. Please review.",
+        "kor": "클래스에 여러 개의 getInstance 메서드가 있습니다. 리뷰하세요."
+    },
+    "SingletonClassReturningNewInstance": {
+        "eng": "getInstance method always creates a new object and hence does not comply to Singleton Design Pattern behaviour. Please review",
+        "kor": "getInstance 메서드는 항상 새로운 객체를 생성하므로 싱글톤 디자인 패턴 동작을 준수하지 않습니다. 리뷰하세요"
+    },
+    "StaticEJBFieldShouldBeFinal": {
+        "eng": "EJB's shouldn't have non-final static fields",
+        "kor": "EJB에는 final이 아닌 정적 필드가 있어서는 안 됩니다"
+    },
+    "StringBufferInstantiationWithChar": {
+        "eng": "Do not instantiate a StringBuffer or StringBuilder with a char",
+        "kor": "StringBuffer나 StringBuilder를 char로 인스턴스화하지 마세요"
+    },
+    "SuspiciousEqualsMethodName": {
+        "eng": "The method name and parameter number are suspiciously close to equals\\(Object\\)",
+        "kor": "메서드 이름과 매개변수 수가 equals(Object)와 유사합니다"
+    },
+    "SuspiciousHashcodeMethodName": {
+        "eng": "The method name and return type are suspiciously close to hashCode\\(\\)",
+        "kor": "메서드 이름과 반환 타입이 hashCode()와 유사합니다"
+    },
+    "SuspiciousOctalEscape": {
+        "eng": "Suspicious decimal characters following octal escape in string literal: (.+)",
+        "kor": "문자열 리터럴에서 8진수 이스케이프 뒤에 이상한 10진수 문자가 있습니다: %s"
+    },
+    "TestClassWithoutTestCases": {
+        "eng": "The class (.+) might be a test class, but it contains no test cases.",
+        "kor": "클래스 %s는 테스트 클래스일 수 있지만 테스트 케이스가 없습니다."
+    },
+    "UnconditionalIfStatement": {
+        "eng": "Do not use 'if' statements that are always true or always false",
+        "kor": "항상 true이거나 항상 false인 'if' 문을 사용하지 마세요"
+    },
+    "UnnecessaryBooleanAssertion": {
+        "eng": "assertTrue\\(true\\) or similar statements are unnecessary",
+        "kor": "assertTrue(true)나 유사한 문은 불필요합니다"
+    },
+    "UnnecessaryCaseChange": {
+        "eng": "Using equalsIgnoreCase\\(\\) is cleaner than using toUpperCase\/toLowerCase\\(\\).equals\\(\\).",
+        "kor": "equalsIgnoreCase()를 사용하는 것이 toUpperCase/toLowerCase().equals()보다 더 깔끔합니다."
+    },
+    "UnnecessaryConversionTemporary": {
+        "eng": "Avoid unnecessary temporaries when converting primitives to Strings",
+        "kor": "기본 타입을 문자열로 변환할 때 불필요한 임시 변수를 피하세요"
+    },
+    "UnusedNullCheckInEquals": {
+        "eng": "Invoke equals\\(\\) on the object you've already ensured is not null",
+        "kor": "이미 null이 아님을 확인한 객체에 대해 equals()를 호출하세요"
+    },
+    "UseCorrectExceptionLogging": {
+        "eng": "Use the correct logging statement for logging exceptions",
+        "kor": "예외를 로깅할 때 올바른 로깅 문을 사용하세요"
+    },
+    "UseEqualsToCompareStrings": {
+        "eng": "Use equals\\(\\) to compare strings instead of '==' or '!='",
+        "kor": "문자열을 비교할 때 '==' 또는 '!=' 대신 equals()를 사용하세요"
+    },
+    "UselessOperationOnImmutable": {
+        "eng": "An operation on an Immutable object \\(String, BigDecimal or BigInteger\\) won't change the object itself",
+        "kor": "불변 객체(String, BigDecimal 또는 BigInteger)에 대한 작업은 객체 자체를 변경하지 않습니다"
+    },
+    "UseLocaleWithCaseConversions": {
+        "eng": "When doing a String.toLowerCase\\(\\)\/toUpperCase\\(\\) call, use a Locale",
+        "kor": "String.toLowerCase()/toUpperCase()를 호출할 때 Locale을 사용하세요"
+    },
+    "AvoidSynchronizedAtMethodLevel": {
+        "eng": "Use block level rather than method level synchronization",
+        "kor": "메서드 수준 동기화 대신 블록 수준 동기화를 사용하세요"
+    },
+    "AvoidThreadGroup": {
+        "eng": "Avoid using java.lang.ThreadGroup; it is not thread safe",
+        "kor": "java.lang.ThreadGroup을 사용하지 마세요. 스레드 안전성이 보장되지 않습니다"
+    },
+    "AvoidUsingVolatile": {
+        "eng": "Use of modifier volatile is not recommended.",
+        "kor": "volatile 수정자 사용은 권장되지 않습니다."
+    },
+    "DoNotUseThreads": {
+        "eng": "To be compliant to J2EE, a webapp should not use any thread.",
+        "kor": "J2EE 규정을 준수하기 위해 웹 애플리케이션에서는 스레드를 사용하지 않아야 합니다."
+    },
+    "DontCallThreadRun": {
+        "eng": "Don't call Thread.run\\(\\) explicitly, use Thread.start\\(\\)",
+        "kor": "Thread.run()을 명시적으로 호출하지 마세요. Thread.start()를 사용하세요."
+    },
+    "DoubleCheckedLocking": {
+        "eng": "Double checked locking is not thread safe in Java.",
+        "kor": "자바에서 이중 검사 잠금은 스레드 안전하지 않습니다."
+    },
+    "NonThreadSafeSingleton": {
+        "eng": "Singleton is not thread safe",
+        "kor": "싱글톤은 스레드 안전하지 않습니다"
+    },
+    "UnsynchronizedStaticFormatter": {
+        "eng": "Static Formatter objects should be accessed in a synchronized manner",
+        "kor": "정적 Formatter 객체는 동기화된 방식으로 접근되어야 합니다"
+    },
+    "UseConcurrentHashMap": {
+        "eng": "If you run in Java5 or newer and have concurrent access, you should use the ConcurrentHashMap implementation",
+        "kor": "Java5 이상을 사용하고 동시 액세스가 있는 경우 ConcurrentHashMap 구현을 사용해야 합니다"
+    },
+    "UseNotifyAllInsteadOfNotify": {
+        "eng": "Call Thread.notifyAll\\(\\) rather than Thread.notify\\(\\)",
+        "kor": "Thread.notify() 대신 Thread.notifyAll()을 호출하세요"
+    },
+    "AddEmptyString": {
+        "eng": "Do not add empty strings",
+        "kor": "빈 문자열을 추가하지 마세요"
+    },
+    "AppendCharacterWithChar": {
+        "eng": "Avoid appending characters as strings in StringBuffer.append.",
+        "kor": "StringBuffer.append에서 문자를 문자열로 추가하지 마세요."
+    },
+    "AvoidArrayLoops": {
+        "eng": "Arrays.copyOf or System.arraycopy are more efficient",
+        "kor": "Arrays.copyOf 또는 System.arraycopy가 더 효율적입니다"
+    },
+    "AvoidCalendarDateCreation": {
+        "eng": "A Calendar is used to get the current time, this is expensive.",
+        "kor": "현재 시간을 가져오기 위해 Calendar를 사용하면 비용이 많이 듭니다."
+    },
+    "AvoidFileStream": {
+        "eng": "Avoid instantiating FileInputStream, FileOutputStream, FileReader, or FileWriter",
+        "kor": "FileInputStream, FileOutputStream, FileReader 또는 FileWriter를 인스턴스화하지 마세요"
+    },
+    "AvoidInstantiatingObjectsInLoops": {
+        "eng": "Avoid instantiating new objects inside loops",
+        "kor": "루프 내에서 새로운 객체를 인스턴스화하는 것을 피하세요"
+    },
+    "BigIntegerInstantiation": {
+        "eng": "Don't create instances of already existing BigInteger and BigDecimal \\(ZERO, ONE, TEN\\)",
+        "kor": "이미 존재하는 BigInteger 및 BigDecimal (ZERO, ONE, TEN)의 인스턴스를 생성하지 마세요"
+    },
+    "ConsecutiveAppendsShouldReuse": {
+        "eng": "StringBuffer \\(or StringBuilder\\).append is called consecutively without reusing the target variable.",
+        "kor": "StringBuffer (또는 StringBuilder).append가 연속적으로 호출되며 대상 변수를 재사용하지 않습니다."
+    },
+    "ConsecutiveLiteralAppends": {
+        "eng": "StringBuffer \\(or StringBuilder\\).append is called (.+) consecutive times with literals. Use a single append with a single combined String.",
+        "kor": "연속적인 문자열 리터럴을 사용하여 StringBuffer (또는 StringBuilder).append가 %s번 호출됩니다. 단일 문자열로 결합된 하나의 append를 사용하세요."
+    },
+    "InefficientEmptyStringCheck": {
+        "eng": "String.trim\\(\\).length\\(\\) == 0 \/ String.trim\\(\\).isEmpty\\(\\) is an inefficient way to validate a blank String.",
+        "kor": "String.trim().length() == 0 또는 String.trim().isEmpty()는 빈 문자열을 유효성 검사하는 비효율적인 방법입니다."
+    },
+    "InefficientStringBuffering": {
+        "eng": "Avoid concatenating nonliterals in a StringBuffer\/StringBuilder constructor or append\\(\\).",
+        "kor": "StringBuffer/StringBuilder 생성자나 append()에서 비문자열을 연결하지 마세요."
+    },
+    "InsufficientStringBufferDeclaration": {
+        "eng": "(.+) has been initialized with size (.+), but has at least (.+) characters appended.",
+        "kor": "%s의 크기가 %s로 초기화되었지만 적어도 %s개의 문자가 추가되었습니다."
+    },
+    "OptimizableToArrayCall": {
+        "eng": "This call to Collection.toArray\\(\\) may be optimizable",
+        "kor": "이 Collection.toArray() 호출을 최적화할 수 있습니다"
+    },
+    "RedundantFieldInitializer": {
+        "eng": "Avoid using redundant field initializer for (.+)",
+        "kor": "%s에 대한 중복 필드 초기화자 사용을 피하세요"
+    },
+    "StringInstantiation": {
+        "eng": "Avoid instantiating String objects; this is usually unnecessary.",
+        "kor": "String 객체를 인스턴스화하는 것은 대부분 불필요합니다."
+    },
+    "StringToString": {
+        "eng": "Avoid calling toString\\(\\) on String objects; this is unnecessary.",
+        "kor": "String 객체에 toString()을 호출하는 것은 불필요합니다."
+    },
+    "TooFewBranchesForASwitchStatement": {
+        "eng": "A switch with less than three branches is inefficient, use a 'if statement' instead.",
+        "kor": "세 개 미만의 분기가 있는 switch는 비효율적입니다. 대신 'if 문'을 사용하세요."
+    },
+    "UseArrayListInsteadOfVector": {
+        "eng": "Use ArrayList instead of Vector",
+        "kor": "Vector 대신 ArrayList를 사용하세요"
+    },
+    "UseArraysAsList": {
+        "eng": "Use asList instead of tight loops",
+        "kor": "타이트한 루프 대신 asList를 사용하세요"
+    },
+    "UseIndexOfChar": {
+        "eng": "String.indexOf\\(char\\) is faster than String.indexOf\\(String\\).",
+        "kor": "String.indexOf(char)는 String.indexOf(String)보다 빠릅니다."
+    },
+    "UseIOStreamsWithApacheCommonsFileItem": {
+        "eng": "Avoid memory intensive FileItem.get\\(\\) or FileItem.getString\\(\\)",
+        "kor": "메모리 집약적인 FileItem.get() 또는 FileItem.getString()을 피하세요"
+    },
+    "UselessStringValueOf": {
+        "eng": "No need to call String.valueOf to append to a string.",
+        "kor": "문자열에 추가하기 위해 String.valueOf를 호출할 필요가 없습니다."
+    },
+    "UseStringBufferForStringAppends": {
+        "eng": "Prefer StringBuilder \\(non-synchronized\\) or StringBuffer \\(synchronized\\) over += for concatenating strings",
+        "kor": "문자열을 연결하는 데 += 대신 StringBuilder (동기화되지 않음) 또는 StringBuffer (동기화됨)를 사용하세요"
+    },
+    "UseStringBufferLength": {
+        "eng": "This is an inefficient use of CharSequence.toString; call CharSequence.length instead.",
+        "kor": "CharSequence.toString을 비효율적으로 사용하고 있습니다. 대신 CharSequence.length를 호출하세요."
+    },
+    "HardCodedCryptoKey": {
+        "eng": "Do not use hard coded encryption keys",
+        "kor": "하드 코딩된 암호화 키를 사용하지 마세요"
+    },
+    "InsecureCryptoIv": {
+        "eng": "Do not use hard coded initialization vector in crypto operations",
+        "kor": "암호화 작업에서 하드 코딩된 초기화 벡터를 사용하지 마세요"
+    }
+}

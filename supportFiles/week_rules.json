@@ -1,0 +1,44 @@
+{
+  "pylint": {
+    "1": ["missing-final-newline", "chained-comparison", "redefined-builtin", "invalid-name", "trailing-whitespace", "missing-function-docstring", "consider-swap-variables", "expression-not-assigned", "trailing-newlines", "eval-used", "non-ascii-file-name", "bad-indentation", "too-many-boolean-expressions", "multiple-statements", "syntax-error", "superfluous-parens", "line-too-long", "pointless-statement", "unnecessary-semicolon", "consider-using-max-builtin", "inconsistent-return-statements", "redefined-outer-name", "no-else-return", "simplifiable-if-statement", "singleton-comparison", "unused-import", "wildcard-import", "unused-wildcard-import"],
+    "2": ["unused-variable", "useless-return", "unused-argument", "no-else-break", "undefined-variable", "disallowed-name", "no-name-in-module", "consider-using-enumerate", "function-redefined"],
+    "3": ["unnecessary-pass", "unnecessary-comprehension", "use-list-literal", "pointless-string-statement", "used-before-assignment", "bad-file-encoding", "unreachable"],
+    "4": ["condition-evals-to-constant", "consider-using-in", "not-callable", "unsubscriptable-object", "undefined-loop-variable", "no-else-continue", "too-many-branches", "assignment-from-no-return", "redefined-argument-from-local", "global-at-module-level", "global-statement", "global-variable-not-assigned"],
+    "5": ["too-many-statements", "too-many-return-statements", "consider-using-dict-items", "import-outside-toplevel", "self-assigning-variable"],
+    "6": ["use-dict-literal", "no-member", "consider-using-f-string", "modified-iterating-list", "use-implicit-booleaness-not-comparison", "unnecessary-dict-index-lookup", "consider-iterating-dictionary", "consider-using-generator"],
+    "7": ["dangerous-default-value", "global-variable-undefined", "import-error", "unnecessary-lambda", "invalid-sequence-index", "unnecessary-list-index-lookup"],
+    "8": ["consider-using-set-comprehension", "consider-using-min-builtin"],
+    "9": ["unnecessary-direct-lambda-call", "too-many-locals", "cell-var-from-loop", "nested-min-max"],
+    "10": ["missing-class-docstring", "too-few-public-methods", "protected-access", "useless-object-inheritance", "super-init-not-called", "attribute-defined-outside-init", "unused-private-member", "bare-except", "fixme", "no-self-argument", "no-value-for-parameter", "consider-using-sys-exit", "useless-parent-delegation", "bad-staticmethod-argument", "too-many-instance-attributes", "not-an-iterable", "arguments-out-of-order"],
+    "11": ["raise-missing-from", "broad-exception-caught", "no-else-raise", "unidiomatic-typecheck", "wrong-exception-operation", "too-many-nested-blocks", "misplaced-bare-raise", "too-many-function-args", "raising-non-exception", "wrong-import-order", "too-many-format-args", "f-string-without-interpolation", "no-method-argument", "broad-exception-raised", "pointless-exception-statement", "duplicate-except"]
+  },
+  "pmd": {
+    "1": ["UnnecessaryImport", "UseUtilityClass", "CloseResource", "LocalVariableNamingConventions", "ClassNamingConventions", "UselessParentheses", "ControlStatementBraces", "UnnecessarySemicolon", "PackageCase", "MethodNamingConventions", "UnnecessaryLocalBeforeReturn"],
+    "2": ["EmptyControlStatement", "LongVariable", "FormalParameterNamingConventions"],
+    "3": ["UnnecessaryReturn", "ForLoopShouldBeWhileLoop", "UselessOperationOnImmutable"],
+    "4": [],
+    "5": ["LogicInversion", "SingularField", "IdempotentOperations"],
+    "6": ["FinalFieldCouldBeStatic", "UseLocaleWithCaseConversions", "UnnecessaryFullyQualifiedName", "NonStaticInitializer"],
+    "7": ["AssignmentToNonFinalStatic", "UselessOverridingMethod", "CompareObjectsWithEquals", "UseEqualsToCompareStrings", "SimplifyBooleanReturns"],
+    "8": ["UnnecessaryModifier", "BigIntegerInstantiation", "AvoidBranchingStatementAsLastInLoop", "UnnecessaryConversionTemporary"],
+    "9": ["IdenticalCatchBranches", "EmptyCatchBlock", "ImplicitSwitchFallThrough", "UnnecessaryConstructor"],
+    "10": ["AvoidDecimalLiteralsInBigDecimalConstructor", "AbstractClassWithoutAnyMethod"],
+    "11": ["ClassCastExceptionWithToArray", "GenericsNaming", "AssignmentInOperand"],
+    "12": ["SuspiciousEqualsMethodName"]
+  },
+  "cppcheck": {
+    "1": ["invalidPrintfArgType_sint", "duplicateExpression", "unreadVariable", "syntaxError", "shadowVariable", "CastAddressToIntegerAtReturn", "knownConditionTrueFalse", "unusedVariable", "invalidScanfArgType_int", "nullPointer", "wrongPrintfScanfArgNum"],
+    "2": ["badBitmaskCheck", "compareBoolExpressionWithInt", "variableScope", "uninitvar", "legacyUninitvar", "clarifyCondition", "moduloAlwaysTrueFalse", "moduloofone", "returnImplicitInt", "constVariable", "constStatement", "invalidPrintfArgType_uint", "invalidScanfArgType_float"],
+    "3": ["invalidPrintfArgType_n", "selfAssignment", "unknownMacro", "invalidPrintfArgType_float", "AssignmentAddressToInteger", "unassignedVariable", "invalidscanf", "constVariablePointer", "constParameter", "multiCondition", "memleakOnRealloc"],
+    "4": ["invalidScanfFormatWidth", "unusedFunction", "literalWithCharPtrCompare", "arrayIndexOutOfBounds", "getsCalled", "nullPointerRedundantCheck", "constParameterPointer", "charLiteralWithCharPtrCompare"],
+    "5": ["knownArgument"],
+    "6": ["zerodivcond"],
+    "7": ["missingReturn", "duplicateBreak"],
+    "8": ["incorrectCharBooleanError", "checkCastIntToCharAndBack", "redundantCondition", "invalidFunctionArgStr", "redundantAssignInSwitch", "negativeIndex", "incorrectLogicOperator", "clarifyStatement"],
+    "9": ["constParameterCallback", "sizeofwithsilentarraypointer", "duplicateValueTernary", "shadowFunction", "objectIndex"],
+    "10": ["uninitStructMember", "redundantAssignment"],
+    "11": ["unusedStructMember", "returnDanglingLifetime", "leakNoVarFunctionCall", "arrayIndexOutOfBoundsCond", "CastIntegerToAddressAtReturn", "invalidFunctionArgBool", "nonStandardCharLiteral", "AssignmentIntegerToAddress", "internalError"],
+    "12": ["invalidPrintfArgType_s", "arrayIndexThenCheck", "pointerSize"],
+    "13": ["arrayIndexThenCheck", "pointerSize", "shiftTooManyBitsSigned"]
+  }
+}
