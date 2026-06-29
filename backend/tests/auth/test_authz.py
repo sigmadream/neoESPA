@@ -7,7 +7,6 @@ from app.main import app
 from app.models.schemas import User
 from app.services.auth_service import AuthService
 
-
 engine = create_engine(
     "sqlite://", connect_args={"check_same_thread": False}, poolclass=StaticPool
 )
@@ -47,6 +46,22 @@ def _auth_headers(token: str) -> dict[str, str]:
     return {"Authorization": f"Bearer {token}"}
 
 
+def _create_admin_homework_response(client: TestClient, token: str):
+    return client.post(
+        "/api/admin/homeworks",
+        json={
+            "title": "Admin Managed Homework",
+            "intro": "Created through the admin API.",
+            "deadline": "2026-12-31 23:59:59",
+            "codeName": "managed",
+            "sbnum": 5,
+            "sec": 2,
+            "isLint": True,
+        },
+        headers=_auth_headers(token),
+    )
+
+
 def setup_function():
     SQLModel.metadata.create_all(engine)
 
@@ -66,25 +81,18 @@ def test_student_cannot_access_admin_routes():
         client = TestClient(app)
 
         token = _login(client, "student1", "student-pass")
-        response = client.post(
-            "/api/admin/homeworks",
-            json={
-                "title": "Restricted Homework",
-                "intro": "Students must not create this.",
-                "deadline": "2026-12-31 23:59:59",
-                "codeName": "restricted",
-            },
-            headers=_auth_headers(token),
-        )
+        response = _create_admin_homework_response(client, token)
 
         app.dependency_overrides.clear()
 
     assert response.status_code == 403
+    assert response.json()["detail"] == "Staff privileges required"
 
 
-def test_admin_can_manage_homeworks():
+def test_staff_roles_can_manage_homeworks():
     with Session(engine) as session:
-        _create_user(session, "admin1", 10000011, "admin-pass", "admin")
+        for idx, role in enumerate(["admin", "instructor", "ta"], start=1):
+            _create_user(session, f"staff-{role}", 10000010 + idx, "staff-pass", role)
 
         def get_session_override():
             return session
@@ -92,26 +100,42 @@ def test_admin_can_manage_homeworks():
         app.dependency_overrides[get_session] = get_session_override
         client = TestClient(app)
 
-        token = _login(client, "admin1", "admin-pass")
-        response = client.post(
-            "/api/admin/homeworks",
-            json={
-                "title": "Admin Managed Homework",
-                "intro": "Created through the admin API.",
-                "deadline": "2026-12-31 23:59:59",
-                "codeName": "managed",
-                "sbnum": 5,
-                "sec": 2,
-                "isLint": True,
-            },
-            headers=_auth_headers(token),
-        )
+        responses = []
+        for role in ["admin", "instructor", "ta"]:
+            token = _login(client, f"staff-{role}", "staff-pass")
+            responses.append((role, _create_admin_homework_response(client, token)))
 
         app.dependency_overrides.clear()
 
-        created_homework = response.json()
+    for role, response in responses:
+        assert response.status_code == 200, role
+        payload = response.json()
+        assert payload["title"] == "Admin Managed Homework"
+        assert payload["sbnum"] == 5
+        assert payload["isLint"] is True
 
-    assert response.status_code == 200
-    assert created_homework["title"] == "Admin Managed Homework"
-    assert created_homework["sbnum"] == 5
-    assert created_homework["isLint"] is True
+
+def test_inactive_staff_user_cannot_access_admin_routes_with_valid_token():
+    with Session(engine) as session:
+        _create_user(
+            session,
+            "inactive-admin",
+            10000021,
+            "admin-pass",
+            "admin",
+            is_active=False,
+        )
+
+        def get_session_override():
+            return session
+
+        app.dependency_overrides[get_session] = get_session_override
+        client = TestClient(app)
+
+        token = AuthService.create_access_token({"sub": "inactive-admin"})
+        response = _create_admin_homework_response(client, token)
+
+        app.dependency_overrides.clear()
+
+    assert response.status_code == 403
+    assert response.json()["detail"] == "Inactive user cannot access this resource"

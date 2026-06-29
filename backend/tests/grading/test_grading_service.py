@@ -1,6 +1,8 @@
 import json
 from datetime import UTC, datetime, timedelta
 
+from hypothesis import given, settings
+from hypothesis import strategies as st
 from sqlmodel import Session, SQLModel, create_engine, select
 from sqlmodel.pool import StaticPool
 
@@ -233,3 +235,66 @@ def test_grading_requires_active_testcases():
             assert False, "Expected grading without testcases to fail"
         except ValueError as error:
             assert str(error) == MISSING_TESTCASES_ERROR
+
+
+@settings(max_examples=20, deadline=None)
+@given(
+    case_scores=st.lists(
+        st.integers(min_value=1, max_value=40),
+        min_size=1,
+        max_size=5,
+    ),
+    passed_cases=st.lists(
+        st.booleans(),
+        min_size=1,
+        max_size=5,
+    ),
+)
+def test_grading_score_stays_within_case_bounds(case_scores: list[int], passed_cases: list[bool]):
+    case_count = min(len(case_scores), len(passed_cases))
+    case_scores = case_scores[:case_count]
+    passed_cases = passed_cases[:case_count]
+
+    SQLModel.metadata.drop_all(engine)
+    SQLModel.metadata.create_all(engine)
+
+    with Session(engine) as session:
+        _create_user(session)
+        homework = _create_homework(session, 4)
+        submission = _create_submission(session, 4)
+
+        cases = []
+        runner_outputs = {}
+        for index, (score, should_pass) in enumerate(
+            zip(case_scores, passed_cases, strict=True),
+            start=1,
+        ):
+            case_input = f"input-{index}\n"
+            expected_output = f"expected-{index}\n"
+            cases.append(
+                {
+                    "name": f"case-{index}",
+                    "input": case_input,
+                    "expected_output": expected_output,
+                    "score": score,
+                    "is_hidden": False,
+                }
+            )
+            runner_outputs[case_input] = expected_output if should_pass else f"wrong-{index}\n"
+
+        _create_testcase_rule(session, 4, cases)
+
+        grading_service = GradingService(runner=StubRunner(runner_outputs))
+        result = grading_service.grade_submission(session, submission, homework)
+
+    expected_score = float(
+        sum(score for score, should_pass in zip(case_scores, passed_cases, strict=True) if should_pass)
+    )
+    max_score = float(sum(case_scores))
+
+    assert result.total_score == expected_score
+    assert result.submission_score == expected_score
+    assert result.passed_case_count == sum(passed_cases)
+    assert result.total_case_count == case_count
+    assert 0.0 <= result.total_score <= max_score
+    assert result.submission_score <= max_score

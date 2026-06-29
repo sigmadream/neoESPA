@@ -6,16 +6,20 @@ from sqlmodel import Session, SQLModel, create_engine, select
 from sqlmodel.pool import StaticPool
 
 from app.core.db import get_session
+from app.domains.grading import router as grading_router
 from app.main import app
 from app.models.schemas import (
+    AuditLog,
     GradingRule,
     Homework,
     Submission,
     SubmissionCaseResult,
     SubmissionResult,
+    SystemEventLog,
     User,
 )
 from app.services.auth_service import AuthService
+
 
 
 engine = create_engine(
@@ -105,12 +109,19 @@ def _auth_headers(token: str) -> dict[str, str]:
     return {"Authorization": f"Bearer {token}"}
 
 
+def _reset_runtime_grading_queue() -> None:
+    grading_router.grading_queue._queue.clear()
+    grading_router.grading_queue._enqueued_submission_ids.clear()
+
 def setup_function():
+    _reset_runtime_grading_queue()
     SQLModel.metadata.create_all(engine)
 
 
 def teardown_function():
+    _reset_runtime_grading_queue()
     SQLModel.metadata.drop_all(engine)
+
 
 
 def test_admin_can_requeue_failed_submission():
@@ -361,3 +372,311 @@ def test_failed_regrade_preserves_existing_result_data():
     assert stored_result.adjusted_by == "admin-rollback"
     assert len(stored_case_results) == 1
     assert stored_case_results[0].case_name == "sample"
+
+def test_admin_process_next_returns_404_when_queue_is_empty():
+    with Session(engine) as session:
+        _create_user(session, "admin-empty-queue", 10008005, "admin-pass", "admin")
+
+        def get_session_override():
+            return session
+
+        app.dependency_overrides[get_session] = get_session_override
+        client = TestClient(app)
+
+        admin_token = _login(client, "admin-empty-queue", "admin-pass")
+        response = client.post(
+            "/api/admin/grading/process-next",
+            headers=_auth_headers(admin_token),
+        )
+
+        app.dependency_overrides.clear()
+
+    assert response.status_code == 404
+    assert response.json()["detail"] == "No queued submissions found"
+
+
+def test_admin_queue_and_requeue_return_404_for_missing_submission():
+    with Session(engine) as session:
+        _create_user(session, "admin-missing-submission", 10008006, "admin-pass", "admin")
+
+        def get_session_override():
+            return session
+
+        app.dependency_overrides[get_session] = get_session_override
+        client = TestClient(app)
+
+        admin_token = _login(client, "admin-missing-submission", "admin-pass")
+        queue_response = client.post(
+            "/api/admin/submissions/999/queue",
+            headers=_auth_headers(admin_token),
+        )
+        requeue_response = client.post(
+            "/api/admin/submissions/999/requeue",
+            headers=_auth_headers(admin_token),
+        )
+
+        app.dependency_overrides.clear()
+
+    assert queue_response.status_code == 404
+    assert queue_response.json()["detail"] == "Submission not found"
+    assert requeue_response.status_code == 404
+    assert requeue_response.json()["detail"] == "Submission not found"
+
+
+def test_admin_exports_return_404_for_missing_homework():
+    with Session(engine) as session:
+        _create_user(session, "admin-missing-homework", 10008007, "admin-pass", "admin")
+
+        def get_session_override():
+            return session
+
+        app.dependency_overrides[get_session] = get_session_override
+        client = TestClient(app)
+
+        admin_token = _login(client, "admin-missing-homework", "admin-pass")
+        grades_response = client.get(
+            "/api/admin/homeworks/999/grades/export",
+            headers=_auth_headers(admin_token),
+        )
+        archive_response = client.get(
+            "/api/admin/homeworks/999/submissions/archive",
+            headers=_auth_headers(admin_token),
+        )
+
+        app.dependency_overrides.clear()
+
+    assert grades_response.status_code == 404
+    assert grades_response.json()["detail"] == "Homework not found"
+    assert archive_response.status_code == 404
+    assert archive_response.json()["detail"] == "Homework not found"
+
+
+def test_admin_adjust_score_rejects_pending_or_negative_values():
+    with Session(engine) as session:
+        _create_homework(session, 5, "Adjust Validation Homework")
+        _create_user(session, "student-adjust-validation", 20248005, "student-pass", "student")
+        _create_user(session, "admin-adjust-validation", 10008008, "admin-pass", "admin")
+
+        pending_submission = Submission(
+            homework_num=5,
+            user_id="student-adjust-validation",
+            submission_mode="official",
+            attempt_no=1,
+            language="python",
+            status="pending",
+            code_text="print('pending')\n",
+            original_filename="pending.py",
+        )
+        graded_submission = Submission(
+            homework_num=5,
+            user_id="student-adjust-validation",
+            submission_mode="official",
+            attempt_no=2,
+            language="python",
+            status="graded",
+            code_text="print('graded')\n",
+            original_filename="graded.py",
+        )
+        session.add(pending_submission)
+        session.add(graded_submission)
+        session.commit()
+        session.refresh(pending_submission)
+        session.refresh(graded_submission)
+
+        def get_session_override():
+            return session
+
+        app.dependency_overrides[get_session] = get_session_override
+        client = TestClient(app)
+
+        admin_token = _login(client, "admin-adjust-validation", "admin-pass")
+        pending_response = client.patch(
+            f"/api/admin/submissions/{pending_submission.id}/score",
+            json={"manual_total_score": 10, "adjustment_note": "Should fail"},
+            headers=_auth_headers(admin_token),
+        )
+        negative_response = client.patch(
+            f"/api/admin/submissions/{graded_submission.id}/score",
+            json={"manual_total_score": -1, "adjustment_note": "Invalid"},
+            headers=_auth_headers(admin_token),
+        )
+
+        app.dependency_overrides.clear()
+
+    assert pending_response.status_code == 400
+    assert pending_response.json()["detail"] == "Cannot adjust score while grading is in progress"
+    assert negative_response.status_code == 400
+    assert negative_response.json()["detail"] == "Adjusted score must be non-negative"
+
+def test_admin_grade_submission_logs_event_on_unexpected_error():
+    with Session(engine) as session:
+        _create_homework(session, 6, "Unexpected Error Homework")
+        _create_testcase_rule(session, 6, expected_output="ok\n")
+        _create_user(session, "student-runtime-grade", 20248006, "student-pass", "student")
+        _create_user(session, "admin-runtime-grade", 10008009, "admin-pass", "admin")
+
+        submission = Submission(
+            homework_num=6,
+            user_id="student-runtime-grade",
+            submission_mode="official",
+            attempt_no=1,
+            language="python",
+            status="pending",
+            code_text="print('ok')\n",
+            original_filename="answer.py",
+        )
+        session.add(submission)
+        session.commit()
+        session.refresh(submission)
+
+        def get_session_override():
+            return session
+
+        app.dependency_overrides[get_session] = get_session_override
+        client = TestClient(app, raise_server_exceptions=False)
+        admin_token = _login(client, "admin-runtime-grade", "admin-pass")
+
+        def explode(*args, **kwargs):
+            raise RuntimeError("grader exploded")
+
+        original_grade_submission = grading_router.grading_service.grade_submission
+        grading_router.grading_service.grade_submission = explode
+        try:
+            response = client.post(
+                f"/api/admin/submissions/{submission.id}/grade",
+                headers=_auth_headers(admin_token),
+            )
+        finally:
+            grading_router.grading_service.grade_submission = original_grade_submission
+            app.dependency_overrides.clear()
+
+        stored_submission = session.get(Submission, submission.id)
+        event = session.exec(
+            select(SystemEventLog).where(SystemEventLog.event_type == "grading_failed")
+        ).first()
+
+    assert response.status_code == 500
+    assert stored_submission is not None
+    assert stored_submission.status == "pending"
+    assert event is not None
+    assert event.message == "grader exploded"
+    assert event.submission_id == submission.id
+    assert event.user_id == "admin-runtime-grade"
+    assert event.request_path == f"/api/admin/submissions/{submission.id}/grade"
+
+
+def test_admin_process_next_records_audit_for_graded_submission():
+    with Session(engine) as session:
+        _create_homework(session, 7, "Queue Success Homework")
+        _create_testcase_rule(session, 7, expected_output="ok\n")
+        _create_user(session, "student-queue-success", 20248007, "student-pass", "student")
+        _create_user(session, "admin-queue-success", 10008010, "admin-pass", "admin")
+
+        submission = Submission(
+            homework_num=7,
+            user_id="student-queue-success",
+            submission_mode="official",
+            attempt_no=1,
+            language="python",
+            status="pending",
+            code_text="print('ok')\n",
+            original_filename="answer.py",
+        )
+        session.add(submission)
+        session.commit()
+        session.refresh(submission)
+
+        def get_session_override():
+            return session
+
+        app.dependency_overrides[get_session] = get_session_override
+        client = TestClient(app)
+        admin_token = _login(client, "admin-queue-success", "admin-pass")
+
+        queue_response = client.post(
+            f"/api/admin/submissions/{submission.id}/queue",
+            headers=_auth_headers(admin_token),
+        )
+        process_response = client.post(
+            "/api/admin/grading/process-next",
+            headers=_auth_headers(admin_token),
+        )
+
+        audit_log = session.exec(
+            select(AuditLog).where(AuditLog.action_type == "process_grading_queue")
+        ).first()
+        stored_result = session.exec(
+            select(SubmissionResult).where(SubmissionResult.submission_id == submission.id)
+        ).first()
+
+        app.dependency_overrides.clear()
+
+    assert queue_response.status_code == 200
+    assert process_response.status_code == 200
+    assert process_response.json()["status"] == "graded"
+    assert stored_result is not None
+    assert stored_result.status == "graded"
+    assert audit_log is not None
+    assert audit_log.target_id == str(submission.id)
+    assert '"status": "graded"' in (audit_log.payload_json or "")
+
+
+def test_admin_process_next_records_event_for_retryable_submission():
+    with Session(engine) as session:
+        _create_user(session, "student-queue-retry", 20248008, "student-pass", "student")
+        _create_user(session, "admin-queue-retry", 10008011, "admin-pass", "admin")
+
+        submission = Submission(
+            homework_num=999,
+            user_id="student-queue-retry",
+            submission_mode="official",
+            attempt_no=1,
+            language="python",
+            status="pending",
+            code_text="print('ok')\n",
+            original_filename="missing-homework.py",
+        )
+        session.add(submission)
+        session.commit()
+        session.refresh(submission)
+
+        def get_session_override():
+            return session
+
+        app.dependency_overrides[get_session] = get_session_override
+        client = TestClient(app)
+        admin_token = _login(client, "admin-queue-retry", "admin-pass")
+
+        queue_response = client.post(
+            f"/api/admin/submissions/{submission.id}/queue",
+            headers=_auth_headers(admin_token),
+        )
+        process_response = client.post(
+            "/api/admin/grading/process-next",
+            headers=_auth_headers(admin_token),
+        )
+
+        retry_event = session.exec(
+            select(SystemEventLog).where(SystemEventLog.event_type == "queue_processing_failed")
+        ).first()
+        audit_log = session.exec(
+            select(AuditLog).where(AuditLog.action_type == "process_grading_queue")
+        ).first()
+        stored_result = session.exec(
+            select(SubmissionResult).where(SubmissionResult.submission_id == submission.id)
+        ).first()
+
+        app.dependency_overrides.clear()
+
+    assert queue_response.status_code == 200
+    assert process_response.status_code == 200
+    assert process_response.json()["status"] == "retryable"
+    assert stored_result is not None
+    assert stored_result.status == "retryable"
+    assert retry_event is not None
+    assert retry_event.message == "Queue processing failed: Homework not found"
+    assert retry_event.submission_id == submission.id
+    assert retry_event.user_id == "admin-queue-retry"
+    assert retry_event.request_path == "/api/admin/grading/process-next"
+    assert audit_log is not None
+    assert audit_log.target_id == str(submission.id)

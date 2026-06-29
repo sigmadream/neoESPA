@@ -23,6 +23,10 @@ class Settings:
     SECRET_KEY: str = _RAW_SECRET_KEY or "super-secret-key-must-be-changed-in-production-32-chars"
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24  # 1 day
+    SNAPSHOT_RATE_LIMIT_COUNT: int = int(os.getenv("SNAPSHOT_RATE_LIMIT_COUNT", "20"))
+    SNAPSHOT_RATE_LIMIT_WINDOW_SECONDS: int = int(
+        os.getenv("SNAPSHOT_RATE_LIMIT_WINDOW_SECONDS", "60")
+    )
 
     def validate_security(self):
         is_dev_or_test = self.ENVIRONMENT in ("dev", "test")

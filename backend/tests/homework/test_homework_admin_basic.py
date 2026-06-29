@@ -1,6 +1,9 @@
 from fastapi.testclient import TestClient
 from sqlmodel import Session, select
+
+from app.domains.homework import router as homework_router
 from app.models.schemas import GradingRule, Homework
+
 
 def test_admin_can_create_homework_with_schedule(client: TestClient, create_user, login_user, auth_headers, dt_string):
     create_user("homework-admin", 20245001, "admin-pass", "admin")
@@ -111,3 +114,102 @@ def test_delete_homework_preserves_submission_protection(client: TestClient, cre
     del_res = client.delete(f"/api/admin/homeworks/{homework_num}", headers=auth_headers(admin_token))
     assert del_res.status_code == 400
     assert "Cannot delete homework with submissions" in del_res.json()["detail"]
+
+def test_admin_cannot_update_or_delete_missing_homework(client: TestClient, create_user, login_user, auth_headers, dt_string):
+    create_user("missing-homework-admin", 20245029, "admin-pass", "admin")
+    token = login_user("missing-homework-admin", "admin-pass")
+
+    update_res = client.patch(
+        "/api/admin/homeworks/99999",
+        json={
+            "title": "Missing HW",
+            "intro": "...",
+            "deadline": dt_string(2),
+            "starttime": dt_string(-1),
+            "codeName": "missing",
+        },
+        headers=auth_headers(token),
+    )
+    delete_res = client.delete(
+        "/api/admin/homeworks/99999",
+        headers=auth_headers(token),
+    )
+
+    assert update_res.status_code == 404
+    assert delete_res.status_code == 404
+    assert update_res.json()["detail"] == "Homework not found"
+    assert delete_res.json()["detail"] == "Homework not found"
+
+
+def test_delete_homework_removes_artifacts_and_metadata_rules(
+    client: TestClient,
+    session: Session,
+    create_user,
+    login_user,
+    auth_headers,
+    dt_string,
+    tmp_path,
+    monkeypatch,
+):
+    create_user("artifact-homework-admin", 20245030, "admin-pass", "admin")
+    token = login_user("artifact-homework-admin", "admin-pass")
+
+    artifact_root = tmp_path / "supportFiles" / "homeworks"
+    monkeypatch.setattr(homework_router, "_get_homework_artifact_root", lambda: artifact_root)
+
+    create_res = client.post(
+        "/api/admin/homeworks",
+        json={
+            "title": "Artifact HW",
+            "intro": "...",
+            "deadline": dt_string(2),
+            "starttime": dt_string(-1),
+            "codeName": "artifact",
+        },
+        headers=auth_headers(token),
+    )
+    homework_num = create_res.json()["num"]
+
+    homework_root = artifact_root / str(homework_num)
+    (homework_root / "problem").mkdir(parents=True)
+    (homework_root / "archives").mkdir()
+    (homework_root / "problem" / "problem.pdf").write_bytes(b"problem")
+    (homework_root / "archives" / "inputs.zip").write_bytes(b"inputs")
+    (homework_root / "archives" / "outputs.zip").write_bytes(b"outputs")
+
+    session.add_all(
+        [
+            GradingRule(
+                scope="homework",
+                homework_num=homework_num,
+                rule_name="problem_file_meta",
+                rule_value="{}",
+                is_active=True,
+            ),
+            GradingRule(
+                scope="homework",
+                homework_num=homework_num,
+                rule_name="input_zip_meta",
+                rule_value="{}",
+                is_active=True,
+            ),
+            GradingRule(
+                scope="homework",
+                homework_num=homework_num,
+                rule_name="output_zip_meta",
+                rule_value="{}",
+                is_active=True,
+            ),
+        ]
+    )
+    session.commit()
+
+    delete_res = client.delete(
+        f"/api/admin/homeworks/{homework_num}",
+        headers=auth_headers(token),
+    )
+
+    assert delete_res.status_code == 200
+    assert session.get(Homework, homework_num) is None
+    assert session.exec(select(GradingRule).where(GradingRule.homework_num == homework_num)).all() == []
+    assert not homework_root.exists()

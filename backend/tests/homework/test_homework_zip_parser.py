@@ -1,7 +1,14 @@
 import io
-import pytest
 import zipfile
-from app.domains.homework.zip_parser import parse_homework_testcase_archives, HomeworkZipValidationError
+
+import pytest
+from hypothesis import given, settings
+from hypothesis import strategies as st
+
+from app.domains.homework.zip_parser import (
+    HomeworkZipValidationError,
+    parse_homework_testcase_archives,
+)
 
 def _build_zip(members):
     buffer = io.BytesIO()
@@ -20,6 +27,42 @@ def test_zip_parser_happy_path():
     assert testcases[0].name == "a.txt"
     assert testcases[0].input == "1\n"
     assert testcases[0].expected_output == "out1\n"
+
+
+@settings(max_examples=20, deadline=None)
+@given(
+    pairs=st.dictionaries(
+        keys=st.text(
+            alphabet="abcdefghijklmnopqrstuvwxyz0123456789",
+            min_size=1,
+            max_size=8,
+        ).map(lambda stem: f"{stem}.txt"),
+        values=st.tuples(
+            st.text(alphabet="abcxyz0123 \n안녕", min_size=0, max_size=20),
+            st.text(alphabet="rstuvw4567 \n세계", min_size=0, max_size=20),
+        ),
+        min_size=1,
+        max_size=6,
+    )
+)
+def test_zip_parser_matches_pairs_independent_of_archive_member_order(pairs):
+    input_zip = _build_zip(
+        [(name, input_text.encode("utf-8")) for name, (input_text, _) in pairs.items()]
+    )
+    output_zip = _build_zip(
+        [
+            (name, output_text.encode("utf-8"))
+            for name, (_, output_text) in reversed(list(pairs.items()))
+        ]
+    )
+
+    testcases = parse_homework_testcase_archives(io.BytesIO(input_zip), io.BytesIO(output_zip))
+
+    assert [testcase.name for testcase in testcases] == sorted(pairs)
+    assert {
+        testcase.name: (testcase.input, testcase.expected_output)
+        for testcase in testcases
+    } == pairs
 
 def test_zip_parser_mismatched_filenames():
     input_zip = _build_zip([("a.txt", b"1")])

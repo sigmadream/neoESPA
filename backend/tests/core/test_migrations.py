@@ -2,7 +2,44 @@ from pathlib import Path
 
 from sqlalchemy import create_engine, inspect, text
 
-from app.core.migrations import apply_migrations, get_applied_versions
+from app.core.migrations import (
+    apply_migrations,
+    get_applied_versions,
+    resolve_sqlite_url_for_alembic,
+)
+from app.migrations import MIGRATIONS
+
+EXPECTED_TABLES = {
+    "schema_migrations",
+    "users",
+    "homework",
+    "notice",
+    "submissions",
+    "submission_files",
+    "submission_results",
+    "submission_case_results",
+    "grading_rules",
+    "system_settings",
+    "code_snapshots",
+    "exams",
+    "exam_submissions",
+    "collab_sessions",
+    "collab_participants",
+    "collab_messages",
+    "collab_code_snapshots",
+}
+
+
+def assert_latest_tables(engine) -> None:
+    inspector = inspect(engine)
+    table_names = set(inspector.get_table_names())
+    assert EXPECTED_TABLES.issubset(table_names)
+
+
+def assert_all_migrations_applied(engine) -> None:
+    applied_versions = get_applied_versions(engine)
+    assert applied_versions == {version for version, _ in MIGRATIONS}
+
 
 
 def test_upgrade_creates_expected_tables(tmp_path: Path):
@@ -11,22 +48,10 @@ def test_upgrade_creates_expected_tables(tmp_path: Path):
 
     apply_migrations(engine)
 
-    inspector = inspect(engine)
-    table_names = set(inspector.get_table_names())
-
-    assert {
-        "schema_migrations",
-        "users",
-        "homework",
-        "notice",
-        "submissions",
-        "submission_files",
-        "submission_results",
-        "submission_case_results",
-        "grading_rules",
-        "system_settings",
-    }.issubset(table_names)
+    assert_latest_tables(engine)
     assert "0001_submission_core" in get_applied_versions(engine)
+    assert "0003_platform_extensions" in get_applied_versions(engine)
+
 
 
 def test_upgrade_backfills_missing_user_timestamps(tmp_path: Path):
@@ -89,3 +114,42 @@ def test_upgrade_backfills_missing_user_timestamps(tmp_path: Path):
     assert row[0] is not None
     assert row[1] is not None
     assert "0004_user_timestamp_backfill" in get_applied_versions(engine)
+
+
+
+def test_upgrade_is_idempotent(tmp_path: Path):
+    database_path = tmp_path / "migration-idempotent.sqlite"
+    engine = create_engine(f"sqlite:///{database_path}")
+
+    apply_migrations(engine)
+    first_versions = get_applied_versions(engine)
+
+    apply_migrations(engine)
+    second_versions = get_applied_versions(engine)
+
+    with engine.connect() as connection:
+        migration_rows = connection.execute(
+            text("SELECT version FROM schema_migrations ORDER BY version")
+        ).all()
+
+    assert first_versions == second_versions
+    assert len(migration_rows) == len(MIGRATIONS)
+    assert {row[0] for row in migration_rows} == {version for version, _ in MIGRATIONS}
+    assert_all_migrations_applied(engine)
+
+
+
+def test_resolve_sqlite_url_for_alembic_handles_docker_and_local_paths(tmp_path: Path):
+    base_dir = tmp_path / "project-root"
+    expected_local = f"sqlite:///{base_dir / 'database' / 'database.sqlite'}"
+
+    assert resolve_sqlite_url_for_alembic(
+        "sqlite:////database/database.sqlite",
+        base_dir=base_dir,
+        database_mount_exists=False,
+    ) == expected_local
+    assert resolve_sqlite_url_for_alembic(
+        "sqlite:////database/database.sqlite",
+        base_dir=base_dir,
+        database_mount_exists=True,
+    ) == "sqlite:////database/database.sqlite"

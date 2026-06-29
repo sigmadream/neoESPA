@@ -7,8 +7,9 @@ from sqlmodel.pool import StaticPool
 
 from app.core.db import get_session
 from app.main import app
-from app.models.schemas import GradingRule, Homework, User
+from app.models.schemas import GradingRule, Homework, SystemSetting, User
 from app.services.auth_service import AuthService
+
 
 
 engine = create_engine(
@@ -167,3 +168,87 @@ def test_admin_can_update_lint_settings():
     assert grade_response.json()["submission_score"] == 100.0
     assert grade_response.json()["quality_score"] == 10.0
     assert "Lint score 10.0/20" in (grade_response.json()["grader_summary"] or "")
+
+def test_admin_settings_reject_empty_payload_and_unknown_key():
+    with Session(engine) as session:
+        _create_user(session, "settings-guard-admin", 10010002, "admin-pass", "admin")
+
+        def get_session_override():
+            return session
+
+        app.dependency_overrides[get_session] = get_session_override
+        client = TestClient(app)
+        admin_token = _login(client, "settings-guard-admin", "admin-pass")
+        headers = _auth_headers(admin_token)
+
+        empty_response = client.patch(
+            "/api/admin/settings",
+            json={"settings": []},
+            headers=headers,
+        )
+        unknown_key_response = client.patch(
+            "/api/admin/settings",
+            json={"settings": [{"key": "unknown_key", "value": 1}]},
+            headers=headers,
+        )
+
+        app.dependency_overrides.clear()
+
+    assert empty_response.status_code == 400
+    assert empty_response.json()["detail"] == "Settings update must include at least one item"
+    assert unknown_key_response.status_code == 400
+    assert unknown_key_response.json()["detail"] == "Unsupported setting key: unknown_key"
+
+
+def test_admin_settings_reject_invalid_values_and_update_timestamp():
+    with Session(engine) as session:
+        _create_user(session, "settings-value-admin", 10010003, "admin-pass", "admin")
+        existing_setting = SystemSetting(
+            key="lint_calc_weight",
+            value="50",
+            value_type="number",
+            description="original description",
+            updated_at=datetime(2024, 1, 1, tzinfo=UTC),
+        )
+        session.add(existing_setting)
+        session.commit()
+
+        def get_session_override():
+            return session
+
+        app.dependency_overrides[get_session] = get_session_override
+        client = TestClient(app)
+        admin_token = _login(client, "settings-value-admin", "admin-pass")
+        headers = _auth_headers(admin_token)
+
+        invalid_boolean_response = client.patch(
+            "/api/admin/settings",
+            json={"settings": [{"key": "lint_set_default", "value": "maybe"}]},
+            headers=headers,
+        )
+        negative_number_response = client.patch(
+            "/api/admin/settings",
+            json={"settings": [{"key": "lint_calc_weight", "value": -1}]},
+            headers=headers,
+        )
+        updated_response = client.patch(
+            "/api/admin/settings",
+            json={"settings": [{"key": "lint_calc_weight", "value": 75}]},
+            headers=headers,
+        )
+        stored_setting = session.get(SystemSetting, "lint_calc_weight")
+
+        app.dependency_overrides.clear()
+
+    assert invalid_boolean_response.status_code == 400
+    assert invalid_boolean_response.json()["detail"] == (
+        "Invalid setting value for lint_set_default: Boolean setting must be true/false"
+    )
+    assert negative_number_response.status_code == 400
+    assert negative_number_response.json()["detail"] == (
+        "Invalid setting value for lint_calc_weight: Numeric setting must be non-negative"
+    )
+    assert updated_response.status_code == 200
+    assert stored_setting is not None
+    assert stored_setting.value == "75"
+    assert stored_setting.updated_at.replace(tzinfo=UTC) > datetime(2024, 1, 1, tzinfo=UTC)

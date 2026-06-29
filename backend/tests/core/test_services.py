@@ -1,5 +1,14 @@
 import pytest
+
+from app.core.system_settings import (
+    DEFAULT_LINT_SETTINGS,
+    LINT_SETTING_KEYS,
+    SYSTEM_SETTING_DEFINITIONS,
+    normalize_setting_value,
+    parse_boolean_setting,
+)
 from app.services.auth_service import AuthService
+
 
 def test_password_hashing():
     """
@@ -24,3 +33,38 @@ def test_auth_service_token_creation():
     token = AuthService.create_access_token(data)
     assert isinstance(token, str)
     assert len(token) > 0
+
+def test_system_setting_parsing_and_normalization(monkeypatch):
+    assert parse_boolean_setting(True) is True
+    assert parse_boolean_setting("yes") is True
+    assert parse_boolean_setting("off") is False
+
+    with pytest.raises(ValueError, match="Boolean setting must be true/false"):
+        parse_boolean_setting("maybe")
+
+    assert normalize_setting_value("lint_calc_weight", 5.0) == ("5", "number")
+    assert normalize_setting_value("lint_calc_panalty", 0.75) == ("0.75", "number")
+    assert normalize_setting_value("lint_set_default", "on") == ("true", "boolean")
+
+    monkeypatch.setitem(
+        SYSTEM_SETTING_DEFINITIONS,
+        "custom_string_setting",
+        {
+            "value_type": "string",
+            "default_value": "demo",
+            "description": "Custom string setting for tests.",
+        },
+    )
+    assert normalize_setting_value("custom_string_setting", "  value  ") == (
+        "value",
+        "string",
+    )
+
+    with pytest.raises(ValueError, match="String setting must not be empty"):
+        normalize_setting_value("custom_string_setting", "   ")
+
+    with pytest.raises(KeyError):
+        normalize_setting_value("missing_setting", 1)
+
+    assert "lint_set_default" in LINT_SETTING_KEYS
+    assert DEFAULT_LINT_SETTINGS["lint_calc_weight"] == 50.0

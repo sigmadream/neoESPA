@@ -5,7 +5,7 @@ from pathlib import Path
 import pytest
 from sqlmodel import Session
 
-from app.models.schemas import Homework, Notice, SubmissionResult
+from app.models.schemas import GradingRule, Homework, Notice, Submission, SubmissionResult
 from app.services.feedback_service import FeedbackService
 
 @pytest.fixture
@@ -101,3 +101,111 @@ def test_latest_notice_filtering(feedback_service, session: Session):
     
     latest_pinned = feedback_service._latest_notice(session)
     assert latest_pinned.title == "Pinned Notice"
+
+
+def test_build_submission_feedback_combines_deadline_notice_and_result_hints(
+    feedback_service, session: Session
+):
+    homework = Homework(
+        num=7,
+        title="Feedback HW",
+        intro="...",
+        codeName="main",
+        starttime=(datetime.now(UTC) - timedelta(days=1)).strftime("%Y-%m-%d %H:%M:%S"),
+        deadline=(datetime.now(UTC) + timedelta(hours=2)).strftime("%Y-%m-%d %H:%M:%S"),
+        isLint=False,
+    )
+    submission = Submission(
+        homework_num=7,
+        user_id="student-feedback",
+        submission_mode="official",
+        attempt_no=1,
+        language="python",
+        status="failed",
+        code_text="print('x')",
+    )
+    result = SubmissionResult(
+        submission_id=1,
+        status="failed",
+        compile_status="failed",
+        run_status="not_started",
+        quality_score=0,
+    )
+    session.add(
+        Notice(
+            title="Urgent Notice",
+            author="admin",
+            content="...",
+            is_published=True,
+            date=(datetime.now(UTC) - timedelta(hours=1)).strftime("%Y-%m-%d %H:%M:%S"),
+        )
+    )
+    session.commit()
+
+    feedback = feedback_service.build_submission_feedback(session, submission, homework, result)
+
+    assert feedback.deadline_status == "closing_soon"
+    assert any("컴파일 오류" in hint for hint in feedback.hints)
+    assert any("마감이 임박" in hint for hint in feedback.hints)
+    assert any("Urgent Notice" in hint for hint in feedback.hints)
+
+
+def test_latest_notice_hides_future_notice_and_allows_invalid_date_fallback(
+    feedback_service, session: Session
+):
+    session.add(
+        Notice(
+            title="Future Notice",
+            author="admin",
+            content="...",
+            is_published=True,
+            date=(datetime.now(UTC) + timedelta(days=7)).strftime("%Y-%m-%d %H:%M:%S"),
+        )
+    )
+    session.add(
+        Notice(
+            title="Invalid Date Notice",
+            author="admin",
+            content="...",
+            is_published=True,
+            date="not-a-date",
+        )
+    )
+    session.commit()
+
+    latest = feedback_service._latest_notice(session)
+
+    assert latest is not None
+    assert latest.title == "Invalid Date Notice"
+    assert feedback_service._parse_datetime("not-a-date") is None
+
+
+def test_build_guides_uses_lint_week_and_message_fallback(feedback_service, session: Session):
+    homework = Homework(
+        num=9,
+        title="Lint HW",
+        intro="...",
+        codeName="main",
+        isLint=True,
+    )
+    session.add(homework)
+    session.commit()
+    session.add(
+        GradingRule(
+            scope="homework",
+            homework_num=9,
+            rule_name="lint_week",
+            rule_value="week-custom",
+            is_active=True,
+        )
+    )
+    session.commit()
+
+    feedback_service.week_rules = {"pylint": {"week-custom": ["rule1", "rule-missing"]}}
+    guides = feedback_service._build_guides(session, homework)
+
+    assert [guide.rule for guide in guides] == ["rule1", "rule-missing"]
+    assert guides[0].summary == "규칙1"
+    assert guides[0].description == "규칙1 상세"
+    assert guides[1].summary == "rule-missing"
+    assert guides[1].description == "rule-missing"

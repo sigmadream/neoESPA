@@ -1,4 +1,5 @@
 import logging
+from datetime import UTC, datetime, timedelta
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlmodel import Session, select
@@ -11,6 +12,7 @@ from ...api.runtime import (
     grading_service,
 )
 from ...core.compression import compress_text, decompress_text
+from ...core.config import settings
 from ...core.db import get_session
 from ...models.schemas import (
     CodeSnapshot,
@@ -25,13 +27,48 @@ from ...models.schemas import (
     User,
 )
 from ...services.code_runner import SUPPORTED_LANGUAGES
+from ...services.user_management import ADMIN_ROLES
 from ..homework.helpers import load_allowed_languages
 from ..shared.schedules import compute_schedule_window
 from ..submissions.helpers import to_submission_read
-from ...services.user_management import ADMIN_ROLES
 
 
 router = APIRouter()
+
+
+def to_code_snapshot_read(snapshot):
+    return CodeSnapshotRead(
+        id=snapshot.id or 0,
+        homework_num=snapshot.homework_num,
+        user_id=snapshot.user_id,
+        language=snapshot.language,
+        code_text=decompress_text(snapshot.code_text),
+        snapshot_type=snapshot.snapshot_type,
+        created_at=snapshot.created_at,
+    )
+
+
+def enforce_snapshot_rate_limit(session: Session, user_id: str):
+    limit = max(settings.SNAPSHOT_RATE_LIMIT_COUNT, 0)
+    window_seconds = max(settings.SNAPSHOT_RATE_LIMIT_WINDOW_SECONDS, 0)
+    if limit == 0 or window_seconds == 0:
+        return
+
+    window_start = datetime.now(UTC) - timedelta(seconds=window_seconds)
+    recent_snapshot_ids = session.exec(
+        select(CodeSnapshot.id).where(
+            CodeSnapshot.user_id == user_id,
+            CodeSnapshot.created_at >= window_start,
+        )
+    ).all()
+    if len(recent_snapshot_ids) >= limit:
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail=(
+                f"Snapshot save limit exceeded. Up to {limit} saves are allowed per "
+                f"{window_seconds} seconds."
+            ),
+        )
 
 
 @router.post(
@@ -96,7 +133,7 @@ def create_submission(
             attempt_no=attempt_no,
             language=language,
             status="pending",
-            code_text=payload.code_text,
+            code_text=compress_text(payload.code_text),
             original_filename=payload.original_filename,
             deadline_snapshot=homework.deadline,
         )
@@ -254,8 +291,8 @@ def save_code_snapshot(
     ).first()
 
     if last_snapshot and decompress_text(last_snapshot.code_text) == payload.code_text:
-        last_snapshot.code_text = payload.code_text
-        return last_snapshot
+        return to_code_snapshot_read(last_snapshot)
+    enforce_snapshot_rate_limit(session, current_user.id)
 
     snapshot = CodeSnapshot(
         homework_num=payload.homework_num,
@@ -267,8 +304,7 @@ def save_code_snapshot(
     session.add(snapshot)
     session.commit()
     session.refresh(snapshot)
-    snapshot.code_text = decompress_text(snapshot.code_text)
-    return snapshot
+    return to_code_snapshot_read(snapshot)
 
 
 @router.get("/homeworks/{homework_num}/snapshots/latest", response_model=CodeSnapshotRead | None)
@@ -286,7 +322,7 @@ def get_latest_snapshot(
         .order_by(CodeSnapshot.created_at.desc())
     ).first()
     if snapshot:
-        snapshot.code_text = decompress_text(snapshot.code_text)
+        return to_code_snapshot_read(snapshot)
     return snapshot
 
 
@@ -305,6 +341,4 @@ def get_student_snapshots(
         )
         .order_by(CodeSnapshot.created_at.desc())
     ).all()
-    for s in snapshots:
-        s.code_text = decompress_text(s.code_text)
-    return snapshots
+    return [to_code_snapshot_read(snapshot) for snapshot in snapshots]

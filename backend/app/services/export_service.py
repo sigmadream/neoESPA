@@ -7,6 +7,7 @@ from pathlib import Path
 
 from sqlmodel import Session, select
 
+from ..core.compression import decompress_text
 from ..models.schemas import Homework, Submission, SubmissionResult, User
 
 DEFAULT_SOURCE_NAMES = {
@@ -118,7 +119,8 @@ class ExportService:
         with zipfile.ZipFile(archive_buffer, "w", zipfile.ZIP_DEFLATED) as archive:
             for user_id in sorted(latest_submissions):
                 submission = latest_submissions[user_id]
-                if submission.code_text is None or not submission.code_text.strip():
+                source_text = decompress_text(submission.code_text or "")
+                if not source_text.strip():
                     continue
 
                 user = session.get(User, user_id)
@@ -134,7 +136,7 @@ class ExportService:
                     f"homework_{homework.num}/{user.sid}_{user.id}/"
                     f"attempt_{submission.attempt_no}_{safe_source_name}"
                 )
-                archive.writestr(archive_path, submission.code_text)
+                archive.writestr(archive_path, source_text)
 
         return archive_buffer.getvalue()
 

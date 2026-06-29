@@ -1,13 +1,12 @@
 from fastapi.testclient import TestClient
-from sqlmodel import Session, SQLModel, create_engine
+from sqlmodel import Session, SQLModel, create_engine, select
 from sqlmodel.pool import StaticPool
 
 from app.core.db import get_session
 from app.main import _to_user_read, app
-from sqlmodel import select
-
 from app.models.schemas import AuditLog, User
 from app.services.auth_service import AuthService
+
 
 
 engine = create_engine(
@@ -316,3 +315,276 @@ def test_user_read_serialization_backfills_missing_timestamps():
     assert payload.id == "legacy-user"
     assert payload.created_at is not None
     assert payload.updated_at is not None
+
+def test_admin_user_list_rejects_invalid_role_filter():
+    with Session(engine) as session:
+        _create_user(session, "filter-admin", 20246030, "admin-pass", role="admin")
+
+        def get_session_override():
+            return session
+
+        app.dependency_overrides[get_session] = get_session_override
+        client = TestClient(app)
+        token = _login(client, "filter-admin", "admin-pass")
+        headers = {"Authorization": f"Bearer {token}"}
+
+        response = client.get("/api/admin/users?role=owner", headers=headers)
+
+        app.dependency_overrides.clear()
+
+    assert response.status_code == 400
+    assert response.json()["detail"] == "Unsupported user role"
+
+
+def test_admin_cannot_change_own_role_or_deactivate_self():
+    with Session(engine) as session:
+        _create_user(session, "self-admin", 20246031, "admin-pass", role="admin")
+
+        def get_session_override():
+            return session
+
+        app.dependency_overrides[get_session] = get_session_override
+        client = TestClient(app)
+        token = _login(client, "self-admin", "admin-pass")
+        headers = {"Authorization": f"Bearer {token}"}
+
+        role_response = client.patch(
+            "/api/admin/users/self-admin/role",
+            json={"user_group": "ta"},
+            headers=headers,
+        )
+        status_response = client.patch(
+            "/api/admin/users/self-admin/status",
+            json={"is_active": False},
+            headers=headers,
+        )
+
+        app.dependency_overrides.clear()
+
+    assert role_response.status_code == 400
+    assert role_response.json()["detail"] == "Cannot change your own role"
+    assert status_response.status_code == 400
+    assert status_response.json()["detail"] == "Cannot deactivate your own account"
+
+
+def test_admin_user_management_returns_404_for_missing_user():
+    with Session(engine) as session:
+        _create_user(session, "missing-admin", 20246032, "admin-pass", role="admin")
+
+        def get_session_override():
+            return session
+
+        app.dependency_overrides[get_session] = get_session_override
+        client = TestClient(app)
+        token = _login(client, "missing-admin", "admin-pass")
+        headers = {"Authorization": f"Bearer {token}"}
+
+        role_response = client.patch(
+            "/api/admin/users/ghost/role",
+            json={"user_group": "ta"},
+            headers=headers,
+        )
+        status_response = client.patch(
+            "/api/admin/users/ghost/status",
+            json={"is_active": False},
+            headers=headers,
+        )
+        reset_response = client.post(
+            "/api/admin/users/ghost/reset-password",
+            json={"new_password": "next-pass"},
+            headers=headers,
+        )
+
+        app.dependency_overrides.clear()
+
+    assert role_response.status_code == 404
+    assert status_response.status_code == 404
+    assert reset_response.status_code == 404
+    assert role_response.json()["detail"] == "User not found"
+    assert status_response.json()["detail"] == "User not found"
+    assert reset_response.json()["detail"] == "User not found"
+
+
+def test_admin_bulk_user_creation_validates_duplicates_and_existing_users():
+    with Session(engine) as session:
+        _create_user(session, "bulk-check-admin", 20246033, "admin-pass", role="admin")
+        _create_user(session, "existing-bulk-user", 20246034, "student-pass")
+
+        def get_session_override():
+            return session
+
+        app.dependency_overrides[get_session] = get_session_override
+        client = TestClient(app)
+        token = _login(client, "bulk-check-admin", "admin-pass")
+        headers = {"Authorization": f"Bearer {token}"}
+
+        duplicate_id_response = client.post(
+            "/api/admin/users/bulk",
+            json={
+                "default_password": "welcome-pass",
+                "skip_existing": True,
+                "users": [
+                    {
+                        "id": "dup-user",
+                        "sid": 20246035,
+                        "name": "Dup User One",
+                        "phone": "010-0000-0001",
+                        "email": "dup-user-one@example.com",
+                        "user_group": "student",
+                    },
+                    {
+                        "id": "dup-user",
+                        "sid": 20246036,
+                        "name": "Dup User Two",
+                        "phone": "010-0000-0002",
+                        "email": "dup-user-two@example.com",
+                        "user_group": "student",
+                    },
+                ],
+            },
+            headers=headers,
+        )
+        duplicate_sid_response = client.post(
+            "/api/admin/users/bulk",
+            json={
+                "default_password": "welcome-pass",
+                "skip_existing": True,
+                "users": [
+                    {
+                        "id": "dup-sid-a",
+                        "sid": 20246037,
+                        "name": "Dup Sid One",
+                        "phone": "010-0000-0003",
+                        "email": "dup-sid-one@example.com",
+                        "user_group": "student",
+                    },
+                    {
+                        "id": "dup-sid-b",
+                        "sid": 20246037,
+                        "name": "Dup Sid Two",
+                        "phone": "010-0000-0004",
+                        "email": "dup-sid-two@example.com",
+                        "user_group": "student",
+                    },
+                ],
+            },
+            headers=headers,
+        )
+        existing_user_response = client.post(
+            "/api/admin/users/bulk",
+            json={
+                "default_password": "welcome-pass",
+                "skip_existing": False,
+                "users": [
+                    {
+                        "id": "existing-bulk-user",
+                        "sid": 20246034,
+                        "name": "Existing Bulk User",
+                        "phone": "010-0000-0005",
+                        "email": "existing-bulk-user@example.com",
+                        "user_group": "student",
+                    }
+                ],
+            },
+            headers=headers,
+        )
+
+        app.dependency_overrides.clear()
+
+    assert duplicate_id_response.status_code == 400
+    assert duplicate_id_response.json()["detail"] == "Duplicate user id in request: dup-user"
+    assert duplicate_sid_response.status_code == 400
+    assert duplicate_sid_response.json()["detail"] == "Duplicate student ID in request: 20246037"
+    assert existing_user_response.status_code == 400
+    assert existing_user_response.json()["detail"] == "User already exists: existing-bulk-user"
+
+
+def test_admin_bulk_user_creation_requires_non_empty_password_and_valid_role():
+    with Session(engine) as session:
+        _create_user(session, "bulk-validate-admin", 20246038, "admin-pass", role="admin")
+
+        def get_session_override():
+            return session
+
+        app.dependency_overrides[get_session] = get_session_override
+        client = TestClient(app)
+        token = _login(client, "bulk-validate-admin", "admin-pass")
+        headers = {"Authorization": f"Bearer {token}"}
+
+        empty_password_response = client.post(
+            "/api/admin/users/bulk",
+            json={
+                "default_password": "   ",
+                "skip_existing": True,
+                "users": [
+                    {
+                        "id": "bulk-student",
+                        "sid": 20246039,
+                        "name": "Bulk Student",
+                        "phone": "010-0000-0006",
+                        "email": "bulk-student@example.com",
+                        "user_group": "student",
+                    }
+                ],
+            },
+            headers=headers,
+        )
+        invalid_role_response = client.post(
+            "/api/admin/users/bulk",
+            json={
+                "default_password": "welcome-pass",
+                "skip_existing": True,
+                "users": [
+                    {
+                        "id": "bulk-owner",
+                        "sid": 20246040,
+                        "name": "Bulk Owner",
+                        "phone": "010-0000-0007",
+                        "email": "bulk-owner@example.com",
+                        "user_group": "owner",
+                    }
+                ],
+            },
+            headers=headers,
+        )
+
+        app.dependency_overrides.clear()
+
+    assert empty_password_response.status_code == 400
+    assert empty_password_response.json()["detail"] == "Default password must not be empty"
+    assert invalid_role_response.status_code == 400
+    assert invalid_role_response.json()["detail"] == "Unsupported user role"
+
+
+def test_admin_can_reset_password_and_old_password_stops_working():
+    with Session(engine) as session:
+        _create_user(session, "reset-admin", 20246041, "admin-pass", role="admin")
+        _create_user(session, "reset-user", 20246042, "old-pass")
+
+        def get_session_override():
+            return session
+
+        app.dependency_overrides[get_session] = get_session_override
+        client = TestClient(app)
+        admin_token = _login(client, "reset-admin", "admin-pass")
+        headers = {"Authorization": f"Bearer {admin_token}"}
+
+        reset_response = client.post(
+            "/api/admin/users/reset-user/reset-password",
+            json={"new_password": "new-pass"},
+            headers=headers,
+        )
+        old_login_response = client.post(
+            "/api/auth/login",
+            json={"id": "reset-user", "ps": "old-pass"},
+        )
+        new_login_response = client.post(
+            "/api/auth/login",
+            json={"id": "reset-user", "ps": "new-pass"},
+        )
+
+        app.dependency_overrides.clear()
+
+    assert reset_response.status_code == 200
+    assert old_login_response.status_code == 401
+    assert new_login_response.status_code == 200

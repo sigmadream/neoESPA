@@ -5,6 +5,7 @@ from difflib import SequenceMatcher
 
 from sqlmodel import Session, select
 
+from ..core.compression import decompress_text
 from ..models.schemas import PlagiarismPair, PlagiarismPairRead, PlagiarismRun, PlagiarismRunRead, Submission, SubmissionResult
 
 
@@ -117,6 +118,12 @@ class PlagiarismService:
     ) -> PlagiarismPairRead:
         left_submission = session.get(Submission, pair.left_submission_id)
         right_submission = session.get(Submission, pair.right_submission_id)
+        left_code = None
+        if include_code and left_submission is not None:
+            left_code = decompress_text(left_submission.code_text or "")
+        right_code = None
+        if include_code and right_submission is not None:
+            right_code = decompress_text(right_submission.code_text or "")
         return PlagiarismPairRead(
             id=pair.id or 0,
             run_id=pair.run_id,
@@ -128,8 +135,8 @@ class PlagiarismService:
             similarity_score=pair.similarity_score,
             status=pair.status,
             summary=pair.summary,
-            left_code=left_submission.code_text if include_code and left_submission is not None else None,
-            right_code=right_submission.code_text if include_code and right_submission is not None else None,
+            left_code=left_code,
+            right_code=right_code,
             created_at=pair.created_at,
         )
 
@@ -154,7 +161,7 @@ class PlagiarismService:
 
         latest_by_user: dict[str, Submission] = {}
         for submission in submissions:
-            if not submission.code_text or not submission.code_text.strip():
+            if not decompress_text(submission.code_text or "").strip():
                 continue
             latest_by_user.setdefault(submission.user_id, submission)
         return list(latest_by_user.values())
@@ -163,8 +170,8 @@ class PlagiarismService:
         pairs: list[CandidatePair] = []
         for index, left_submission in enumerate(submissions):
             for right_submission in submissions[index + 1 :]:
-                left_code = self._normalize_source(left_submission.code_text or "")
-                right_code = self._normalize_source(right_submission.code_text or "")
+                left_code = self._normalize_source(decompress_text(left_submission.code_text or ""))
+                right_code = self._normalize_source(decompress_text(right_submission.code_text or ""))
                 if not left_code or not right_code:
                     continue
                 similarity = SequenceMatcher(None, left_code, right_code).ratio()

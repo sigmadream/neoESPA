@@ -14,6 +14,7 @@ from ..models.schemas import (
     SubmissionCaseResult,
     SubmissionResult,
 )
+from ..core.compression import decompress_text
 from .code_runner import CodeRunner, CodeRunnerService, RunnerExecutionResult
 from .lint_pipeline import LintPipelineService
 
@@ -47,7 +48,8 @@ class GradingService:
         submission: Submission,
         homework: Homework | None = None,
     ) -> SubmissionResult:
-        if submission.code_text is None or not submission.code_text.strip():
+        source_text = decompress_text(submission.code_text or "")
+        if not source_text.strip():
             raise ValueError("Submission does not contain executable source code")
 
         resolved_homework = homework or session.get(Homework, submission.homework_num)
@@ -104,11 +106,11 @@ class GradingService:
         total_score = 0.0
         run_status = "passed"
         last_exit_code = 0
-
+        source_text = decompress_text(submission.code_text or "")
         for test_case in test_cases:
             execution = self.runner.run_code(
                 submission.language,
-                submission.code_text or "",
+                source_text,
                 input_data=test_case.input_data,
                 source_name=submission.original_filename,
                 timeout_seconds=homework.sec or 10,
@@ -260,14 +262,15 @@ class GradingService:
             return
         if submission.language != "python":
             return
-        if submission.code_text is None or not submission.code_text.strip():
+        source_text = decompress_text(submission.code_text or "")
+        if not source_text.strip():
             return
         if result.status != "graded" or result.compile_status != "passed":
             return
 
         lint_week = self._load_lint_week(session, homework.num or 0)
         lint_report = self.lint_pipeline.analyze_python_code(
-            submission.code_text,
+            source_text,
             week=lint_week,
             session=session,
         )

@@ -1,10 +1,13 @@
-import json
 from pathlib import Path
+
 import pytest
+from fastapi import HTTPException
 from fastapi.testclient import TestClient
 from sqlmodel import Session, select
-from app.models.schemas import AuditLog, GradingRule, Homework
+
 from app.domains.homework import router as homework_router
+from app.models.schemas import AuditLog, GradingRule, Homework
+
 
 def _read_fixture(name: str) -> bytes:
     path = Path(__file__).resolve().parents[1] / "fixtures" / "homework_import" / name
@@ -75,3 +78,93 @@ def test_import_validation_zip_errors(client: TestClient, create_user, login_use
     )
     assert response.status_code == 400
     assert "corrupt" in response.json()["detail"].lower()
+
+def test_import_homework_cleans_up_artifacts_after_http_error(
+    client: TestClient,
+    session: Session,
+    create_user,
+    login_user,
+    auth_headers,
+    dt_string,
+    tmp_path,
+    monkeypatch,
+):
+    create_user("admin-http-cleanup", 20245029, "pass", "admin")
+    token = login_user("admin-http-cleanup", "pass")
+
+    artifact_root = tmp_path / "supportFiles" / "homeworks"
+    monkeypatch.setattr(homework_router, "_get_homework_artifact_root", lambda: artifact_root)
+
+    def fail_metadata(*args, **kwargs):
+        raise HTTPException(status_code=400, detail="metadata write failed")
+
+    monkeypatch.setattr(homework_router, "upsert_homework_artifact_metadata", fail_metadata)
+
+    response = client.post(
+        "/api/admin/homeworks/import",
+        data={
+            "title": "Cleanup HTTP",
+            "intro": "...",
+            "deadline": dt_string(7),
+            "starttime": dt_string(2),
+            "codeName": "cleanup-http",
+            "allowed_languages": '["python"]',
+            "isLint": "false",
+        },
+        files={
+            "problem_file": ("problem.pdf", _read_fixture("problem.pdf"), "application/pdf"),
+            "input_zip": ("inputs.zip", _read_fixture("inputs.zip"), "application/zip"),
+            "output_zip": ("outputs.zip", _read_fixture("outputs.zip"), "application/zip"),
+        },
+        headers=auth_headers(token),
+    )
+
+    assert response.status_code == 400
+    assert response.json()["detail"] == "metadata write failed"
+    assert session.exec(select(Homework)).all() == []
+    assert not (artifact_root / "1").exists()
+
+
+def test_import_homework_cleans_up_artifacts_after_unexpected_error(
+    client: TestClient,
+    session: Session,
+    create_user,
+    login_user,
+    auth_headers,
+    dt_string,
+    tmp_path,
+    monkeypatch,
+):
+    create_user("admin-runtime-cleanup", 20245030, "pass", "admin")
+    token = login_user("admin-runtime-cleanup", "pass")
+
+    artifact_root = tmp_path / "supportFiles" / "homeworks"
+    monkeypatch.setattr(homework_router, "_get_homework_artifact_root", lambda: artifact_root)
+
+    def explode_metadata(*args, **kwargs):
+        raise RuntimeError("metadata exploded")
+
+    monkeypatch.setattr(homework_router, "upsert_homework_artifact_metadata", explode_metadata)
+
+    with pytest.raises(RuntimeError, match="metadata exploded"):
+        client.post(
+            "/api/admin/homeworks/import",
+            data={
+                "title": "Cleanup Runtime",
+                "intro": "...",
+                "deadline": dt_string(7),
+                "starttime": dt_string(2),
+                "codeName": "cleanup-runtime",
+                "allowed_languages": '["python"]',
+                "isLint": "false",
+            },
+            files={
+                "problem_file": ("problem.pdf", _read_fixture("problem.pdf"), "application/pdf"),
+                "input_zip": ("inputs.zip", _read_fixture("inputs.zip"), "application/zip"),
+                "output_zip": ("outputs.zip", _read_fixture("outputs.zip"), "application/zip"),
+            },
+            headers=auth_headers(token),
+        )
+
+    assert session.exec(select(Homework)).all() == []
+    assert not (artifact_root / "1").exists()

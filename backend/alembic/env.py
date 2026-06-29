@@ -10,6 +10,7 @@ from alembic import context
 import os
 import app.models.schemas
 from app.core.config import settings
+from app.core.migrations import resolve_sqlite_url_for_alembic
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -20,9 +21,11 @@ config = context.config
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
-db_url = settings.SQLITE_URL
-if db_url == "sqlite:////database/database.sqlite" and not os.path.exists("/database"):
-    db_url = f"sqlite:///{settings.BASE_DIR}/database/database.sqlite"
+db_url = resolve_sqlite_url_for_alembic(
+    settings.SQLITE_URL,
+    base_dir=settings.BASE_DIR,
+    database_mount_exists=os.path.exists("/database"),
+)
 
 # Set database URL dynamically from the app settings
 config.set_main_option("sqlalchemy.url", db_url)

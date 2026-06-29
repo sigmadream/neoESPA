@@ -1,3 +1,5 @@
+from datetime import UTC, datetime, timedelta
+
 import pytest
 from fastapi.testclient import TestClient
 from sqlmodel import Session, SQLModel, create_engine
@@ -5,8 +7,13 @@ from sqlmodel.pool import StaticPool
 
 from app.core.db import configure_sqlite_foreign_keys, get_session
 from app.main import app
-from app.models.schemas import User
-from app.services.auth_service import AuthService
+from tests.factories import (
+    create_homework as build_homework,
+    create_submission as build_submission,
+    create_submission_result as build_submission_result,
+    create_user as build_user,
+)
+
 
 @pytest.fixture(name="engine")
 def engine_fixture():
@@ -19,10 +26,12 @@ def engine_fixture():
     yield engine
     SQLModel.metadata.drop_all(engine)
 
+
 @pytest.fixture(name="session")
 def session_fixture(engine):
     with Session(engine) as session:
         yield session
+
 
 @pytest.fixture(name="client")
 def client_fixture(session):
@@ -34,6 +43,7 @@ def client_fixture(session):
     yield client
     app.dependency_overrides.clear()
 
+
 @pytest.fixture
 def create_user(session):
     def _create(
@@ -42,22 +52,46 @@ def create_user(session):
         password: str = "password",
         role: str = "student",
         is_active: bool = True,
-    ) -> User:
-        user = User(
-            id=user_id,
-            sid=sid,
-            ps=AuthService.get_password_hash(password),
-            name=user_id,
-            phone="010-0000-0000",
-            email=f"{user_id}@example.com",
-            user_group=role,
-            is_active=is_active,
-        )
-        session.add(user)
-        session.commit()
-        session.refresh(user)
-        return user
+    ):
+        return build_user(session, user_id, sid, password, role, is_active)
+
     return _create
+
+
+@pytest.fixture
+def create_homework(session):
+    def _create(
+        num: int,
+        title: str,
+        start_offset_days: int = -1,
+        deadline_offset_days: int = 2,
+    ):
+        return build_homework(
+            session,
+            num,
+            title,
+            start_offset_days=start_offset_days,
+            deadline_offset_days=deadline_offset_days,
+        )
+
+    return _create
+
+
+@pytest.fixture
+def create_submission(session):
+    def _create(**kwargs):
+        return build_submission(session, **kwargs)
+
+    return _create
+
+
+@pytest.fixture
+def create_submission_result(session):
+    def _create(submission_id: int, **kwargs):
+        return build_submission_result(session, submission_id, **kwargs)
+
+    return _create
+
 
 @pytest.fixture
 def login_user(client):
@@ -66,9 +100,9 @@ def login_user(client):
         if response.status_code == 200:
             return response.json()["access_token"]
         return None
+
     return _login
 
-from datetime import UTC, datetime, timedelta
 
 @pytest.fixture
 def dt_string():
@@ -76,10 +110,13 @@ def dt_string():
         return (
             datetime.now(UTC) + timedelta(days=offset_days, hours=offset_hours)
         ).strftime("%Y-%m-%d %H:%M:%S")
+
     return _dt
+
 
 @pytest.fixture
 def auth_headers():
     def _headers(token: str):
         return {"Authorization": f"Bearer {token}"}
+
     return _headers

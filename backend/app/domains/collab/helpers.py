@@ -1,6 +1,7 @@
 from fastapi import HTTPException, status
 from sqlmodel import Session, select
 
+from ...core.compression import compress_text, decompress_text
 from ...models.schemas import (
     CollabCodeSnapshot,
     CollabCodeSnapshotRead,
@@ -69,7 +70,7 @@ def to_collab_snapshot_read(snapshot: CollabCodeSnapshot) -> CollabCodeSnapshotR
         id=snapshot.id or 0,
         session_id=snapshot.session_id,
         user_id=snapshot.user_id,
-        code_text=snapshot.code_text,
+        code_text=decompress_text(snapshot.code_text),
         created_at=snapshot.created_at,
     )
 
@@ -112,6 +113,6 @@ def ensure_collab_snapshot(
         CollabCodeSnapshot(
             session_id=collab_session.id or 0,
             user_id=user_id,
-            code_text=collab_session.current_code,
+            code_text=compress_text(collab_session.current_code),
         )
     )

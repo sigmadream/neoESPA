@@ -4,11 +4,13 @@ import json
 from sqlmodel import Session, SQLModel, create_engine, select
 from sqlmodel.pool import StaticPool
 
+from app.core.system_settings import DEFAULT_LINT_SETTINGS
 from app.models.schemas import GradingRule, Homework, Submission, SubmissionResult, SystemSetting, User
 from app.services.auth_service import AuthService
 from app.services.code_runner import CodeRunner, PhaseExecutionResult, RunnerExecutionResult
 from app.services.grading_service import GradingService
 from app.services.lint_pipeline import LintPipelineService
+
 
 
 engine = create_engine(
@@ -250,3 +252,67 @@ def test_lint_is_saved_but_not_applied_below_threshold():
     assert result.total_score == 80.0
     assert result.grader_summary is not None
     assert "Lint was not applied to the total" in result.grader_summary
+
+def test_lint_pipeline_collects_syntax_errors_and_disallowed_names():
+    pipeline = LintPipelineService()
+
+    syntax_issues = pipeline._collect_python_issues("def broken(:\n")
+    disallowed_name_issues = pipeline._collect_python_issues(
+        "def demo(foo1, i):\n"
+        "    foo1 = foo1 + 1\n"
+        "    return i\n"
+    )
+
+    assert any(issue["rule"] == "syntax-error" for issue in syntax_issues)
+    assert any(issue["rule"] == "disallowed-name" for issue in disallowed_name_issues)
+    assert any(issue["message"] == "Disallowed name foo1" for issue in disallowed_name_issues)
+
+
+def test_lint_pipeline_message_and_setting_fallbacks():
+    pipeline = LintPipelineService()
+    pipeline.message_catalog.setdefault("pylint", {})["broken-rule"] = {
+        "eng": "(",
+        "kor": "정규식이 잘못된 경우 기본 번역을 사용합니다",
+    }
+
+    unknown_message = pipeline._render_message("pylint", "unknown-rule", "raw message")
+    broken_pattern_message = pipeline._render_message(
+        "pylint",
+        "broken-rule",
+        "raw message",
+    )
+
+    with Session(engine) as session:
+        session.add(
+            SystemSetting(
+                key="lint_set_default",
+                value="maybe",
+                value_type="boolean",
+            )
+        )
+        session.add(
+            SystemSetting(
+                key="lint_calc_weight",
+                value="not-a-number",
+                value_type="number",
+            )
+        )
+        session.commit()
+
+        default_enabled = pipeline._default_rules_enabled(session)
+        enabled_for_missing_week = pipeline._rule_enabled_for_week(
+            "pylint",
+            "line-too-long",
+            week=999,
+            session=session,
+        )
+        fallback_weight = pipeline._get_setting(session, "lint_calc_weight")
+
+    assert unknown_message == ("raw message", "")
+    assert broken_pattern_message == (
+        "raw message",
+        "정규식이 잘못된 경우 기본 번역을 사용합니다",
+    )
+    assert default_enabled is False
+    assert enabled_for_missing_week is True
+    assert fallback_weight == DEFAULT_LINT_SETTINGS["lint_calc_weight"]

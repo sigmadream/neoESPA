@@ -2,6 +2,7 @@ from datetime import UTC, datetime
 
 from sqlmodel import Session, select
 
+from ...core.compression import decompress_text
 from ...models.schemas import Homework, Submission, SubmissionRead, SubmissionResult
 
 
@@ -27,6 +28,10 @@ def effective_total_score(result: SubmissionResult | None) -> float:
     if result.manual_total_score is not None:
         return result.manual_total_score
     return result.total_score
+
+
+def submission_source_text(submission):
+    return decompress_text(submission.code_text or "")
 
 
 def to_submission_read(session: Session, submission: Submission) -> SubmissionRead:
