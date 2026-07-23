@@ -6,6 +6,7 @@ import { Calendar, ChevronRight, Hash } from 'lucide-react';
 
 import { useAuth } from '@/components/AuthProvider';
 import { getHomeworks, type HomeworkApi } from '@/lib/api';
+import { parseServerDate } from '@/lib/datetime';
 
 const STATUS_META: Record<
   HomeworkApi['schedule_status'],
@@ -115,7 +116,7 @@ export default function HomeworkListPage() {
                     <div className="flex items-center gap-4 mt-1 text-xs text-slate-500">
                       <span className="flex items-center gap-1.5 font-medium">
                         <Calendar size={12} />
-                        {hw.deadline ? new Date(hw.deadline).toLocaleDateString() : 'No deadline'}
+                        {parseServerDate(hw.deadline)?.toLocaleDateString() ?? 'No deadline'}
                       </span>
                       <span className="text-slate-300 dark:text-slate-700">|</span>
                       <span className="font-mono">{hw.codeName}</span>

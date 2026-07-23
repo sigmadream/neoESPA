@@ -8,6 +8,7 @@ import { Calendar, Clock, FileText, Settings, ShieldCheck, ChevronLeft, Download
 import { useAuth } from '@/components/AuthProvider';
 import HomeworkSubmissionPanel from '@/components/homework/HomeworkSubmissionPanel';
 import { getHomework, type HomeworkApi } from '@/lib/api';
+import { parseServerDate } from '@/lib/datetime';
 
 const STATUS_META: Record<
   HomeworkApi['schedule_status'],
@@ -141,14 +142,14 @@ export default function HomeworkDetailPage() {
                 <Calendar size={16} className="text-slate-400 mt-0.5" />
                 <div>
                   <p className="text-xs text-slate-400 font-medium mb-0.5">Start Time</p>
-                  <p className="text-sm font-semibold">{homework.starttime ? new Date(homework.starttime).toLocaleString() : 'Immediately'}</p>
+                  <p className="text-sm font-semibold">{parseServerDate(homework.starttime)?.toLocaleString() ?? 'Immediately'}</p>
                 </div>
               </div>
               <div className="flex items-start gap-3">
                 <Clock size={16} className="text-slate-400 mt-0.5" />
                 <div>
                   <p className="text-xs text-slate-400 font-medium mb-0.5">Deadline</p>
-                  <p className="text-sm font-semibold text-rose-600 dark:text-rose-400">{homework.deadline ? new Date(homework.deadline).toLocaleString() : 'No deadline'}</p>
+                  <p className="text-sm font-semibold text-rose-600 dark:text-rose-400">{parseServerDate(homework.deadline)?.toLocaleString() ?? 'No deadline'}</p>
                 </div>
               </div>
               <div className="flex items-start gap-3">

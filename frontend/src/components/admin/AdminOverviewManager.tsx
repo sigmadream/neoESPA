@@ -14,11 +14,12 @@ export default function AdminOverviewManager() {
 
   useEffect(() => {
     if (!token) return;
+    const authToken: string = token;
     let isMounted = true;
     async function loadDashboard() {
       setIsLoading(true);
       try {
-        const response = await getAdminDashboard(token);
+        const response = await getAdminDashboard(authToken);
         if (isMounted) setDashboard(response);
       } catch (error) {
         if (isMounted) setErrorMessage(error instanceof Error ? error.message : 'Failed to load dashboard.');

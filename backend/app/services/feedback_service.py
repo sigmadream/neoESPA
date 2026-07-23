@@ -41,7 +41,9 @@ class FeedbackService:
     ) -> SubmissionFeedbackRead:
         deadline_status, deadline_message = self._deadline_feedback(homework)
         latest_notice = self._latest_notice(session)
-        hints = self._build_hints(result, deadline_status, latest_notice)
+        hints = self._build_hints(
+            result, deadline_status, latest_notice, lint_enabled=homework.isLint
+        )
         coding_rule_guides = self._build_guides(session, homework)
 
         return SubmissionFeedbackRead(
@@ -88,6 +90,8 @@ class FeedbackService:
         result: SubmissionResult | None,
         deadline_status: str,
         latest_notice: NoticeRead | None,
+        *,
+        lint_enabled: bool,
     ) -> list[str]:
         hints: list[str] = []
 
@@ -99,7 +103,7 @@ class FeedbackService:
             hints.append("시간 초과가 발생했습니다. 반복문 종료 조건과 알고리즘 복잡도를 점검하세요.")
         elif result.run_status == "failed":
             hints.append("런타임 오류가 발생했습니다. 입력 처리, 인덱스 범위, 예외 케이스를 확인하세요.")
-        elif result.quality_score < 20:
+        elif lint_enabled and result.quality_score < 20:
             hints.append("기능 점수 외에 코드 품질 점수가 낮습니다. 주차별 린트 가이드를 확인하세요.")
         else:
             hints.append("채점은 완료되었습니다. 히든 케이스와 린트 피드백을 바탕으로 다음 제출을 다듬어 보세요.")

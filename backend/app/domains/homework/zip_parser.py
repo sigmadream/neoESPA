@@ -57,11 +57,15 @@ def parse_homework_testcase_archives(
             f"Testcase ZIP archives may contain at most {MAX_HOMEWORK_TESTCASE_PAIRS} file pairs"
         )
 
+    # sync_homework_rules stores each case with an explicit score, so assign the
+    # equal 100/n share here — otherwise imported homework is graded 0 points.
+    case_score = 100.0 / len(input_members)
     return [
         HomeworkTestCaseWrite(
             name=input_member.name,
             input=input_member.content,
             expected_output=output_member.content,
+            score=case_score,
         )
         for input_member, output_member in zip(
             input_members, output_members, strict=True
@@ -96,9 +100,10 @@ def _read_archive_members(
     try:
         with zipfile.ZipFile(archive_stream) as archive:
             for info in archive.infolist():
-                member_name = _validate_member_name(
-                    info.filename, archive_label, is_directory=info.is_dir()
-                )
+                if _is_ignorable_member(info.filename, is_directory=info.is_dir()):
+                    continue
+
+                member_name = _validate_member_name(info.filename, archive_label)
                 if member_name in seen_names:
                     raise HomeworkZipValidationError(
                         f"{archive_label} contains duplicate testcase name: {member_name}"
@@ -130,12 +135,22 @@ def _read_archive_members(
     return members, extracted_size
 
 
-def _validate_member_name(name: str, archive_label: str, *, is_directory: bool) -> str:
+def _is_ignorable_member(name: str, *, is_directory: bool) -> bool:
+    # Folder-compressed and Finder-produced ZIPs carry directory entries and
+    # metadata files (__MACOSX/, .DS_Store, ._*) — skip them instead of
+    # rejecting the whole archive.
+    if is_directory or not name:
+        return True
+    parts = Path(name).parts
+    if "__MACOSX" in parts:
+        return True
+    return Path(name).name.startswith(".")
+
+
+def _validate_member_name(name: str, archive_label: str) -> str:
     safe_name = Path(name).name
     if (
-        not name
-        or is_directory
-        or safe_name != name
+        not safe_name
         or name in {".", ".."}
         or ".." in name
         or "\\" in name
@@ -145,4 +160,4 @@ def _validate_member_name(name: str, archive_label: str, *, is_directory: bool) 
         raise HomeworkZipValidationError(
             f"{archive_label} contains unsupported member path: {name or '<empty>'}"
         )
-    return name
+    return safe_name

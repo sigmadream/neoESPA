@@ -11,6 +11,7 @@ import {
   type StudentDashboardApi,
   type StudentDashboardHomeworkItemApi,
 } from '@/lib/api';
+import { parseServerDate } from '@/lib/datetime';
 
 const STATUS_META: Record<
   StudentDashboardHomeworkItemApi['schedule_status'],
@@ -36,9 +37,8 @@ const STATUS_META: Record<
 
 function formatDate(value: string | null) {
   if (!value) return '-';
-  const normalized = value.includes(' ') ? value.replace(' ', 'T') : value;
-  const parsed = new Date(normalized);
-  if (Number.isNaN(parsed.getTime())) return value;
+  const parsed = parseServerDate(value);
+  if (!parsed) return value;
   return parsed.toLocaleDateString() + ' ' + parsed.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 }
 
@@ -59,11 +59,12 @@ function DashboardContent() {
 
   useEffect(() => {
     if (!token) return;
+    const authToken: string = token;
     let isMounted = true;
     async function loadDashboard() {
       setIsLoading(true);
       try {
-        const response = await getStudentDashboard(token);
+        const response = await getStudentDashboard(authToken);
         if (isMounted) setDashboard(response);
       } catch (error) {
         if (isMounted) setErrorMessage(error instanceof Error ? error.message : 'Failed to load dashboard.');

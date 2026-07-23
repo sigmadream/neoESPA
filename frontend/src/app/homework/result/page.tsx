@@ -53,16 +53,17 @@ function HomeworkResultContent() {
 
   useEffect(() => {
     if (!token) return;
+    const authToken: string = token;
     let isMounted = true;
     async function loadSubmissionData() {
       setIsLoading(true);
       try {
         if (requestedSubmissionId) {
           const sid = Number(requestedSubmissionId);
-          const detail = await getSubmission(sid, token);
+          const detail = await getSubmission(sid, authToken);
           const [relHistory, fb] = await Promise.all([
-            getMySubmissions(token, detail.homework_num),
-            getSubmissionFeedback(sid, token)
+            getMySubmissions(authToken, detail.homework_num),
+            getSubmissionFeedback(sid, authToken)
           ]);
           if (isMounted) {
             setSubmission(detail);
@@ -70,9 +71,9 @@ function HomeworkResultContent() {
             setFeedback(fb);
           }
         } else {
-          const submissions = await getMySubmissions(token);
+          const submissions = await getMySubmissions(authToken);
           if (submissions[0]) {
-            const fb = await getSubmissionFeedback(submissions[0].id, token);
+            const fb = await getSubmissionFeedback(submissions[0].id, authToken);
             if (isMounted) {
               setSubmission(submissions[0]);
               setHistory(submissions);

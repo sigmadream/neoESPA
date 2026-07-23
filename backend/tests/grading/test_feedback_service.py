@@ -69,18 +69,22 @@ def test_deadline_feedback_logic(feedback_service):
 def test_build_hints_mapping(feedback_service):
     # 컴파일 실패 시 힌트
     res_compile_fail = SubmissionResult(submission_id=1, compile_status="failed", status="graded")
-    hints = feedback_service._build_hints(res_compile_fail, "open", None)
+    hints = feedback_service._build_hints(res_compile_fail, "open", None, lint_enabled=True)
     assert any("컴파일 오류" in h for h in hints)
 
     # 타임아웃 시 힌트
     res_timeout = SubmissionResult(submission_id=1, run_status="timeout", status="graded")
-    hints = feedback_service._build_hints(res_timeout, "open", None)
+    hints = feedback_service._build_hints(res_timeout, "open", None, lint_enabled=True)
     assert any("시간 초과" in h for h in hints)
 
     # 낮은 코드 품질 점수 힌트
     res_low_quality = SubmissionResult(submission_id=1, run_status="passed", quality_score=10, status="graded")
-    hints = feedback_service._build_hints(res_low_quality, "open", None)
+    hints = feedback_service._build_hints(res_low_quality, "open", None, lint_enabled=True)
     assert any("코드 품질 점수" in h for h in hints)
+
+    # 린트가 꺼진 과제에서는 품질 점수 힌트를 보여주지 않는다
+    hints = feedback_service._build_hints(res_low_quality, "open", None, lint_enabled=False)
+    assert not any("코드 품질 점수" in h for h in hints)
 
 def test_latest_notice_filtering(feedback_service, session: Session):
     # 공지사항이 없는 경우

@@ -50,9 +50,20 @@ class GradingQueueService:
         return submission
 
     def process_next(self, session: Session) -> Submission | None:
-        while self._queue:
-            submission_id = self._queue.popleft()
-            self._enqueued_submission_ids.discard(submission_id)
+        while True:
+            if self._queue:
+                submission_id = self._queue.popleft()
+                self._enqueued_submission_ids.discard(submission_id)
+            else:
+                # The in-memory queue is lost on restart while statuses stay
+                # "pending" in the DB — fall back to the oldest pending row.
+                submission_id = session.exec(
+                    select(Submission.id)
+                    .where(Submission.status == "pending")
+                    .order_by(Submission.id)
+                ).first()
+                if submission_id is None:
+                    return None
 
             submission = session.get(Submission, submission_id)
             if submission is None:

@@ -192,19 +192,22 @@ function CollabPageContent() {
   }
 
   async function handleSendMessage() {
-    if (!token || !selectedSessionId || !chatInput.trim()) {
+    const content = chatInput.trim();
+    if (!token || !selectedSessionId || !content) {
       return;
     }
     const authToken: string = token;
 
     try {
-      await postCollabMessage(selectedSessionId, chatInput.trim(), authToken);
-      socketRef.current?.send(
-        JSON.stringify({
-          type: 'chat',
-          content: chatInput.trim(),
-        }),
-      );
+      const socket = socketRef.current;
+      if (socket && socket.readyState === WebSocket.OPEN) {
+        // The websocket handler persists the message and echoes it back via
+        // broadcast; calling the REST endpoint too would store it twice.
+        socket.send(JSON.stringify({ type: 'chat', content }));
+      } else {
+        const created = await postCollabMessage(selectedSessionId, content, authToken);
+        setMessages((current) => [...current, created]);
+      }
       setChatInput('');
     } catch (error) {
       setErrorMessage(

@@ -23,4 +23,10 @@ class CollabConnectionManager:
 
     async def broadcast(self, session_id: int, payload: dict) -> None:
         for websocket in list(self._connections.get(session_id, set())):
-            await websocket.send_json(payload)
+            try:
+                await websocket.send_json(payload)
+            except Exception:
+                # An abruptly-dropped client never raises WebSocketDisconnect in
+                # its own handler; evict it here so one dead socket cannot break
+                # broadcasts for the rest of the session.
+                self.disconnect(session_id, websocket)

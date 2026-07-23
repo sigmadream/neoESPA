@@ -81,7 +81,17 @@ def _validate_problem_file_extension(problem_filename: str) -> None:
 
 def _validate_schedule_order(starttime: str | None, deadline: str | None) -> None:
     start_at = parse_datetime(starttime)
+    if starttime and start_at is None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="starttime must be a valid ISO-8601 datetime",
+        )
     deadline_at = parse_datetime(deadline)
+    if deadline and deadline_at is None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="deadline must be a valid ISO-8601 datetime",
+        )
     if start_at is not None and deadline_at is not None and deadline_at <= start_at:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -250,6 +260,7 @@ async def create_homework(
     current_user: User = Depends(require_staff),
     session: Session = Depends(get_session),
 ):
+    _validate_schedule_order(payload.starttime, payload.deadline)
     now = datetime.now(UTC)
 
     homework = Homework(
@@ -394,7 +405,11 @@ async def import_homework(
         input_zip_path = archives_dir / "inputs.zip"
         output_zip_path = archives_dir / "outputs.zip"
 
-        homework_root.mkdir(parents=True, exist_ok=False)
+        # homework_num was just allocated, so an existing directory can only be
+        # a stale leftover (e.g. from a reseeded database) — replace it.
+        if homework_root.exists():
+            shutil.rmtree(homework_root)
+        homework_root.mkdir(parents=True)
         problem_dir.mkdir()
         archives_dir.mkdir()
 
@@ -492,6 +507,7 @@ async def update_homework(
             status_code=status.HTTP_404_NOT_FOUND, detail="Homework not found"
         )
 
+    _validate_schedule_order(payload.starttime, payload.deadline)
     homework.title = payload.title
     homework.intro = payload.intro
     homework.deadline = payload.deadline
@@ -527,7 +543,7 @@ async def delete_homework(
     current_user: User = Depends(require_staff),
     session: Session = Depends(get_session),
 ):
-    from ...models.schemas import GradingRule
+    from ...models.schemas import CodeSnapshot, CollabSession, GradingRule
 
     homework = session.get(Homework, homework_num)
     if homework is None:
@@ -560,6 +576,21 @@ async def delete_homework(
         ).all()
         for grading_rule in remaining_rules:
             session.delete(grading_rule)
+
+        # code_snapshots and collab_sessions also reference homework.num; with
+        # foreign keys enforced, leaving them behind fails the delete.
+        code_snapshots = session.exec(
+            select(CodeSnapshot).where(CodeSnapshot.homework_num == homework_num)
+        ).all()
+        for code_snapshot in code_snapshots:
+            session.delete(code_snapshot)
+
+        collab_sessions = session.exec(
+            select(CollabSession).where(CollabSession.homework_num == homework_num)
+        ).all()
+        for collab_session in collab_sessions:
+            collab_session.homework_num = None
+            session.add(collab_session)
 
         observability_service.record_audit(
             session,

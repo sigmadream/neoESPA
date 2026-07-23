@@ -72,10 +72,44 @@ def test_zip_parser_mismatched_filenames():
         parse_homework_testcase_archives(io.BytesIO(input_zip), io.BytesIO(output_zip))
     assert "matching filenames" in str(exc.value)
 
-def test_zip_parser_rejects_nested_paths():
+def test_zip_parser_flattens_nested_paths():
+    # Folder-compressed archives store members as folder/name; use the basename.
     input_zip = _build_zip([("nested/a.txt", b"1")])
-    output_zip = _build_zip([("nested/a.txt", b"1")])
+    output_zip = _build_zip([("nested/a.txt", b"out1")])
+
+    testcases = parse_homework_testcase_archives(io.BytesIO(input_zip), io.BytesIO(output_zip))
+
+    assert [testcase.name for testcase in testcases] == ["a.txt"]
+
+
+def test_zip_parser_skips_directory_and_metadata_entries():
+    members = [
+        ("inputs/", b""),
+        ("__MACOSX/._a.txt", b"junk"),
+        (".DS_Store", b"junk"),
+        ("inputs/a.txt", b"1"),
+    ]
+    input_zip = _build_zip(members)
+    output_zip = _build_zip([("a.txt", b"out1")])
+
+    testcases = parse_homework_testcase_archives(io.BytesIO(input_zip), io.BytesIO(output_zip))
+
+    assert [testcase.name for testcase in testcases] == ["a.txt"]
+
+
+def test_zip_parser_rejects_traversal_paths():
+    input_zip = _build_zip([("../a.txt", b"1")])
+    output_zip = _build_zip([("../a.txt", b"1")])
 
     with pytest.raises(HomeworkZipValidationError) as exc:
         parse_homework_testcase_archives(io.BytesIO(input_zip), io.BytesIO(output_zip))
     assert "unsupported member path" in str(exc.value).lower()
+
+
+def test_zip_parser_assigns_equal_share_scores():
+    input_zip = _build_zip([("a.txt", b"1"), ("b.txt", b"2")])
+    output_zip = _build_zip([("a.txt", b"out1"), ("b.txt", b"out2")])
+
+    testcases = parse_homework_testcase_archives(io.BytesIO(input_zip), io.BytesIO(output_zip))
+
+    assert [testcase.score for testcase in testcases] == [50.0, 50.0]

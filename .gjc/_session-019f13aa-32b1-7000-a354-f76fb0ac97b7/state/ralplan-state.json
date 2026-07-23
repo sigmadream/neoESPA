@@ -1,0 +1,28 @@
+{
+  "active": true,
+  "version": 2,
+  "current_phase": "planner",
+  "skill": "ralplan",
+  "cwd": "/Users/sd/Works/neoespa_v2",
+  "updated_at": "2026-06-29T23:51:02.265Z",
+  "session_id": "019f13aa-32b1-7000-a354-f76fb0ac97b7",
+  "receipt": {
+    "version": 1,
+    "skill": "ralplan",
+    "owner": "gjc-hook",
+    "command": "gjc-skill-invocation",
+    "state_path": "/Users/sd/Works/neoespa_v2/.gjc/state/sessions/019f13aa-32b1-7000-a354-f76fb0ac97b7/skill-active-state.json",
+    "storage_path": "/Users/sd/Works/neoespa_v2/.gjc/state/sessions/019f13aa-32b1-7000-a354-f76fb0ac97b7/ralplan-state.json",
+    "mutated_at": "2026-06-29T23:51:02.267Z",
+    "fresh_until": "2026-06-30T00:21:02.267Z",
+    "status": "fresh",
+    "mutation_id": "ralplan:2026-06-29T23:51:02.267Z",
+    "content_sha256": {
+      "algorithm": "sha256",
+      "value": "985bc15069e3d1e48c0cb425e0233ab36d45407303e7cde199f56c941a17c91e",
+      "covered_path": "/Users/sd/Works/neoespa_v2/.gjc/_session-019f13aa-32b1-7000-a354-f76fb0ac97b7/state/ralplan-state.json",
+      "computed_at": "2026-06-29T23:51:02.267Z"
+    }
+  },
+  "state_revision": 1
+}

@@ -20,11 +20,12 @@ function NotificationPageContent() {
 
   useEffect(() => {
     if (!token) return;
+    const authToken: string = token;
     let isMounted = true;
     async function loadNotifications() {
       setIsLoading(true);
       try {
-        const response = await getNotifications(token);
+        const response = await getNotifications(authToken);
         if (isMounted) setNotifications(response);
       } catch (error) {
         if (isMounted) setErrorMessage(error instanceof Error ? error.message : 'Failed to load notifications.');

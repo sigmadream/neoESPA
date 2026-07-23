@@ -128,6 +128,8 @@ export default function AdminPlagiarismManager() {
                   </button>
                 ))
               )}
+            </div>
+          </div>
           <div className="lg:col-span-2 space-y-4">
             <h3 className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-2">Source Comparison</h3>
             {selectedPair ? (

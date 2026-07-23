@@ -349,10 +349,19 @@ class GradingService:
             raise ValueError("Invalid testcase configuration")
 
         test_cases: list[HomeworkTestCase] = []
-        explicit_scores = all(
-            isinstance(item, dict) and "score" in item for item in raw_cases
+        # Cases without an explicit score share the budget left over from the
+        # explicit ones, so mixed configurations still total 100 points.
+        explicit_total = sum(
+            float(item["score"])
+            for item in raw_cases
+            if isinstance(item, dict) and "score" in item
         )
-        default_score = 100.0 / len(raw_cases) if raw_cases and not explicit_scores else 0.0
+        missing_count = sum(
+            1 for item in raw_cases if not (isinstance(item, dict) and "score" in item)
+        )
+        default_score = (
+            max(0.0, 100.0 - explicit_total) / missing_count if missing_count else 0.0
+        )
 
         for index, raw_case in enumerate(raw_cases, start=1):
             if not isinstance(raw_case, dict):
