@@ -1,7 +1,7 @@
 import { expect, type APIRequestContext, type Page } from '@playwright/test';
 
 const STORAGE_KEY = 'neoespa.auth.session';
-const BACKEND_BASE_URL = 'http://127.0.0.1:8101';
+export const BACKEND_BASE_URL = 'http://127.0.0.1:8101';
 
 export type TestUser = {
   id: string;
@@ -106,11 +106,11 @@ export async function registerViaUi(page: Page, user: TestUser) {
   await page.getByLabel('Full Name').fill(user.name);
   await page.getByLabel('User ID').fill(user.id);
   await page.getByLabel('Student ID').fill(String(user.sid));
-  await page.getByLabel('Email Address').fill(user.email);
-  await page.getByLabel('Phone Number').fill(user.phone);
+  await page.getByLabel('Email').fill(user.email);
+  await page.getByLabel('Phone').fill(user.phone);
   await page.getByLabel('Password', { exact: true }).fill(user.password);
-  await page.getByLabel('Confirm Password', { exact: true }).fill(user.password);
-  await page.getByRole('button', { name: 'Sign up' }).click();
+  await page.getByLabel('Confirm', { exact: true }).fill(user.password);
+  await page.getByRole('button', { name: 'Create Student Account' }).click();
 }
 
 export async function createHomeworkViaAdminApi(
@@ -119,6 +119,40 @@ export async function createHomeworkViaAdminApi(
 ) {
   const session = await loginViaApi(request, adminUser);
   const response = await request.post(`${BACKEND_BASE_URL}/api/admin/homeworks`, {
+    data: payload,
+    headers: {
+      Authorization: `Bearer ${session.token}`,
+    },
+  });
+  expect(response.ok()).toBeTruthy();
+  return response.json();
+}
+
+export async function updateHomeworkViaAdminApi(
+  request: APIRequestContext,
+  homeworkNum: number,
+  payload: Record<string, unknown>,
+) {
+  const session = await loginViaApi(request, adminUser);
+  const response = await request.patch(
+    `${BACKEND_BASE_URL}/api/admin/homeworks/${homeworkNum}`,
+    {
+      data: payload,
+      headers: {
+        Authorization: `Bearer ${session.token}`,
+      },
+    },
+  );
+  expect(response.ok()).toBeTruthy();
+  return response.json();
+}
+
+export async function createExamViaAdminApi(
+  request: APIRequestContext,
+  payload: Record<string, unknown>,
+) {
+  const session = await loginViaApi(request, adminUser);
+  const response = await request.post(`${BACKEND_BASE_URL}/api/admin/exams`, {
     data: payload,
     headers: {
       Authorization: `Bearer ${session.token}`,

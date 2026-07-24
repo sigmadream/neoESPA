@@ -274,6 +274,7 @@ class SubmissionRead(SQLModel):
     submission_score: float = 0.0
     quality_score: float = 0.0
     compile_status: str = "not_started"
+    compile_log: Optional[str] = None
     run_status: str = "not_started"
     grader_summary: Optional[str] = None
     manual_total_score: Optional[float] = None
@@ -558,7 +559,10 @@ class Notification(SQLModel, table=True):
 class LectureMaterialBase(SQLModel):
     title: str = Field(max_length=200)
     description: str = Field(sa_column=Column(Text, nullable=False))
-    url: str = Field(max_length=500)
+    url: str = Field(default="", max_length=500)
+    content: Optional[str] = Field(default=None, sa_column=Column(Text, nullable=True))
+    attachment_name: Optional[str] = Field(default=None, max_length=255)
+    attachment_relpath: Optional[str] = Field(default=None, max_length=500)
     is_published: bool = True
 
 
@@ -571,6 +575,31 @@ class LectureMaterial(LectureMaterialBase, table=True):
     updated_at: datetime = Field(default_factory=utc_now)
 
 
+class MaterialCommentBase(SQLModel):
+    content: str = Field(sa_column=Column(Text, nullable=False))
+
+
+class MaterialComment(MaterialCommentBase, table=True):
+    __tablename__ = "material_comments"
+
+    id: Optional[int] = Field(default=None, primary_key=True)
+    material_id: int = Field(foreign_key="lecture_materials.id", nullable=False)
+    user_id: str = Field(foreign_key="users.id", nullable=False)
+    created_at: datetime = Field(default_factory=utc_now)
+
+
+class MaterialCommentCreate(MaterialCommentBase):
+    pass
+
+
+class MaterialCommentRead(MaterialCommentBase):
+    id: int
+    material_id: int
+    user_id: str
+    user_name: Optional[str] = None
+    created_at: datetime
+
+
 class LectureMaterialWrite(LectureMaterialBase):
     pass
 
@@ -578,6 +607,7 @@ class LectureMaterialWrite(LectureMaterialBase):
 class LectureMaterialRead(LectureMaterialBase):
     id: int
     created_by: str
+    comments: list[MaterialCommentRead] = []
     created_at: datetime
     updated_at: datetime
 

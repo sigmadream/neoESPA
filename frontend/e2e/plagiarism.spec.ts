@@ -50,9 +50,9 @@ test('admin_can_compare_flagged_submissions', async ({ page, request }) => {
   await page.goto('/admin');
   await page.getByRole('button', { name: 'Plagiarism' }).click();
   await page.getByRole('combobox').selectOption(String(homework.num));
-  await page.getByRole('button', { name: 'Run scan' }).click();
+  await page.getByRole('button', { name: 'Run Scan' }).click();
 
-  await expect(page.getByText('flagged 1 pairs')).toBeVisible();
+  await expect(page.getByText('Scan complete: 1 pairs flagged.')).toBeVisible();
   await page.getByRole('button', { name: new RegExp(`${firstUser.id} vs ${secondUser.id}`) }).click();
   await expect(page.getByText("print('copied')")).toHaveCount(2);
 });

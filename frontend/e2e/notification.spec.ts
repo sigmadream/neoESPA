@@ -22,5 +22,5 @@ test('student_sees_new_notice_notification', async ({ page, request }) => {
   await page.goto('/notifications');
 
   await expect(page.getByText(`새 공지: ${notice.title}`)).toBeVisible();
-  await expect(page.getByRole('link', { name: '공지 보기' })).toBeVisible();
+  await expect(page.getByRole('link', { name: 'View Notice' })).toBeVisible();
 });

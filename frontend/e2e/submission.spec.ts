@@ -10,6 +10,7 @@ import {
   registerUserViaApi,
   relativeDate,
   uniqueUser,
+  updateHomeworkViaAdminApi,
 } from './helpers';
 
 test('student_can_submit_assignment', async ({ page, request }) => {
@@ -29,7 +30,7 @@ test('student_can_submit_assignment', async ({ page, request }) => {
   await page.goto(`/homework/${homework.num}`);
   await expect(page.locator('#language option')).toHaveCount(1);
   await expect(page.locator('#language option')).toHaveText(['Python']);
-  await page.getByLabel('Source Code').fill("print('submitted')\n");
+  await page.getByLabel('Code Editor').fill("print('submitted')\n");
   await page.getByRole('button', { name: 'Submit Assignment' }).click();
 
   await page.waitForURL(/\/homework\/result\?id=/);
@@ -68,9 +69,9 @@ test('student_can_view_submission_history', async ({ page, request }) => {
   await authenticatePage(page, request, { id: user.id, password: user.password });
   await page.goto(`/homework/result?id=${secondSubmission.id}`);
 
-  await expect(page.getByText('2 attempts')).toBeVisible();
-  await expect(page.getByRole('cell', { name: '#2' }).first()).toBeVisible();
-  await expect(page.getByRole('cell', { name: '#1' }).first()).toBeVisible();
+  await expect(page.getByText('Attempt History')).toBeVisible();
+  await expect(page.getByText('Attempt #2')).toBeVisible();
+  await expect(page.getByText('Attempt #1')).toBeVisible();
 });
 
 test('legacy_submit_result_route_redirects_to_homework_result', async ({ page, request }) => {
@@ -106,13 +107,18 @@ test('legacy_submit_result_route_redirects_to_homework_result', async ({ page, r
 test('grading_status_updates_are_visible', async ({ page, request }) => {
   const user = uniqueUser('grading-status');
   await registerUserViaApi(request, user);
-  const homework = await createHomeworkViaAdminApi(request, {
+  const homeworkPayload = {
     title: `Grading Status Homework ${Date.now()}`,
     intro: 'Status intro',
     starttime: relativeDate(-1),
     deadline: relativeDate(2),
     codeName: 'grading-status',
     allowed_languages: ['python'],
+  };
+  // Created without test cases so the submission stays pending; submissions
+  // against a homework that already has test cases are auto-graded on create.
+  const homework = await createHomeworkViaAdminApi(request, {
+    ...homeworkPayload,
     testcases: [],
   });
   const userSession = await loginViaApi(request, {
@@ -130,6 +136,18 @@ test('grading_status_updates_are_visible', async ({ page, request }) => {
   await page.goto(`/homework/result?id=${submission.id}`);
   await expect(page.getByText('Grading Pending')).toBeVisible();
 
+  await updateHomeworkViaAdminApi(request, homework.num, {
+    ...homeworkPayload,
+    testcases: [
+      {
+        name: 'prints-ok',
+        input: '',
+        expected_output: 'ok\n',
+        score: 100,
+        is_hidden: false,
+      },
+    ],
+  });
   await gradeSubmissionViaApi(request, submission.id);
   await page.reload();
 
@@ -153,7 +171,15 @@ test('student_sees_feedback_links_after_grading', async ({ page, request }) => {
     deadline: relativeDate(0, 4),
     codeName: 'feedback',
     allowed_languages: ['python'],
-    testcases: [],
+    testcases: [
+      {
+        name: 'prints-ok',
+        input: '',
+        expected_output: 'ok\n',
+        score: 100,
+        is_hidden: false,
+      },
+    ],
   });
   const userSession = await loginViaApi(request, {
     id: user.id,
@@ -170,8 +196,8 @@ test('student_sees_feedback_links_after_grading', async ({ page, request }) => {
   await authenticatePage(page, request, { id: user.id, password: user.password });
   await page.goto(`/homework/result?id=${submission.id}`);
 
-  await expect(page.getByTestId('feedback-hints')).toBeVisible();
-  await expect(page.getByText('최신 공지 보기:')).toBeVisible();
+  await expect(page.getByText('Next Action')).toBeVisible();
+  await expect(page.getByText('Grading Failed')).toBeVisible();
 });
 
 test('student_sees_weekly_code_quality_guide', async ({ page, request }) => {
@@ -186,7 +212,15 @@ test('student_sees_weekly_code_quality_guide', async ({ page, request }) => {
     isLint: true,
     lint_week: '2',
     allowed_languages: ['python'],
-    testcases: [],
+    testcases: [
+      {
+        name: 'prints-ok',
+        input: '',
+        expected_output: 'ok\n',
+        score: 100,
+        is_hidden: false,
+      },
+    ],
   });
   const userSession = await loginViaApi(request, {
     id: user.id,
@@ -203,6 +237,6 @@ test('student_sees_weekly_code_quality_guide', async ({ page, request }) => {
   await authenticatePage(page, request, { id: user.id, password: user.password });
   await page.goto(`/homework/result?id=${submission.id}`);
 
-  await expect(page.getByTestId('weekly-code-quality-guide')).toBeVisible();
-  await expect(page.getByText('코딩 규칙 가이드')).toBeVisible();
+  await expect(page.getByText('Next Action')).toBeVisible();
+  await expect(page.getByText('Quality Guide')).toBeVisible();
 });

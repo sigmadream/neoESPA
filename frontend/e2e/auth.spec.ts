@@ -32,7 +32,7 @@ test('protected_pages_redirect_when_unauthenticated', async ({ page }) => {
   await page.goto('/profile');
   await page.waitForURL(/\/login\?next=/);
 
-  await expect(page.getByRole('heading', { name: 'Sign in to neoESPA' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Sign In' })).toBeVisible();
 });
 
 test('expired_session_forces_relogin', async ({ page }) => {
@@ -59,5 +59,5 @@ test('expired_session_forces_relogin', async ({ page }) => {
   await page.goto('/profile');
   await page.waitForURL(/\/login\?next=%2Fprofile/);
 
-  await expect(page.getByRole('heading', { name: 'Sign in to neoESPA' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Sign In' })).toBeVisible();
 });

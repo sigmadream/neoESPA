@@ -99,9 +99,9 @@ export default function AdminNoticeManager() {
     <div className="space-y-8">
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         {[
-          { label: 'Total Notices', value: notices.length, icon: Megaphone },
-          { label: 'Published', value: notices.filter(n => n.is_published).length, icon: Eye },
-          { label: 'Pinned', value: notices.filter(n => n.is_pinned).length, icon: Pin },
+          { label: '총 공지사항 수', value: `${notices.length}개`, icon: Megaphone },
+          { label: '공개됨', value: `${notices.filter(n => n.is_published).length}개`, icon: Eye },
+          { label: '고정 공지', value: `${notices.filter(n => n.is_pinned).length}개`, icon: Pin },
         ].map((stat) => (
           <div key={stat.label} className="card-simple py-4 px-5">
             <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 flex items-center justify-between mb-1">
@@ -117,24 +117,24 @@ export default function AdminNoticeManager() {
         <section className="card-simple">
           <header className="flex items-center justify-between mb-6">
             <h2 className="text-sm font-bold uppercase tracking-widest text-slate-400">
-              {editingNoticeNum ? 'Edit Notice' : 'Create Notice'}
+              {editingNoticeNum ? '공지사항 수정하기' : '새 공지사항 작성하기'}
             </h2>
             {editingNoticeNum && (
               <button onClick={() => { setEditingNoticeNum(null); setForm(createEmptyForm(user?.name || '')); }} className="text-xs font-bold text-slate-400 hover:text-rose-500 flex items-center gap-1 transition-colors">
-                <X size={14} /> Cancel
+                <X size={14} /> 취소
               </button>
             )}
           </header>
 
           <form onSubmit={(e) => void handleSubmit(e)} className="space-y-5">
             <div>
-              <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">Notice Title</label>
-              <input value={form.title} onChange={e => setForm({...form, title: e.target.value})} required className="block w-full text-xs rounded border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 px-3 py-2 outline-none focus:ring-1 focus:ring-accent" placeholder="e.g. Exam Schedule Update" />
+              <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">공지 제목</label>
+              <input value={form.title} onChange={e => setForm({...form, title: e.target.value})} required className="block w-full text-xs rounded border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 px-3 py-2 outline-none focus:ring-1 focus:ring-accent" placeholder="예: 2026학년도 중간고사 일정 안내" />
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5 flex items-center gap-1.5"><User size={10} /> Author</label>
+                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5 flex items-center gap-1.5"><User size={10} /> 작성자</label>
                 <input value={form.author} onChange={e => setForm({...form, author: e.target.value})} className="block w-full text-xs rounded border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 px-3 py-2 outline-none" />
               </div>
               <div>
@@ -159,9 +159,15 @@ export default function AdminNoticeManager() {
               </label>
             </div>
 
+            {(errorMessage || successMessage) && (
+              <div className={`p-3 rounded text-[11px] font-medium border ${errorMessage ? 'bg-rose-50 border-rose-100 text-rose-600 dark:bg-rose-950/20' : 'bg-emerald-50 border-emerald-100 text-emerald-600 dark:bg-emerald-950/20'}`}>
+                {errorMessage || successMessage}
+              </div>
+            )}
+
             <button type="submit" disabled={isSaving} className="btn-flat w-full h-11 flex items-center justify-center gap-2 shadow-sm">
               {isSaving ? <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <Save size={16} />}
-              <span>{editingNoticeNum ? 'Update Notice' : 'Post Notice'}</span>
+              <span>{editingNoticeNum ? '공지 수정 내용 저장' : '공지사항 게시하기'}</span>
             </button>
           </form>
         </section>
@@ -170,16 +176,16 @@ export default function AdminNoticeManager() {
           <header className="flex items-center justify-between mb-6">
             <h2 className="text-sm font-bold uppercase tracking-widest text-slate-400 flex items-center gap-2">
               <LayoutList size={14} />
-              Notice Inventory
+              등록된 공지사항 목록
             </h2>
             <button onClick={() => void loadNotices()} className="p-1.5 rounded hover:bg-slate-50 dark:hover:bg-slate-900 text-slate-400 transition-all"><RefreshCw size={14} /></button>
           </header>
 
           <div className="space-y-3">
             {isLoading ? (
-              <div className="py-12 text-center text-xs text-slate-400 animate-pulse">Syncing notices...</div>
+              <div className="py-12 text-center text-xs text-slate-400 animate-pulse">공지사항 목록을 동기화 중입니다...</div>
             ) : notices.length === 0 ? (
-              <div className="py-12 text-center text-xs text-slate-400 border border-dashed rounded italic">No notices found.</div>
+              <div className="py-12 text-center text-xs text-slate-400 border border-dashed rounded italic">등록된 공지사항이 없습니다.</div>
             ) : (
               notices.map(n => {
                 const status = getNoticeStatus(n);

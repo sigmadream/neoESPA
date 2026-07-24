@@ -39,10 +39,10 @@ export default function AdminOverviewManager() {
     <div className="space-y-8">
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[
-          { label: 'Active Students', value: dashboard.active_students, icon: Users },
-          { label: 'Total Homeworks', value: dashboard.total_homeworks, icon: BookOpen },
-          { label: 'Total Submissions', value: dashboard.total_submissions, icon: Send },
-          { label: 'Queue Size', value: dashboard.queue.queue_size, icon: ListChecks },
+          { label: '수강 학생 수', value: `${dashboard.active_students}명`, icon: Users },
+          { label: '등록된 과제 수', value: `${dashboard.total_homeworks}개`, icon: BookOpen },
+          { label: '총 답안 제출 수', value: `${dashboard.total_submissions}건`, icon: Send },
+          { label: '대기 채점 큐', value: `${dashboard.queue.queue_size}건`, icon: ListChecks },
         ].map((stat) => (
           <div key={stat.label} className="card-simple flex flex-col justify-between py-4 px-5">
             <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 flex items-center justify-between">
@@ -57,21 +57,21 @@ export default function AdminOverviewManager() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2">
           <section className="card-simple">
-            <h2 className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-6">Homework Metrics</h2>
+            <h2 className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-6">과제별 제출 현황 및 참여율</h2>
             <div className="divide-y divide-slate-50 dark:divide-slate-900">
               {dashboard.homework_metrics.map((m) => (
                 <div key={m.homework_num} className="py-4 first:pt-0 last:pb-0 grid grid-cols-1 md:grid-cols-4 gap-4 items-center">
                   <div className="md:col-span-2 min-w-0">
                     <p className="text-sm font-bold text-slate-900 dark:text-white truncate">#{m.homework_num} {m.title}</p>
-                    <p className="text-[11px] text-slate-500 font-medium">Submission Rate: {m.submission_rate.toFixed(1)}%</p>
+                    <p className="text-[11px] text-slate-500 font-medium">제출률: {m.submission_rate.toFixed(1)}%</p>
                   </div>
                   <div className="flex flex-col">
-                    <span className="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">Participation</span>
-                    <span className="text-xs font-bold text-slate-700 dark:text-slate-300">{m.submitted_students} / {m.total_students}</span>
+                    <span className="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">제출 학생 수</span>
+                    <span className="text-xs font-bold text-slate-700 dark:text-slate-300">{m.submitted_students}명 / {m.total_students}명</span>
                   </div>
                   <div className="flex flex-col">
-                    <span className="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">Failure / Pending</span>
-                    <span className="text-xs font-bold text-rose-600 dark:text-rose-400">{m.failed_submission_count} / {m.pending_submission_count}</span>
+                    <span className="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">오류 / 대기건</span>
+                    <span className="text-xs font-bold text-rose-600 dark:text-rose-400">{m.failed_submission_count}건 / {m.pending_submission_count}건</span>
                   </div>
                 </div>
               ))}
@@ -83,16 +83,16 @@ export default function AdminOverviewManager() {
           <section className="card-simple">
             <h2 className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-5 flex items-center gap-2">
               <AlertTriangle size={14} className="text-rose-500" />
-              Failure Types
+              오류 발생 유형 분석
             </h2>
             <div className="space-y-2">
               {dashboard.failure_metrics.length === 0 ? (
-                <p className="text-xs text-slate-400 italic">No failures recorded.</p>
+                <p className="text-xs text-slate-400 italic">기록된 오류가 없습니다.</p>
               ) : (
                 dashboard.failure_metrics.map((m) => (
                   <div key={m.failure_type} className="flex items-center justify-between text-xs p-2.5 rounded bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800">
                     <span className="text-slate-600 dark:text-slate-400 font-medium">{m.failure_type}</span>
-                    <span className="font-bold text-slate-900 dark:text-white">{m.count}</span>
+                    <span className="font-bold text-slate-900 dark:text-white">{m.count}건</span>
                   </div>
                 ))
               )}
@@ -102,7 +102,7 @@ export default function AdminOverviewManager() {
           <section className="card-simple">
             <h2 className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-5 flex items-center gap-2">
               <Activity size={14} className="text-accent" />
-              System Events
+              실시간 시스템 이벤트
             </h2>
             <div className="space-y-3">
               {dashboard.recent_events.slice(0, 5).map((e) => (

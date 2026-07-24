@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { Bell, CheckCheck, ExternalLink, Calendar } from 'lucide-react';
 
 import AuthGate from '@/components/AuthGate';
@@ -124,7 +124,9 @@ function NotificationPageContent() {
 export default function NotificationPage() {
   return (
     <AuthGate>
-      <NotificationPageContent />
+      <Suspense fallback={<div className="py-20 text-center text-slate-400 font-medium animate-pulse">Loading notifications...</div>}>
+        <NotificationPageContent />
+      </Suspense>
     </AuthGate>
   );
 }

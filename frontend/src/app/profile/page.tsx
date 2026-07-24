@@ -128,16 +128,16 @@ function ProfilePageContent() {
 
             <div className="grid gap-6 sm:grid-cols-2">
               <div className="sm:col-span-2">
-                <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Name</label>
-                <input name="name" value={form.name} onChange={handleChange} className="block w-full text-sm rounded border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 px-3 py-2.5 outline-none focus:ring-1 focus:ring-accent" required />
+                <label htmlFor="profile-name" className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Name</label>
+                <input id="profile-name" name="name" value={form.name} onChange={handleChange} className="block w-full text-sm rounded border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 px-3 py-2.5 outline-none focus:ring-1 focus:ring-accent" required />
               </div>
               <div>
-                <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-1.5"><Phone size={12} /> Phone</label>
-                <input name="phone" value={form.phone} onChange={handleChange} className="block w-full text-sm rounded border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 px-3 py-2.5 outline-none focus:ring-1 focus:ring-accent" required />
+                <label htmlFor="profile-phone" className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-1.5"><Phone size={12} /> Phone</label>
+                <input id="profile-phone" name="phone" value={form.phone} onChange={handleChange} className="block w-full text-sm rounded border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 px-3 py-2.5 outline-none focus:ring-1 focus:ring-accent" required />
               </div>
               <div>
-                <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-1.5"><Mail size={12} /> Email</label>
-                <input type="email" name="email" value={form.email} onChange={handleChange} className="block w-full text-sm rounded border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 px-3 py-2.5 outline-none focus:ring-1 focus:ring-accent" required />
+                <label htmlFor="profile-email" className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-1.5"><Mail size={12} /> Email</label>
+                <input id="profile-email" type="email" name="email" value={form.email} onChange={handleChange} className="block w-full text-sm rounded border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 px-3 py-2.5 outline-none focus:ring-1 focus:ring-accent" required />
               </div>
             </div>
 
@@ -163,16 +163,16 @@ function ProfilePageContent() {
             </h2>
             
             <div>
-              <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Current Password</label>
-              <input type="password" name="currentPassword" value={passwordForm.currentPassword} onChange={handlePasswordChange} className="block w-full text-sm rounded border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 px-3 py-2 outline-none focus:ring-1 focus:ring-accent" required />
+              <label htmlFor="profile-current-password" className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Current Password</label>
+              <input id="profile-current-password" type="password" name="currentPassword" value={passwordForm.currentPassword} onChange={handlePasswordChange} className="block w-full text-sm rounded border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 px-3 py-2 outline-none focus:ring-1 focus:ring-accent" required />
             </div>
             <div>
-              <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">New Password</label>
-              <input type="password" name="newPassword" value={passwordForm.newPassword} onChange={handlePasswordChange} className="block w-full text-sm rounded border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 px-3 py-2 outline-none focus:ring-1 focus:ring-accent" required />
+              <label htmlFor="profile-new-password" className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">New Password</label>
+              <input id="profile-new-password" type="password" name="newPassword" value={passwordForm.newPassword} onChange={handlePasswordChange} className="block w-full text-sm rounded border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 px-3 py-2 outline-none focus:ring-1 focus:ring-accent" required />
             </div>
             <div>
-              <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Confirm New Password</label>
-              <input type="password" name="confirmPassword" value={passwordForm.confirmPassword} onChange={handlePasswordChange} className="block w-full text-sm rounded border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 px-3 py-2 outline-none focus:ring-1 focus:ring-accent" required />
+              <label htmlFor="profile-confirm-password" className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Confirm New Password</label>
+              <input id="profile-confirm-password" type="password" name="confirmPassword" value={passwordForm.confirmPassword} onChange={handlePasswordChange} className="block w-full text-sm rounded border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 px-3 py-2 outline-none focus:ring-1 focus:ring-accent" required />
             </div>
 
             {(passwordErrorMessage || passwordSuccessMessage) && (

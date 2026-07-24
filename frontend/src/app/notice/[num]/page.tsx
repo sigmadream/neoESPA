@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { User, Calendar, Pin, ChevronLeft, LayoutList } from 'lucide-react';
 
 import { useAuth } from '@/components/AuthProvider';
+import MarkdownContent from '@/components/MarkdownContent';
 import { getNotice, type NoticeApi } from '@/lib/api';
 
 export default function NoticeDetailPage() {
@@ -96,8 +97,8 @@ export default function NoticeDetailPage() {
         </div>
       </header>
 
-      <article className="prose dark:prose-invert max-w-none text-slate-700 dark:text-slate-300 leading-relaxed whitespace-pre-line mb-16">
-        {notice.content}
+      <article className="mb-16">
+        <MarkdownContent content={notice.content} />
       </article>
 
       <footer className="pt-8 border-t border-slate-100 dark:border-slate-800">

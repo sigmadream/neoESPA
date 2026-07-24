@@ -12,8 +12,9 @@ import {
 test('student_submission_flow', async ({ page, request }) => {
   const user = uniqueUser('full-flow');
   await registerUserViaApi(request, user);
+  const homeworkTitle = `Full Flow Homework ${Date.now()}`;
   const homework = await createHomeworkViaAdminApi(request, {
-    title: `Full Flow Homework ${Date.now()}`,
+    title: homeworkTitle,
     intro: 'Flow intro',
     starttime: relativeDate(-1),
     deadline: relativeDate(2),
@@ -35,7 +36,7 @@ test('student_submission_flow', async ({ page, request }) => {
   await page.getByText(`Full Flow Homework`).click();
   await expect(page).toHaveURL(new RegExp(`/homework/${homework.num}$`));
 
-  await page.getByLabel('Source Code').fill(
+  await page.getByLabel('Code Editor').fill(
     'a, b = map(int, input().split())\nprint(a + b)\n',
   );
   await page.getByRole('button', { name: 'Submit Assignment' }).click();
@@ -49,8 +50,6 @@ test('student_submission_flow', async ({ page, request }) => {
   await expect(page.getByText('Grading Complete')).toBeVisible();
   await page.goto('/dashboard');
   await expect(
-    page.getByRole('link', {
-      name: new RegExp(`#${homework.num}\\s+Full Flow Homework`),
-    }).first(),
+    page.getByRole('link', { name: homeworkTitle }).first(),
   ).toBeVisible();
 });

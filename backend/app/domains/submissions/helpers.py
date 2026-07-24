@@ -56,6 +56,7 @@ def to_submission_read(session: Session, submission: Submission) -> SubmissionRe
         submission_score=result.submission_score if result is not None else 0.0,
         quality_score=result.quality_score if result is not None else 0.0,
         compile_status=result.compile_status if result is not None else "not_started",
+        compile_log=result.compile_log if result is not None else None,
         run_status=result.run_status if result is not None else "not_started",
         grader_summary=result.grader_summary if result is not None else None,
         manual_total_score=result.manual_total_score if result is not None else None,

@@ -17,6 +17,9 @@ from ..domains.submissions.router import router as submissions_router
 from ..domains.users.router import router as users_router
 
 
+from ..domains.qa.router import router as qa_router
+
+
 router = APIRouter()
 
 
@@ -41,6 +44,7 @@ for child_router in [
     plagiarism_router,
     exams_router,
     collab_router,
+    qa_router,
 ]:
     router.include_router(child_router)
 

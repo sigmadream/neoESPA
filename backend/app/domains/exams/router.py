@@ -62,6 +62,42 @@ def create_exam(
     return to_exam_read(exam)
 
 
+@router.get("/exams/{exam_id}", response_model=ExamRead)
+def get_exam(
+    exam_id: int,
+    current_user: User | None = Depends(get_optional_current_user),
+    session: Session = Depends(get_session),
+):
+    exam = session.get(Exam, exam_id)
+    if exam is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Exam not found")
+
+    schedule_status, _ = compute_schedule_window(exam.starttime, exam.deadline)
+    if schedule_status == "upcoming" and not is_staff(current_user):
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Exam not found")
+
+    return to_exam_read(exam)
+
+
+@router.get("/exams/{exam_id}/submissions", response_model=list[ExamSubmissionRead])
+def list_exam_submissions(
+    exam_id: int,
+    current_user: User = Depends(get_current_active_user),
+    session: Session = Depends(get_session),
+):
+    exam = session.get(Exam, exam_id)
+    if exam is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Exam not found")
+
+    submissions = session.exec(
+        select(ExamSubmission)
+        .where(ExamSubmission.exam_id == exam_id, ExamSubmission.user_id == current_user.id)
+        .order_by(ExamSubmission.id.desc())
+    ).all()
+
+    return [to_exam_submission_read(s) for s in submissions]
+
+
 @router.post(
     "/exams/{exam_id}/submit",
     response_model=ExamSubmissionRead,

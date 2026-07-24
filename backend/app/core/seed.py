@@ -14,10 +14,10 @@ SEEDED_USERS = [
     {
         "id": "admin",
         "sid": 100000001,
-        "password": "pllab818",
+        "password": "admin",
         "name": "Administrator",
-        "phone": "051-510-3939",
-        "email": "pllab@pusan.ac.kr",
+        "phone": "051-1234-5678",
+        "email": "admin@pusan.ac.kr",
         "user_group": "admin",
     },
     {
@@ -25,8 +25,8 @@ SEEDED_USERS = [
         "sid": 12345678,
         "password": "qwer1234",
         "name": "Practice User",
-        "phone": "010-0000-0000",
-        "email": "test@example.com",
+        "phone": "010-1234-5678",
+        "email": "testuser@example.com",
         "user_group": "student",
     },
 ]
@@ -35,7 +35,30 @@ SEEDED_HOMEWORKS = [
     {
         "num": 1,
         "title": "Sample Problem: A+B",
-        "intro": "Write a program that takes two integers A and B, and prints their sum.",
+        "intro": (
+            "## 문제 설명\n"
+            "두 정수 `A`와 `B`를 입력받아 두 수의 합(`A + B`)을 출력하는 프로그램을 작성하세요.\n\n"
+            "## 입출력 요구사항\n"
+            "- **입력 형식**: 표준 입력(`stdin`)으로 한 줄에 공백으로 구분된 두 정수 `A`와 `B`가 주어집니다. (예: `1 2`)\n"
+            "- **출력 형식**: 표준 출력(`stdout`)으로 `A + B`의 덧셈 결과를 출력합니다. (예: `3`)\n\n"
+            "## 언어별 구현 예시\n\n"
+            "### Python 구현\n"
+            "```python\n"
+            "a, b = map(int, input().split())\n"
+            "print(a + b)\n"
+            "```\n\n"
+            "### C 언어 구현\n"
+            "```c\n"
+            "#include <stdio.h>\n\n"
+            "int main(void) {\n"
+            "    int a = 0, b = 0;\n"
+            "    if (scanf(\"%d %d\", &a, &b) == 2) {\n"
+            "        printf(\"%d\\n\", a + b);\n"
+            "    }\n"
+            "    return 0;\n"
+            "}\n"
+            "```"
+        ),
         "deadline": "2026-12-31 23:59:59",
         "codeName": "aplusb",
         "starttime": "2026-03-01 00:00:00",
@@ -71,7 +94,14 @@ SEEDED_NOTICES = [
         "num": 1,
         "title": "Welcome to neoESPA",
         "author": "Administrator",
-        "content": "Read the first assignment and verify that your account can log in before the first deadline.",
+        "content": (
+            "## 환영합니다!\n\n"
+            "neoESPA 시스템에 오신 것을 환영합니다. 본 플랫폼에서는 **프로그래밍 과제 제출**, **자동 채점**, **코드 품질 피드백**을 제공합니다.\n\n"
+            "### 유의 사항 안내\n"
+            "- 첫 과제 마감 전 로그인 가능 여부를 반드시 확인하세요.\n"
+            "- 제출 시 기능 점수 외에도 주차별 코드 스타일(Lint) 점수가 반영됩니다.\n"
+            "- 문의 사항은 **Q&A 게시판**을 활용해 주세요."
+        ),
         "date": "2026-03-01 09:00:00",
         "is_pinned": True,
         "is_published": True,

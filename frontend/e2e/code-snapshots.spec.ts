@@ -1,8 +1,11 @@
 import { expect, test } from '@playwright/test';
 
 import {
+  BACKEND_BASE_URL,
+  adminUser,
   authenticatePage,
   createHomeworkViaAdminApi,
+  loginViaApi,
   registerUserViaApi,
   relativeDate,
   uniqueUser,
@@ -65,9 +68,23 @@ test('admin_can_view_student_snapshot_timeline', async ({ page, request }) => {
   
   // 2. Student types version 2 (Must be different content)
   // Wait longer to avoid rapid collision and clear debounce
-  await page.waitForTimeout(5000); 
+  await page.waitForTimeout(5000);
   await editor.fill("print('version two is different')");
-  await expect(page.getByText('Saved')).toBeVisible({ timeout: 15000 });
+
+  // Autosave is debounced, so wait until the second snapshot is actually
+  // persisted before leaving the page.
+  const adminSession = await loginViaApi(request, adminUser);
+  await expect
+    .poll(async () => {
+      const response = await request.get(
+        `${BACKEND_BASE_URL}/api/admin/homeworks/${homework.num}/snapshots/${user.id}`,
+        { headers: { Authorization: `Bearer ${adminSession.token}` } },
+      );
+      if (!response.ok()) return 0;
+      const snapshots = (await response.json()) as unknown[];
+      return Array.isArray(snapshots) ? snapshots.length : 0;
+    }, { timeout: 20_000 })
+    .toBeGreaterThanOrEqual(2);
 
   // 3. Login as Admin and check timeline
   await authenticatePage(page, request, { id: 'admin', password: 'pllab818' });

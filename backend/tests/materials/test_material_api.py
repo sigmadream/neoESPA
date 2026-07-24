@@ -98,3 +98,130 @@ def test_admin_can_create_material_and_students_see_only_published_items():
         "Week 7 Draft",
         "Week 6 Slides",
     ]
+
+
+def test_material_update_delete_and_comments():
+    with Session(engine) as session:
+        _create_user(session, "mat-admin", 10057002, "admin")
+        _create_user(session, "mat-student", 20257002, "student")
+
+        def get_session_override():
+            return session
+
+        app.dependency_overrides[get_session] = get_session_override
+        client = TestClient(app)
+
+        admin_token = _login(client, "mat-admin")
+        student_token = _login(client, "mat-student")
+
+        create_resp = client.post(
+            "/api/admin/materials",
+            json={
+                "title": "C Programming Guide",
+                "description": "Pointers and memory",
+                "url": "https://example.com/c.pdf",
+                "content": "Detailed article content here",
+                "is_published": True,
+            },
+            headers={"Authorization": f"Bearer {admin_token}"},
+        )
+        mat_id = create_resp.json()["id"]
+
+        get_resp = client.get(f"/api/materials/{mat_id}", headers={"Authorization": f"Bearer {student_token}"})
+        assert get_resp.status_code == 200
+        assert get_resp.json()["content"] == "Detailed article content here"
+
+        comment_resp = client.post(
+            f"/api/materials/{mat_id}/comments",
+            json={"content": "Great guide!"},
+            headers={"Authorization": f"Bearer {student_token}"},
+        )
+        assert comment_resp.status_code == 200
+        assert len(comment_resp.json()["comments"]) == 1
+        assert comment_resp.json()["comments"][0]["content"] == "Great guide!"
+
+        update_resp = client.patch(
+            f"/api/admin/materials/{mat_id}",
+            json={
+                "title": "C Programming Guide (Updated)",
+                "description": "Updated description",
+                "url": "https://example.com/c_v2.pdf",
+                "content": "Updated content",
+                "is_published": True,
+            },
+            headers={"Authorization": f"Bearer {admin_token}"},
+        )
+        assert update_resp.status_code == 200
+        assert update_resp.json()["title"] == "C Programming Guide (Updated)"
+
+        del_resp = client.delete(f"/api/admin/materials/{mat_id}", headers={"Authorization": f"Bearer {admin_token}"})
+        assert del_resp.status_code == 200
+
+        app.dependency_overrides.clear()
+
+
+def test_material_attachment_upload_and_download(tmp_path, monkeypatch):
+    from app.domains.materials import router as materials_router
+
+    monkeypatch.setattr(
+        materials_router,
+        "_get_material_attachment_root",
+        lambda: tmp_path,
+    )
+
+    with Session(engine) as session:
+        _create_user(session, "att-admin", 10057003, "admin")
+        _create_user(session, "att-student", 20257003, "student")
+
+        def get_session_override():
+            return session
+
+        app.dependency_overrides[get_session] = get_session_override
+        client = TestClient(app)
+
+        admin_token = _login(client, "att-admin")
+        student_token = _login(client, "att-student")
+
+        create_resp = client.post(
+            "/api/admin/materials",
+            json={
+                "title": "Slides with attachment",
+                "description": "Week 1 slides",
+                "url": "",
+                "is_published": True,
+            },
+            headers={"Authorization": f"Bearer {admin_token}"},
+        )
+        assert create_resp.status_code == 200
+        mat_id = create_resp.json()["id"]
+
+        upload_resp = client.post(
+            f"/api/admin/materials/{mat_id}/attachment",
+            files={"upload": ("week1.pdf", b"%PDF-1.4 fake-content", "application/pdf")},
+            headers={"Authorization": f"Bearer {admin_token}"},
+        )
+        assert upload_resp.status_code == 200
+        assert upload_resp.json()["attachment_name"] == "week1.pdf"
+        assert upload_resp.json()["attachment_relpath"] == f"{mat_id}/week1.pdf"
+
+        student_upload_resp = client.post(
+            f"/api/admin/materials/{mat_id}/attachment",
+            files={"upload": ("week1.pdf", b"nope", "application/pdf")},
+            headers={"Authorization": f"Bearer {student_token}"},
+        )
+        assert student_upload_resp.status_code == 403
+
+        download_resp = client.get(
+            f"/api/materials/{mat_id}/attachment",
+            headers={"Authorization": f"Bearer {student_token}"},
+        )
+        assert download_resp.status_code == 200
+        assert download_resp.content == b"%PDF-1.4 fake-content"
+
+        missing_resp = client.get(
+            "/api/materials/999999/attachment",
+            headers={"Authorization": f"Bearer {student_token}"},
+        )
+        assert missing_resp.status_code == 404
+
+        app.dependency_overrides.clear()

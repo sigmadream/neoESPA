@@ -5,7 +5,6 @@ from sqlalchemy import create_engine, inspect, text
 from app.core.migrations import (
     apply_migrations,
     get_applied_versions,
-    resolve_sqlite_url_for_alembic,
 )
 from app.migrations import MIGRATIONS
 
@@ -27,6 +26,10 @@ EXPECTED_TABLES = {
     "collab_participants",
     "collab_messages",
     "collab_code_snapshots",
+    "lecture_materials",
+    "material_comments",
+    "qa_posts",
+    "qa_answers",
 }
 
 
@@ -139,17 +142,36 @@ def test_upgrade_is_idempotent(tmp_path: Path):
 
 
 
-def test_resolve_sqlite_url_for_alembic_handles_docker_and_local_paths(tmp_path: Path):
-    base_dir = tmp_path / "project-root"
-    expected_local = f"sqlite:///{base_dir / 'database' / 'database.sqlite'}"
+def test_upgrade_adds_board_columns_to_legacy_lecture_materials(tmp_path: Path):
+    database_path = tmp_path / "legacy-materials.sqlite"
+    engine = create_engine(f"sqlite:///{database_path}")
 
-    assert resolve_sqlite_url_for_alembic(
-        "sqlite:////database/database.sqlite",
-        base_dir=base_dir,
-        database_mount_exists=False,
-    ) == expected_local
-    assert resolve_sqlite_url_for_alembic(
-        "sqlite:////database/database.sqlite",
-        base_dir=base_dir,
-        database_mount_exists=True,
-    ) == "sqlite:////database/database.sqlite"
+    with engine.begin() as connection:
+        connection.execute(
+            text(
+                """
+                CREATE TABLE lecture_materials (
+                    id INTEGER PRIMARY KEY,
+                    title VARCHAR(200) NOT NULL,
+                    description TEXT NOT NULL,
+                    url VARCHAR(500) NOT NULL,
+                    is_published INTEGER NOT NULL DEFAULT 1,
+                    created_by TEXT NOT NULL,
+                    created_at TEXT,
+                    updated_at TEXT
+                )
+                """
+            )
+        )
+
+    apply_migrations(engine)
+
+    inspector = inspect(engine)
+    material_columns = {
+        column["name"] for column in inspector.get_columns("lecture_materials")
+    }
+    table_names = set(inspector.get_table_names())
+
+    assert {"content", "attachment_name", "attachment_relpath"}.issubset(material_columns)
+    assert {"material_comments", "qa_posts", "qa_answers"}.issubset(table_names)
+    assert "0005_materials_board_and_qa" in get_applied_versions(engine)

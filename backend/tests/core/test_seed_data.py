@@ -34,7 +34,7 @@ def test_seed_creates_admin_and_sample_homework():
 
         assert admin is not None
         assert admin.user_group == "admin"
-        assert AuthService.verify_password("pllab818", admin.ps)
+        assert AuthService.verify_password("admin", admin.ps)
 
         assert practice_user is not None
         assert AuthService.verify_password("qwer1234", practice_user.ps)

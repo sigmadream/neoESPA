@@ -72,7 +72,7 @@ test('student_can_view_personal_progress', async ({ page, request }) => {
       name: new RegExp(`#${pendingHomework.num}\\s+Dashboard Pending Homework`),
     }).first(),
   ).toBeVisible();
-  await expect(page.getByText('제출 완료').first()).toBeVisible();
-  await expect(page.getByText('채점 대기').first()).toBeVisible();
-  await expect(page.getByText('최근 평균 점수').first()).toBeVisible();
+  await expect(page.getByText('Submitted').first()).toBeVisible();
+  await expect(page.getByText('Pending').first()).toBeVisible();
+  await expect(page.getByText('Avg Score').first()).toBeVisible();
 });

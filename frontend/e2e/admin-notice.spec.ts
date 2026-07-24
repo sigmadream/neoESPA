@@ -10,12 +10,11 @@ test('admin_can_publish_notice', async ({ page, browser }) => {
   await page.goto('/admin');
   await page.getByRole('button', { name: 'Notices' }).click();
 
-  await page.getByLabel('Title').fill(title);
-  await page.getByLabel('Author').fill('Administrator');
-  await page.getByLabel('Content').fill('Notice created from Playwright.');
-  await page.getByRole('button', { name: 'Create notice' }).click();
+  await page.getByPlaceholder('e.g. Exam Schedule Update').fill(title);
+  await page.getByPlaceholder('Enter content here...').fill('Notice created from Playwright.');
+  await page.getByRole('button', { name: 'Post Notice' }).click();
 
-  await expect(page.getByText('Notice created successfully.')).toBeVisible();
+  await expect(page.getByText('Notice created.')).toBeVisible();
 
   const publicPage = await browser.newPage();
   await publicPage.goto('/notice');

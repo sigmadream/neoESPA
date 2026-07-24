@@ -17,7 +17,7 @@ from .domains.users.serializers import to_user_read as _to_user_read
 async def lifespan(app: FastAPI):
     settings.validate_security()
     apply_migrations(engine)
-    if os.getenv("APP_ENV", "production") == "development":
+    if settings.ENVIRONMENT == "development":
         from .core.seed import seed_database
 
         seed_database(engine)
@@ -33,14 +33,7 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:3000",
-        "http://127.0.0.1:3000",
-        "http://localhost:3001",
-        "http://127.0.0.1:3001",
-        "http://localhost:3101",
-        "http://127.0.0.1:3101",
-    ],
+    allow_origins=settings.CORS_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

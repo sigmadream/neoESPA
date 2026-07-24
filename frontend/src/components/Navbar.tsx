@@ -1,25 +1,30 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useSyncExternalStore } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useTheme } from 'next-themes';
 import { Sun, Moon, Monitor, LogOut } from 'lucide-react';
 
 import { useAuth } from '@/components/AuthProvider';
+import { useTranslation } from '@/i18n/LanguageContext';
 import { getNotifications } from '@/lib/api';
+
+const subscribeToNothing = () => () => {};
 
 const Navbar = () => {
   const { theme, setTheme } = useTheme();
   const { token, user, isAuthenticated, isLoading, logout } = useAuth();
+  const { t } = useTranslation();
   const router = useRouter();
-  const [isThemeMounted, setIsThemeMounted] = useState(false);
+
+  const isThemeMounted = useSyncExternalStore(
+    subscribeToNothing,
+    () => true,
+    () => false,
+  );
   const [unreadNotificationCount, setUnreadNotificationCount] = useState(0);
   const displayedNotificationCount = token ? unreadNotificationCount : 0;
-
-  useEffect(() => {
-    setIsThemeMounted(true);
-  }, []);
 
   useEffect(() => {
     if (!token) return;
@@ -49,14 +54,16 @@ const Navbar = () => {
           </Link>
           <div className="hidden md:flex items-center gap-8 text-sm font-medium">
             {isAuthenticated && (
-              <Link href="/dashboard" className="text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transition-colors">대시보드</Link>
+              <Link href="/dashboard" className="text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transition-colors">{t.nav.dashboard}</Link>
             )}
-            <Link href="/homework" className="text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transition-colors">과제</Link>
-            <Link href="/notice" className="text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transition-colors">공지사항</Link>
-            <Link href="/materials" className="text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transition-colors">강의자료</Link>
+            <Link href="/homework" className="text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transition-colors">{t.nav.homework}</Link>
+            <Link href="/exam" className="text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transition-colors">{t.nav.exam}</Link>
+            <Link href="/notice" className="text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transition-colors">{t.nav.notices}</Link>
+            <Link href="/materials" className="text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transition-colors">{t.nav.materials}</Link>
+            <Link href="/qa" className="text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transition-colors">{t.nav.qa}</Link>
             {isAuthenticated && (
               <Link href="/notifications" className="relative text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transition-colors">
-                알림
+                {t.nav.notifications}
                 {displayedNotificationCount > 0 && (
                   <span className="absolute -top-1.5 -right-2.5 flex h-4 w-4 items-center justify-center rounded-full bg-blue-600 text-[10px] font-bold text-white">
                     {displayedNotificationCount}
@@ -65,7 +72,7 @@ const Navbar = () => {
               </Link>
             )}
             {user && ['admin', 'instructor', 'ta'].includes(user.user_group) && (
-              <Link href="/admin" className="text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transition-colors font-semibold">Admin</Link>
+              <Link href="/admin" className="text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transition-colors font-semibold">{t.nav.admin}</Link>
             )}
           </div>
         </div>
@@ -87,15 +94,14 @@ const Navbar = () => {
               <button
                 onClick={() => { logout(); router.push('/login'); }}
                 className="text-slate-400 hover:text-rose-600 transition-colors"
-                title="로그아웃"
+                title={t.nav.logout}
               >
                 <LogOut size={18} />
               </button>
             </div>
           ) : (
             <div className="flex items-center gap-3">
-              <Link href="/login" className="text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors px-2 py-1">로그인</Link>
-              <Link href="/register" className="btn-flat text-xs">회원가입</Link>
+              <Link href="/login" className="text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors px-2 py-1">{t.nav.login}</Link>
             </div>
           )}
         </div>

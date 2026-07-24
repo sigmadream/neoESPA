@@ -7,6 +7,7 @@ import { Calendar, Clock, FileText, Settings, ShieldCheck, ChevronLeft, Download
 
 import { useAuth } from '@/components/AuthProvider';
 import HomeworkSubmissionPanel from '@/components/homework/HomeworkSubmissionPanel';
+import MarkdownContent from '@/components/MarkdownContent';
 import { getHomework, type HomeworkApi } from '@/lib/api';
 import { parseServerDate } from '@/lib/datetime';
 
@@ -122,11 +123,9 @@ export default function HomeworkDetailPage() {
           <section className="card-simple">
             <h2 className="text-sm font-bold uppercase tracking-wider text-slate-400 mb-4 flex items-center gap-2">
               <FileText size={16} />
-              Assignment Description
+              과제 설명 및 작성 지침
             </h2>
-            <div className="prose dark:prose-invert max-w-none text-slate-600 dark:text-slate-300 leading-relaxed whitespace-pre-line">
-              {homework.intro}
-            </div>
+            <MarkdownContent content={homework.intro} />
           </section>
 
           <section id="submission-panel">
@@ -136,34 +135,34 @@ export default function HomeworkDetailPage() {
 
         <aside className="space-y-6">
           <section className="card-simple bg-slate-50/50 dark:bg-slate-900/20">
-            <h2 className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-5">Details</h2>
+            <h2 className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-5">과제 주요 제출 정보</h2>
             <div className="space-y-4">
               <div className="flex items-start gap-3">
                 <Calendar size={16} className="text-slate-400 mt-0.5" />
                 <div>
-                  <p className="text-xs text-slate-400 font-medium mb-0.5">Start Time</p>
-                  <p className="text-sm font-semibold">{parseServerDate(homework.starttime)?.toLocaleString() ?? 'Immediately'}</p>
+                  <p className="text-xs text-slate-400 font-medium mb-0.5">제출 시작 일시</p>
+                  <p className="text-sm font-semibold">{parseServerDate(homework.starttime)?.toLocaleString() ?? '즉시 제출 가능'}</p>
                 </div>
               </div>
               <div className="flex items-start gap-3">
                 <Clock size={16} className="text-slate-400 mt-0.5" />
                 <div>
-                  <p className="text-xs text-slate-400 font-medium mb-0.5">Deadline</p>
-                  <p className="text-sm font-semibold text-rose-600 dark:text-rose-400">{parseServerDate(homework.deadline)?.toLocaleString() ?? 'No deadline'}</p>
+                  <p className="text-xs text-slate-400 font-medium mb-0.5">제출 마감 일시</p>
+                  <p className="text-sm font-semibold text-rose-600 dark:text-rose-400">{parseServerDate(homework.deadline)?.toLocaleString() ?? '마감 기한 없음'}</p>
                 </div>
               </div>
               <div className="flex items-start gap-3">
                 <ShieldCheck size={16} className="text-slate-400 mt-0.5" />
                 <div>
-                  <p className="text-xs text-slate-400 font-medium mb-0.5">Submissions</p>
-                  <p className="text-sm font-semibold">{homework.sbnum} attempts max</p>
+                  <p className="text-xs text-slate-400 font-medium mb-0.5">최대 제출 가능 횟수</p>
+                  <p className="text-sm font-semibold">최대 {homework.sbnum}회 제출 가능</p>
                 </div>
               </div>
               <div className="flex items-start gap-3">
                 <Settings size={16} className="text-slate-400 mt-0.5" />
                 <div>
-                  <p className="text-xs text-slate-400 font-medium mb-0.5">Constraints</p>
-                  <p className="text-sm font-semibold">{homework.sec}s limit, {homework.ratedatanum} cases</p>
+                  <p className="text-xs text-slate-400 font-medium mb-0.5">시스템 제한사항</p>
+                  <p className="text-sm font-semibold">실행시간 {homework.sec}초 제한, 채점 {homework.ratedatanum}개 케이스</p>
                 </div>
               </div>
             </div>
@@ -171,7 +170,7 @@ export default function HomeworkDetailPage() {
 
           {policyItems.length > 0 && (
             <section className="card-simple border-slate-100 dark:border-slate-800">
-              <h2 className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-4">Policies</h2>
+              <h2 className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-4">제출 규칙 및 평가 정책</h2>
               <ul className="space-y-2">
                 {policyItems.map((item) => (
                   <li key={item} className="text-sm flex items-center gap-2 text-slate-600 dark:text-slate-400">

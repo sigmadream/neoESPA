@@ -181,11 +181,24 @@ export type NoticeAdminPayload = {
   is_published: boolean;
 };
 
+export type MaterialCommentApi = {
+  id: number;
+  material_id: number;
+  user_id: string;
+  user_name: string | null;
+  content: string;
+  created_at: string;
+};
+
 export type LectureMaterialApi = {
   id: number;
   title: string;
   description: string;
   url: string;
+  content: string | null;
+  attachment_name: string | null;
+  attachment_relpath: string | null;
+  comments: MaterialCommentApi[];
   is_published: boolean;
   created_by: string;
   created_at: string;
@@ -196,6 +209,7 @@ export type LectureMaterialPayload = {
   title: string;
   description: string;
   url: string;
+  content?: string | null;
   is_published: boolean;
 };
 
@@ -215,6 +229,7 @@ export type SubmissionApi = {
   submission_score: number;
   quality_score: number;
   compile_status: string;
+  compile_log: string | null;
   run_status: string;
   grader_summary: string | null;
 };
@@ -955,4 +970,104 @@ export async function getCollabHistory(sessionId: number, token: string) {
     method: 'GET',
     token,
   });
+}
+
+export type ExamApi = {
+  id: number;
+  title: string;
+  intro: string;
+  deadline: string | null;
+  codeName: string;
+  filename: string | null;
+  ratedatanum: number;
+  sec: number;
+  sbnum: number;
+  starttime: string | null;
+  isDetected: boolean;
+  vitalSpace: boolean;
+  disorderedOutput: boolean;
+  isLint: boolean;
+  schedule_status: 'upcoming' | 'open' | 'closing_soon' | 'closed';
+  can_submit: boolean;
+  allowed_languages: string[];
+  created_by: string;
+  created_at: string;
+  updated_at: string;
+};
+
+export type ExamSubmissionApi = {
+  id: number;
+  exam_id: number;
+  user_id: string;
+  language: string;
+  status: string;
+  original_filename: string | null;
+  submitted_at: string;
+};
+
+export async function getExams(token?: string | null) {
+  return apiRequest<ExamApi[]>('/api/exams', {
+    method: 'GET',
+    token,
+  });
+}
+
+export async function getExam(examId: number, token?: string | null) {
+  return apiRequest<ExamApi>(`/api/exams/${examId}`, {
+    method: 'GET',
+    token,
+  });
+}
+
+export async function getExamSubmissions(examId: number, token: string) {
+  return apiRequest<ExamSubmissionApi[]>(`/api/exams/${examId}/submissions`, {
+    method: 'GET',
+    token,
+  });
+}
+
+export async function submitExam(
+  examId: number,
+  payload: {
+    language: string;
+    code_text: string;
+    original_filename?: string | null;
+  },
+  token: string,
+) {
+  return apiRequest<ExamSubmissionApi>(`/api/exams/${examId}/submit`, {
+    method: 'POST',
+    token,
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function addMaterialComment(
+  materialId: number,
+  content: string,
+  token: string,
+) {
+  return apiRequest<LectureMaterialApi>(`/api/materials/${materialId}/comments`, {
+    method: 'POST',
+    token,
+    body: JSON.stringify({ content }),
+  });
+}
+
+export async function uploadMaterialAttachment(
+  materialId: number,
+  file: File,
+  token: string,
+) {
+  const formData = new FormData();
+  formData.append('upload', file);
+  return apiRequest<LectureMaterialApi>(`/api/admin/materials/${materialId}/attachment`, {
+    method: 'POST',
+    token,
+    body: formData,
+  });
+}
+
+export function getMaterialAttachmentUrl(materialId: number) {
+  return `${API_BASE_URL}/api/materials/${materialId}/attachment`;
 }

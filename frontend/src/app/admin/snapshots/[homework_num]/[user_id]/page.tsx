@@ -137,7 +137,7 @@ export default function StudentSnapshotHistoryPage({
             </aside>
 
             {/* Code Viewer Area */}
-            <main className="lg:col-span-3 border border-slate-200 dark:border-slate-800 rounded-lg overflow-hidden flex flex-col bg-[#1e1e1e]">
+            <section className="lg:col-span-3 border border-slate-200 dark:border-slate-800 rounded-lg overflow-hidden flex flex-col bg-[#1e1e1e]">
               <div className="p-3 border-b border-slate-800 bg-[#1e1e1e] flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <FileCode size={14} className="text-accent" />
@@ -172,7 +172,7 @@ export default function StudentSnapshotHistoryPage({
                   }}
                 />
               </div>
-            </main>
+            </section>
           </div>
         )}
       </div>

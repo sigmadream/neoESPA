@@ -101,9 +101,9 @@ export default function AdminHomeworkManager() {
     <div className="space-y-8">
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         {[
-          { label: 'Total Tasks', value: homeworks.length, icon: BookOpen },
-          { label: 'Active', value: homeworks.filter(h => ['open', 'closing_soon'].includes(h.schedule_status)).length, icon: CheckCircle2 },
-          { label: 'Lint Enabled', value: homeworks.filter(h => h.isLint).length, icon: ShieldCheck },
+          { label: '전체 과제 수', value: `${homeworks.length}개`, icon: BookOpen },
+          { label: '진행 중 과제', value: `${homeworks.filter(h => ['open', 'closing_soon'].includes(h.schedule_status)).length}개`, icon: CheckCircle2 },
+          { label: '코드 품질 검사 적용', value: `${homeworks.filter(h => h.isLint).length}개`, icon: ShieldCheck },
         ].map((stat) => (
           <div key={stat.label} className="card-simple py-4 px-5">
             <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 flex items-center justify-between mb-1">
@@ -119,11 +119,11 @@ export default function AdminHomeworkManager() {
         <section className="card-simple">
           <header className="flex items-center justify-between mb-6">
             <h2 className="text-sm font-bold uppercase tracking-widest text-slate-400">
-              {editingHomeworkNum ? 'Edit Homework' : 'Create Homework'}
+              {editingHomeworkNum ? '과제 정보 수정하기' : '새 과제 등록하기'}
             </h2>
             {editingHomeworkNum && (
               <button onClick={() => { setEditingHomeworkNum(null); setForm(createEmptyHomeworkForm()); }} className="text-xs font-bold text-slate-400 hover:text-rose-500 flex items-center gap-1 transition-colors">
-                <X size={14} /> Cancel Edit
+                <X size={14} /> 수정 취소
               </button>
             )}
           </header>
@@ -131,28 +131,28 @@ export default function AdminHomeworkManager() {
           <form onSubmit={(e) => void handleSubmit(e)} className="space-y-6">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">Title</label>
-                <input value={form.title} onChange={e => setForm({...form, title: e.target.value})} required className="block w-full text-xs rounded border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 px-3 py-2 outline-none focus:ring-1 focus:ring-accent" placeholder="e.g. Recursion Lab" />
+                <label htmlFor="homework-title" className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">과제 제목</label>
+                <input id="homework-title" value={form.title} onChange={e => setForm({...form, title: e.target.value})} required className="block w-full text-xs rounded border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 px-3 py-2 outline-none focus:ring-1 focus:ring-accent" placeholder="예: 재귀함수 실습 과제" />
               </div>
               <div>
-                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">Code Name</label>
-                <input value={form.codeName} onChange={e => setForm({...form, codeName: e.target.value})} required className="block w-full text-xs rounded border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 px-3 py-2 outline-none focus:ring-1 focus:ring-accent font-mono" placeholder="recursion" />
+                <label htmlFor="homework-code-name" className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">코드 식별자 (Code Name)</label>
+                <input id="homework-code-name" value={form.codeName} onChange={e => setForm({...form, codeName: e.target.value})} required className="block w-full text-xs rounded border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 px-3 py-2 outline-none focus:ring-1 focus:ring-accent font-mono" placeholder="recursion" />
               </div>
             </div>
 
             <div>
-              <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">Description (Intro)</label>
-              <textarea value={form.intro} onChange={e => setForm({...form, intro: e.target.value})} rows={5} required className="block w-full text-xs rounded border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 px-3 py-2 outline-none focus:ring-1 focus:ring-accent resize-none" placeholder="Task requirements..." />
+              <label htmlFor="homework-intro" className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">과제 설명 및 요구사항 (마크다운 지원)</label>
+              <textarea id="homework-intro" value={form.intro} onChange={e => setForm({...form, intro: e.target.value})} rows={5} required className="block w-full text-xs rounded border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 px-3 py-2 outline-none focus:ring-1 focus:ring-accent resize-none" placeholder="과제 설명 및 작성 지침을 입력하세요..." />
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5 flex items-center gap-1.5"><Clock size={10} /> Start Time</label>
-                <input value={form.starttime ?? ''} onChange={e => setForm({...form, starttime: e.target.value})} className="block w-full text-xs rounded border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 px-3 py-2 outline-none" placeholder="YYYY-MM-DD HH:MM:SS" />
+                <label htmlFor="homework-starttime" className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5 flex items-center gap-1.5"><Clock size={10} /> 제출 시작 일시</label>
+                <input id="homework-starttime" value={form.starttime ?? ''} onChange={e => setForm({...form, starttime: e.target.value})} className="block w-full text-xs rounded border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 px-3 py-2 outline-none" placeholder="YYYY-MM-DD HH:MM:SS" />
               </div>
               <div>
-                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5 flex items-center gap-1.5"><Clock size={10} /> Deadline</label>
-                <input value={form.deadline ?? ''} onChange={e => setForm({...form, deadline: e.target.value})} className="block w-full text-xs rounded border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 px-3 py-2 outline-none" placeholder="YYYY-MM-DD HH:MM:SS" />
+                <label htmlFor="homework-deadline" className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5 flex items-center gap-1.5"><Clock size={10} /> 마감 일시</label>
+                <input id="homework-deadline" value={form.deadline ?? ''} onChange={e => setForm({...form, deadline: e.target.value})} className="block w-full text-xs rounded border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 px-3 py-2 outline-none" placeholder="YYYY-MM-DD HH:MM:SS" />
               </div>
             </div>
 
@@ -215,16 +215,16 @@ export default function AdminHomeworkManager() {
           <header className="flex items-center justify-between mb-6">
             <h2 className="text-sm font-bold uppercase tracking-widest text-slate-400 flex items-center gap-2">
               <LayoutList size={14} />
-              Homework Inventory
+              등록된 과제 목록
             </h2>
             <button onClick={() => void loadHomeworks()} className="p-1.5 rounded hover:bg-slate-50 dark:hover:bg-slate-900 text-slate-400 transition-all"><RefreshCw size={14} /></button>
           </header>
 
           <div className="space-y-3">
             {isLoading ? (
-              <div className="py-12 text-center text-xs text-slate-400 animate-pulse">Syncing homeworks...</div>
+              <div className="py-12 text-center text-xs text-slate-400 animate-pulse">과제 목록을 동기화 중입니다...</div>
             ) : homeworks.length === 0 ? (
-              <div className="py-12 text-center text-xs text-slate-400 border border-dashed rounded italic">No assignments created yet.</div>
+              <div className="py-12 text-center text-xs text-slate-400 border border-dashed rounded italic">등록된 과제가 없습니다.</div>
             ) : (
               homeworks.map(hw => {
                 const status = getHomeworkStatus(hw);
@@ -243,8 +243,8 @@ export default function AdminHomeworkManager() {
                         </div>
                       </div>
                       <div className="flex flex-col gap-2">
-                        <button onClick={() => handleEdit(hw)} className="p-2 rounded bg-slate-50 dark:bg-slate-900 text-slate-400 hover:text-accent transition-all hover:bg-white border border-transparent hover:border-slate-100"><Plus size={14} /></button>
-                        <button onClick={() => void handleDelete(hw.num)} className="p-2 rounded bg-slate-50 dark:bg-slate-900 text-slate-400 hover:text-rose-500 transition-all hover:bg-white border border-transparent hover:border-slate-100"><Trash2 size={14} /></button>
+                        <button aria-label="Edit homework" onClick={() => handleEdit(hw)} className="p-2 rounded bg-slate-50 dark:bg-slate-900 text-slate-400 hover:text-accent transition-all hover:bg-white border border-transparent hover:border-slate-100"><Plus size={14} /></button>
+                        <button aria-label="Delete homework" onClick={() => void handleDelete(hw.num)} className="p-2 rounded bg-slate-50 dark:bg-slate-900 text-slate-400 hover:text-rose-500 transition-all hover:bg-white border border-transparent hover:border-slate-100"><Trash2 size={14} /></button>
                       </div>
                     </div>
                     

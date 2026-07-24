@@ -25,12 +25,14 @@ def engine_fixture():
     SQLModel.metadata.create_all(engine)
     yield engine
     SQLModel.metadata.drop_all(engine)
+    engine.dispose()
 
 
 @pytest.fixture(name="session")
 def session_fixture(engine):
     with Session(engine) as session:
         yield session
+        session.close()
 
 
 @pytest.fixture(name="client")

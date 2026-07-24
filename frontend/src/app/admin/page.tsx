@@ -14,13 +14,13 @@ import AdminUserManager from '@/components/admin/AdminUserManager';
 import { useAuth } from '@/components/AuthProvider';
 
 const ADMIN_TABS = [
-  { id: 'overview', label: 'Overview', icon: LayoutGrid, description: 'Stats & Queue' },
-  { id: 'homeworks', label: 'Homework', icon: BookOpen, description: 'Assignments' },
-  { id: 'notices', label: 'Notices', icon: Bell, description: 'Announcements' },
-  { id: 'materials', label: 'Materials', icon: FileCode, description: 'Reference Files' },
-  { id: 'users', label: 'Users', icon: Users, description: 'Access Control' },
-  { id: 'settings', label: 'Settings', icon: Settings, description: 'Global Config' },
-  { id: 'plagiarism', label: 'Plagiarism', icon: ShieldAlert, description: 'Detection' },
+  { id: 'overview', label: '현황 종합', icon: LayoutGrid, description: '통계 및 채점 큐' },
+  { id: 'homeworks', label: '과제 관리', icon: BookOpen, description: '과제 등록 및 삭제' },
+  { id: 'notices', label: '공지사항 관리', icon: Bell, description: '강의 공지 등록' },
+  { id: 'materials', label: '강의자료 관리', icon: FileCode, description: '참고 자료실 관리' },
+  { id: 'users', label: '사용자 관리', icon: Users, description: '계정 승인 및 권한 관리' },
+  { id: 'settings', label: '시스템 설정', icon: Settings, description: '전역 설정 및 규칙' },
+  { id: 'plagiarism', label: '표절 검사', icon: ShieldAlert, description: '코드 유사도 검사' },
 ] as const;
 
 export default function AdminDashboardPage() {
@@ -41,9 +41,9 @@ export default function AdminDashboardPage() {
         <header className="flex flex-col md:flex-row md:items-end justify-between gap-6">
           <div>
             <h1 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-2 mb-1">
-              Admin Console
+              관리자 콘솔
             </h1>
-            <p className="text-slate-500 text-sm font-medium">Manage course operations, assignments, and student access.</p>
+            <p className="text-slate-500 text-sm font-medium">강의 운영, 과제 관리 및 학생 권한을 관리합니다.</p>
           </div>
         </header>
 
@@ -54,25 +54,25 @@ export default function AdminDashboardPage() {
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`w-full flex items-center justify-between px-4 py-3 text-sm font-bold rounded transition-all ${
+                  className={`w-full flex items-center justify-between px-4 py-3 text-sm font-bold rounded-lg transition-all ${
                     currentTab === tab.id
-                      ? 'bg-accent text-white shadow-sm'
-                      : 'text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-900 hover:text-slate-900 dark:hover:text-slate-200'
+                      ? 'bg-blue-600 text-white dark:bg-blue-500 dark:text-white shadow-sm font-semibold'
+                      : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/60 hover:text-slate-900 dark:hover:text-slate-100'
                   }`}
                 >
                   <div className="flex items-center gap-3">
-                    <tab.icon size={18} className={currentTab === tab.id ? 'text-white' : 'text-slate-400'} />
-                    <span>{tab.label}</span>
+                    <tab.icon size={18} className={currentTab === tab.id ? 'text-white' : 'text-slate-400 dark:text-slate-500'} />
+                    <span className={currentTab === tab.id ? 'text-white' : ''}>{tab.label}</span>
                   </div>
-                  {currentTab === tab.id && <ChevronRight size={14} />}
+                  {currentTab === tab.id && <ChevronRight size={14} className="text-white" />}
                 </button>
               ))}
             </nav>
             
             <div className="mt-8 p-4 card-simple bg-slate-50/50 dark:bg-slate-900/20 border-dashed">
-              <h3 className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-2 text-center">Current Context</h3>
+              <h3 className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-2 text-center">현재 관리 권한</h3>
               <p className="text-[11px] text-slate-500 text-center leading-relaxed">
-                Role: <span className="text-accent font-bold">{user?.user_group.toUpperCase()}</span><br />
+                권한: <span className="text-accent font-bold">{user?.user_group.toUpperCase()}</span><br />
                 {visibleTabs.find(t => t.id === currentTab)?.description}
               </p>
             </div>

@@ -215,7 +215,7 @@ export default function HomeworkSubmissionPanel({
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label htmlFor="language" className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">
-              Language
+              제출 언어 선택
             </label>
             <select
               id="language"
@@ -232,11 +232,11 @@ export default function HomeworkSubmissionPanel({
 
           <div>
             <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">
-              Upload Source
+              소스 코드 파일 업로드
             </label>
             <label className="flex items-center justify-center w-full h-10 px-4 border border-slate-200 dark:border-slate-800 rounded bg-white dark:bg-slate-950 text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-900 cursor-pointer transition-colors group">
               <Upload size={14} className="mr-2 group-hover:text-accent" />
-              <span>{selectedFileName ? 'Change File' : 'Choose File'}</span>
+              <span>{selectedFileName ? '파일 변경하기' : '파일 선택하기'}</span>
               <input type="file" className="sr-only" onChange={handleFileChange} />
             </label>
             {selectedFileName && (
@@ -249,28 +249,28 @@ export default function HomeworkSubmissionPanel({
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-3">
               <label htmlFor="code" className="block text-xs font-bold text-slate-400 uppercase tracking-wider">
-                Code Editor
+                코드 에디터
               </label>
               <div className="flex items-center gap-1.5 transition-all">
                 {isSaving ? (
                   <div className="flex items-center gap-1 text-[10px] text-accent animate-pulse font-medium">
                     <Loader2 size={10} className="animate-spin" />
-                    Saving...
+                    자동 저장 중...
                   </div>
                 ) : saveError ? (
                   <div className="flex items-center gap-1 text-[10px] text-rose-500 font-bold animate-pulse">
                     <AlertCircle size={10} />
-                    Save Failed
+                    저장 실패
                   </div>
                 ) : lastSaved ? (
                   <div className="flex items-center gap-1 text-[10px] text-emerald-500 font-medium">
                     <CheckCircle2 size={10} />
-                    Saved {lastSaved.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+                    임시 저장됨 {lastSaved.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
                   </div>
                 ) : null}
               </div>
             </div>
-            <span className="text-[10px] text-slate-400 font-medium">UTF-8 Encoding Required</span>
+            <span className="text-[10px] text-slate-400 font-medium">UTF-8 인코딩 필수</span>
           </div>
           <div className="relative group">
             <div className="absolute top-3 left-3">
@@ -280,9 +280,38 @@ export default function HomeworkSubmissionPanel({
               id="code"
               rows={15}
               className="block w-full rounded border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 pl-9 pr-4 py-3 font-mono text-sm text-slate-800 dark:text-slate-200 focus:ring-1 focus:ring-accent outline-none transition-all resize-none"
-              placeholder="// Paste your code here or upload a file..."
+              placeholder="// 작성한 코드를 입력하거나 소스 코드 파일을 업로드하세요..."
               value={code}
               onChange={(event) => setCode(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === 'Tab') {
+                  event.preventDefault();
+                  const target = event.currentTarget;
+                  const start = target.selectionStart;
+                  const end = target.selectionEnd;
+                  const indent = '  ';
+
+                  if (event.shiftKey) {
+                    const lineStart = target.value.lastIndexOf('\n', start - 1) + 1;
+                    const beforeCursor = target.value.substring(lineStart, start);
+                    if (beforeCursor.endsWith(indent)) {
+                      const newValue =
+                        target.value.substring(0, start - indent.length) + target.value.substring(start);
+                      setCode(newValue);
+                      requestAnimationFrame(() => {
+                        target.selectionStart = target.selectionEnd = start - indent.length;
+                      });
+                    }
+                  } else {
+                    const newValue =
+                      target.value.substring(0, start) + indent + target.value.substring(end);
+                    setCode(newValue);
+                    requestAnimationFrame(() => {
+                      target.selectionStart = target.selectionEnd = start + indent.length;
+                    });
+                  }
+                }
+              }}
             />
           </div>
         </div>
@@ -297,7 +326,7 @@ export default function HomeworkSubmissionPanel({
           ) : (
             <Send size={16} />
           )}
-          <span>Submit Assignment</span>
+          <span>과제 답안 제출하기</span>
         </button>
       </form>
     </section>

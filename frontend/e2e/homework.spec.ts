@@ -45,13 +45,9 @@ test('status_badges_follow_assignment_schedule', async ({ page, request }) => {
 
   await expect(page.getByText('진행 중').first()).toBeVisible();
 
-  const closingSoonRow = page
-    .getByRole('row', { name: new RegExp(`#${closingSoonHomework.num}`) })
-    .first();
-  await expect(closingSoonRow.getByText('마감 임박')).toBeVisible();
+  const closingSoonCard = page.locator('a').filter({ hasText: closingSoonHomework.title });
+  await expect(closingSoonCard.getByText('마감 임박')).toBeVisible();
 
-  const closedRow = page
-    .getByRole('row', { name: new RegExp(`#${closedHomework.num}`) })
-    .first();
-  await expect(closedRow.getByText('마감 완료')).toBeVisible();
+  const closedCard = page.locator('a').filter({ hasText: closedHomework.title });
+  await expect(closedCard.getByText('마감 완료')).toBeVisible();
 });
