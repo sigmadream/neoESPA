@@ -6,7 +6,7 @@ from sqlmodel import Session, SQLModel, create_engine
 from sqlmodel.pool import StaticPool
 
 from app.core.db import get_session
-from app.main import app, grading_queue
+from app.main import app
 from app.models.schemas import GradingRule, Homework, Submission, SubmissionResult, User
 from app.services.auth_service import AuthService
 
@@ -144,14 +144,10 @@ def _auth_headers(token: str) -> dict[str, str]:
 
 def setup_function():
     SQLModel.metadata.create_all(engine)
-    grading_queue._queue.clear()
-    grading_queue._enqueued_submission_ids.clear()
 
 
 def teardown_function():
     SQLModel.metadata.drop_all(engine)
-    grading_queue._queue.clear()
-    grading_queue._enqueued_submission_ids.clear()
 
 
 def test_student_dashboard_returns_submission_summary():

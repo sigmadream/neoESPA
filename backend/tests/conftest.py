@@ -15,6 +15,13 @@ from tests.factories import (
 )
 
 
+@pytest.fixture(autouse=True)
+def isolated_test_environment(monkeypatch):
+    """Keep process-wide environment mutations from leaking between tests."""
+    monkeypatch.setenv("APP_ENV", "test")
+    monkeypatch.setenv("AUTO_GRADING_ENABLED", "true")
+
+
 @pytest.fixture(name="engine")
 def engine_fixture():
     engine = configure_sqlite_foreign_keys(

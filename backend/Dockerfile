@@ -24,7 +24,5 @@ COPY . .
 
 EXPOSE 8000
 
-# Run uvicorn server in production mode.
-# Single worker only: the grading queue and snapshot rate limiter keep
-# in-process state, so multiple workers would each see a separate queue.
+# The queue is SQLite-backed; API replicas do not carry queue state in memory.
 CMD ["uv", "run", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "1"]

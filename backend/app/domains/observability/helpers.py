@@ -2,13 +2,14 @@ from datetime import UTC, datetime
 
 from sqlmodel import Session, select
 
-from ...api.runtime import grading_queue, observability_service
+from ...api.runtime import observability_service
 from ...models.schemas import (
     AdminDashboardFailureMetric,
     AdminDashboardHomeworkMetric,
     AdminDashboardQueueStatus,
     AdminDashboardRead,
     Homework,
+    JudgeJob,
     Submission,
     User,
 )
@@ -90,14 +91,22 @@ def build_admin_dashboard(session: Session) -> AdminDashboardRead:
         if failure_type:
             failure_counts[failure_type] = failure_counts.get(failure_type, 0) + 1
 
-    queue_size, queued_submission_ids = grading_queue.snapshot()
+    queued_jobs = session.exec(
+        select(JudgeJob).where(
+            JudgeJob.job_type == "grade_submission",
+            JudgeJob.status.in_(["queued", "leased", "running"]),
+        ).order_by(JudgeJob.priority, JudgeJob.created_at)
+    ).all()
+    queued_submission_ids = [
+        job.submission_id for job in queued_jobs if job.submission_id is not None
+    ]
     return AdminDashboardRead(
         generated_at=datetime.now(UTC),
         total_homeworks=len(homeworks),
         active_students=len(students),
         total_submissions=len(submissions),
         queue=AdminDashboardQueueStatus(
-            queue_size=queue_size,
+            queue_size=len(queued_jobs),
             queued_submission_ids=queued_submission_ids,
         ),
         homework_metrics=homework_metrics,

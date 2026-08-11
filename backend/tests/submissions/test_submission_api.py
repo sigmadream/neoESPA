@@ -9,7 +9,7 @@ from sqlmodel.pool import StaticPool
 
 from app.core.db import get_session
 from app.main import app
-from app.models.schemas import GradingRule, Homework, Submission, SubmissionResult, User
+from app.models.schemas import GradingRule, Homework, JudgeJob, Submission, SubmissionResult, User
 from app.services.auth_service import AuthService
 from app.core.compression import decompress_text
 
@@ -128,17 +128,50 @@ def test_create_submission_with_code_body(
     assert payload["homework_num"] == 1
     assert payload["homework_title"] == "Open Homework"
     assert payload["attempt_no"] == 1
-    assert payload["status"] == "retryable"
+    assert payload["status"] == "pending"
     assert payload["compile_status"] == "not_started"
     assert payload["run_status"] == "not_started"
     assert len(saved_submissions) == 1
     assert saved_submissions[0].code_text != "print('hello world')"
     assert decompress_text(saved_submissions[0].code_text) == "print('hello world')"
     assert len(saved_results) == 1
-    assert (
-        saved_results[0].grader_summary
-        == "Auto-grading failed: Homework has no active test cases configured"
+    assert saved_results[0].grader_summary == "Submission accepted. Waiting for grading."
+    job = session.exec(select(JudgeJob)).one()
+    assert job.job_type == "grade_submission"
+    assert job.submission_id == saved_submissions[0].id
+
+
+def test_production_submission_is_saved_without_host_execution(
+    client,
+    session,
+    create_user,
+    create_homework,
+    login_user,
+    auth_headers,
+    monkeypatch,
+):
+    monkeypatch.setenv("APP_ENV", "production")
+    monkeypatch.setenv("AUTO_GRADING_ENABLED", "true")
+    create_homework(101, "Production Safe Homework", start_offset_days=-1, deadline_offset_days=2)
+    create_user("safe-submitter", 20242101, "student-pass")
+
+    token = login_user("safe-submitter", "student-pass")
+    response = client.post(
+        "/api/submissions",
+        json={
+            "homework_num": 101,
+            "language": "python",
+            "code_text": "print('never executed on host')",
+            "original_filename": "main.py",
+        },
+        headers=auth_headers(token),
     )
+
+    assert response.status_code == 201
+    assert response.json()["status"] == "pending_manual"
+    stored_result = session.exec(select(SubmissionResult)).one()
+    assert stored_result.status == "pending_manual"
+    assert "isolated judge runner" in (stored_result.grader_summary or "")
 
 
 def test_reject_submission_after_deadline(

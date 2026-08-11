@@ -38,3 +38,9 @@ def load_known_system_settings(
         settings.append(setting)
 
     return settings
+
+
+def get_system_setting_value(session, key: str) -> str:
+    definition = SYSTEM_SETTING_DEFINITIONS[key]
+    setting = session.get(SystemSetting, key)
+    return setting.value if setting is not None else definition["default_value"]

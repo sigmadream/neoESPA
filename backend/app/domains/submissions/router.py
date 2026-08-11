@@ -1,20 +1,20 @@
-import logging
 from datetime import UTC, datetime, timedelta
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlmodel import Session, select
 from sqlalchemy.exc import IntegrityError
 
-from ...api.dependencies import get_current_active_user, require_staff
+from ...api.dependencies import get_current_active_user, require_capability
 from ...api.runtime import (
     SUBMISSION_ATTEMPT_RETRY_LIMIT,
     feedback_service,
-    grading_service,
+    judge_job_service,
 )
 from ...core.compression import compress_text, decompress_text
 from ...core.config import settings
 from ...core.db import get_session
 from ...models.schemas import (
+    AssignmentProblem,
     CodeSnapshot,
     CodeSnapshotCreate,
     CodeSnapshotRead,
@@ -31,6 +31,7 @@ from ...services.user_management import ADMIN_ROLES
 from ..homework.helpers import load_allowed_languages
 from ..shared.schedules import compute_schedule_window
 from ..submissions.helpers import to_submission_read
+from ..settings.helpers import get_system_setting_value
 
 
 router = APIRouter()
@@ -93,6 +94,14 @@ def create_submission(
         )
 
     allowed_languages = load_allowed_languages(session, payload.homework_num)
+    globally_enabled = set(
+        get_system_setting_value(session, "judge_enabled_languages").split(",")
+    )
+    if language not in globally_enabled:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Submission language is disabled by system policy",
+        )
     if language not in allowed_languages:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -103,6 +112,29 @@ def create_submission(
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Submission must include code text",
+        )
+    max_source_bytes = int(
+        float(get_system_setting_value(session, "submission_max_source_bytes"))
+    )
+    if len(payload.code_text.encode("utf-8")) > max_source_bytes:
+        raise HTTPException(
+            status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+            detail=f"Submission source exceeds {max_source_bytes} byte limit",
+        )
+    rate_limit = int(
+        float(get_system_setting_value(session, "submission_rate_limit_per_minute"))
+    )
+    recent_cutoff = datetime.now(UTC) - timedelta(minutes=1)
+    recent_ids = session.exec(
+        select(Submission.id).where(
+            Submission.user_id == current_user.id,
+            Submission.submitted_at >= recent_cutoff,
+        )
+    ).all()
+    if len(recent_ids) >= rate_limit:
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail="Submission rate limit exceeded",
         )
 
     schedule_status, can_submit = compute_schedule_window(homework.starttime, homework.deadline)
@@ -126,8 +158,14 @@ def create_submission(
         ).first()
         attempt_no = 1 if last_attempt is None else last_attempt + 1
 
+        assigned_revision_id = session.exec(
+            select(AssignmentProblem.revision_id)
+            .where(AssignmentProblem.homework_num == payload.homework_num)
+            .order_by(AssignmentProblem.position)
+        ).first()
         submission = Submission(
             homework_num=payload.homework_num,
+            problem_revision_id=assigned_revision_id,
             user_id=current_user.id,
             submission_mode="official",
             attempt_no=attempt_no,
@@ -150,6 +188,18 @@ def create_submission(
                     grader_summary="Submission accepted. Waiting for grading.",
                 )
             )
+            if settings.AUTOMATIC_GRADING_AVAILABLE:
+                judge_job_service.enqueue(
+                    session,
+                    job_type="grade_submission",
+                    payload={
+                        "submission_id": submission.id,
+                        "target_revision_id": submission.problem_revision_id,
+                    },
+                    idempotency_key=f"submission:{submission.id}:initial",
+                    revision_id=submission.problem_revision_id,
+                    submission_id=submission.id,
+                )
             session.commit()
         except IntegrityError:
             session.rollback()
@@ -157,46 +207,21 @@ def create_submission(
 
         session.refresh(submission)
 
-        try:
-            homework = session.get(Homework, submission.homework_num)
-            if homework is not None:
-                submission.status = "grading"
-                result_obj = session.exec(
-                    select(SubmissionResult).where(
-                        SubmissionResult.submission_id == submission.id
-                    )
-                ).first()
-                if result_obj is not None:
-                    result_obj.status = "grading"
-                    result_obj.grader_summary = "Grading in progress."
-                    session.add(result_obj)
-                session.add(submission)
-                session.commit()
-
-                grading_service.grade_submission(session, submission, homework)
-                session.refresh(submission)
-        except Exception as grading_error:
-            session.rollback()
-            submission = session.get(Submission, submission.id)
-            if submission is not None:
-                result_obj = session.exec(
-                    select(SubmissionResult).where(
-                        SubmissionResult.submission_id == submission.id
-                    )
-                ).first()
-                submission.status = "retryable"
-                if result_obj is not None:
-                    result_obj.status = "retryable"
-                    result_obj.grader_summary = f"Auto-grading failed: {grading_error}"
-                    session.add(result_obj)
-                session.add(submission)
-                session.commit()
-                session.refresh(submission)
-            logging.getLogger(__name__).warning(
-                "Auto-grading failed for submission %s: %s",
-                submission.id if submission else "?",
-                grading_error,
-            )
+        if not settings.AUTOMATIC_GRADING_AVAILABLE:
+            result_obj = session.exec(
+                select(SubmissionResult).where(SubmissionResult.submission_id == submission.id)
+            ).first()
+            submission.status = "pending_manual"
+            if result_obj is not None:
+                result_obj.status = "pending_manual"
+                result_obj.grader_summary = (
+                    "Automatic grading is disabled until an isolated judge runner is ready."
+                )
+                session.add(result_obj)
+            session.add(submission)
+            session.commit()
+            session.refresh(submission)
+            return to_submission_read(session, submission)
 
         return to_submission_read(session, submission)
 
@@ -330,7 +355,7 @@ def get_latest_snapshot(
 def get_student_snapshots(
     homework_num: int,
     user_id: str,
-    _: User = Depends(require_staff),
+    _: User = Depends(require_capability("grading:manual")),
     session: Session = Depends(get_session),
 ):
     snapshots = session.exec(

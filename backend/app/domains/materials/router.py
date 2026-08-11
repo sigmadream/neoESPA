@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException, UploadFile, status
 from fastapi.responses import FileResponse
 from sqlmodel import Session, select
 
-from ...api.dependencies import get_optional_current_user, require_roles
+from ...api.dependencies import get_optional_current_user, require_capability, require_roles
 from ...api.runtime import observability_service
 from ...core.config import settings
 from ...core.db import get_session
@@ -91,7 +91,7 @@ def download_material_attachment(
 @router.post("/admin/materials", response_model=LectureMaterialRead)
 def create_material(
     payload: LectureMaterialWrite,
-    current_user: User = Depends(require_roles(*ADMIN_ROLES)),
+    current_user: User = Depends(require_capability("content:manage")),
     session: Session = Depends(get_session),
 ):
     material = LectureMaterial(
@@ -122,7 +122,7 @@ def create_material(
 def upload_material_attachment(
     material_id: int,
     upload: UploadFile,
-    current_user: User = Depends(require_roles(*ADMIN_ROLES)),
+    current_user: User = Depends(require_capability("content:manage")),
     session: Session = Depends(get_session),
 ):
     material = session.get(LectureMaterial, material_id)
@@ -162,7 +162,7 @@ def upload_material_attachment(
 def update_material(
     material_id: int,
     payload: LectureMaterialWrite,
-    current_user: User = Depends(require_roles(*ADMIN_ROLES)),
+    current_user: User = Depends(require_capability("content:manage")),
     session: Session = Depends(get_session),
 ):
     material = session.get(LectureMaterial, material_id)
@@ -194,7 +194,7 @@ def update_material(
 @router.delete("/admin/materials/{material_id}")
 def delete_material(
     material_id: int,
-    current_user: User = Depends(require_roles(*ADMIN_ROLES)),
+    current_user: User = Depends(require_capability("content:manage")),
     session: Session = Depends(get_session),
 ):
     material = session.get(LectureMaterial, material_id)

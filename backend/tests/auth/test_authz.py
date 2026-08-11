@@ -86,7 +86,7 @@ def test_student_cannot_access_admin_routes():
         app.dependency_overrides.clear()
 
     assert response.status_code == 403
-    assert response.json()["detail"] == "Staff privileges required"
+    assert response.json()["detail"] == "Missing capability: homework:manage"
 
 
 def test_staff_roles_can_manage_homeworks():

@@ -1,5 +1,15 @@
 import pytest
-from app.services.code_runner import CodeRunnerService, UnsupportedLanguageError
+from app.services.code_runner import (
+    CodeRunnerService,
+    UnsafeExecutionDisabledError,
+    UnsupportedLanguageError,
+)
+
+
+@pytest.fixture(autouse=True)
+def enable_development_runner(monkeypatch):
+    monkeypatch.setenv("APP_ENV", "test")
+    monkeypatch.setenv("AUTO_GRADING_ENABLED", "true")
 
 def test_runner_blocks_unsupported_language():
     runner = CodeRunnerService()
@@ -50,3 +60,11 @@ def test_python_input_handling():
     
     assert result.status == "passed"
     assert result.run_result.stdout.strip() == "got test-input"
+
+
+def test_runner_cannot_execute_in_production(monkeypatch):
+    monkeypatch.setenv("APP_ENV", "production")
+    monkeypatch.setenv("AUTO_GRADING_ENABLED", "true")
+
+    with pytest.raises(UnsafeExecutionDisabledError, match="Host code execution is disabled"):
+        CodeRunnerService().run_code("python", "print('must not run')")

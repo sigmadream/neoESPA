@@ -1,4 +1,6 @@
 from pathlib import Path
+import json
+import sqlite3
 
 from sqlalchemy import create_engine, inspect, text
 
@@ -30,6 +32,25 @@ EXPECTED_TABLES = {
     "material_comments",
     "qa_posts",
     "qa_answers",
+    "problems",
+    "problem_revisions",
+    "problem_assets",
+    "assignment_problems",
+    "testcase_groups",
+    "problem_testcases",
+    "judge_jobs",
+    "judge_job_events",
+    "judge_workers",
+    "grading_runs",
+    "role_capabilities",
+    "problem_collaborators",
+    "admin_bootstrap_tokens",
+    "contests",
+    "contest_problems",
+    "contest_participations",
+    "contest_clarifications",
+    "contest_announcements",
+    "contest_result_events",
 }
 
 
@@ -54,6 +75,37 @@ def test_upgrade_creates_expected_tables(tmp_path: Path):
     assert_latest_tables(engine)
     assert "0001_submission_core" in get_applied_versions(engine)
     assert "0003_platform_extensions" in get_applied_versions(engine)
+
+
+def test_production_upgrade_creates_consistent_pre_migration_snapshot(
+    tmp_path: Path, monkeypatch,
+):
+    database_path = tmp_path / "production.sqlite3"
+    bundle_path = tmp_path / "course-bundle"
+    engine = create_engine(f"sqlite:///{database_path}")
+    with engine.begin() as connection:
+        connection.execute(text("CREATE TABLE legacy_marker (value TEXT NOT NULL)"))
+        connection.execute(text("INSERT INTO legacy_marker VALUES ('before-migration')"))
+
+    monkeypatch.setenv("APP_ENV", "production")
+    monkeypatch.setenv("COURSE_BUNDLE_ROOT", str(bundle_path))
+    monkeypatch.setenv("COURSE_ID", "course-2026")
+    monkeypatch.setenv("COURSE_TERM", "fall")
+
+    apply_migrations(engine)
+
+    manifest = json.loads((bundle_path / "manifests" / "course.json").read_text("utf-8"))
+    assert manifest["course_id"] == "course-2026"
+    assert manifest["term"] == "fall"
+    assert manifest["schema_version"] == "legacy-unversioned"
+    snapshot = bundle_path / manifest["database_snapshot"]
+    with sqlite3.connect(snapshot) as connection:
+        assert connection.execute("SELECT value FROM legacy_marker").fetchone() == (
+            "before-migration",
+        )
+        assert connection.execute(
+            "SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name='users'"
+        ).fetchone() == (0,)
 
 
 
@@ -175,3 +227,67 @@ def test_upgrade_adds_board_columns_to_legacy_lecture_materials(tmp_path: Path):
     assert {"content", "attachment_name", "attachment_relpath"}.issubset(material_columns)
     assert {"material_comments", "qa_posts", "qa_answers"}.issubset(table_names)
     assert "0005_materials_board_and_qa" in get_applied_versions(engine)
+
+
+def test_problem_migration_backfills_homework_and_submissions(tmp_path: Path):
+    database_path = tmp_path / "problem-backfill.sqlite"
+    engine = create_engine(f"sqlite:///{database_path}")
+    apply_migrations(engine)
+
+    with engine.begin() as connection:
+        connection.execute(
+            text(
+                """
+                INSERT INTO users (id, sid, name, phone, email, user_group, ps, is_active,
+                                   created_at, updated_at)
+                VALUES ('student', 20259901, 'Student', '010', 's@example.com', 'student',
+                        'hash', 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+                """
+            )
+        )
+        connection.execute(
+            text(
+                """
+                INSERT INTO homework
+                    (num, title, intro, codeName, ratedatanum, sec, sbnum, isDetected,
+                     vitalSpace, disorderedOutput, isLint, created_at, updated_at)
+                VALUES
+                    (77, 'Legacy Problem', 'Solve it', 'main', 0, 2, 10, 0, 0, 0, 0,
+                     CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+                """
+            )
+        )
+        connection.execute(
+            text(
+                """
+                INSERT INTO submissions
+                    (homework_num, user_id, submission_mode, attempt_no, language, status,
+                     code_text, submitted_at)
+                VALUES (77, 'student', 'official', 1, 'python', 'pending', 'code', CURRENT_TIMESTAMP)
+                """
+            )
+        )
+    # Re-run only the idempotent backfill body after legacy rows appear.
+    from app.migrations.v0006_problem_revisions import upgrade
+
+    upgrade(engine)
+
+    with engine.connect() as connection:
+        problem = connection.execute(
+            text("SELECT id, code FROM problems WHERE code = 'homework-77'")
+        ).one()
+        revision = connection.execute(
+            text("SELECT id, status FROM problem_revisions WHERE problem_id = :id"),
+            {"id": problem[0]},
+        ).one()
+        assignment = connection.execute(
+            text("SELECT revision_id FROM assignment_problems WHERE homework_num = 77")
+        ).one()
+        submission_revision = connection.execute(
+            text("SELECT problem_revision_id FROM submissions WHERE homework_num = 77")
+        ).scalar_one()
+
+    assert problem[1] == "homework-77"
+    assert revision[1] == "published"
+    assert assignment[0] == revision[0]
+    assert submission_revision == revision[0]

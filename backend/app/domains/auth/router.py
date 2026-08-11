@@ -1,4 +1,4 @@
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlmodel import Session
@@ -8,6 +8,9 @@ from ...api.runtime import observability_service
 from ...core.db import get_session
 from ...models.schemas import (
     PasswordChangeRequest,
+    AdminAuthAssurance,
+    AdminAuthAssuranceRead,
+    StepUpRequest,
     TokenResponse,
     User,
     UserCreate,
@@ -119,6 +122,47 @@ async def login(login_data: UserLogin, session: Session = Depends(get_session)):
         data={"sub": user.id, "role": user.user_group}
     )
     return {"access_token": access_token, "token_type": "bearer"}
+
+
+@router.get("/auth/assurance", response_model=AdminAuthAssuranceRead)
+async def auth_assurance(
+    current_user: User = Depends(get_current_active_user),
+    session: Session = Depends(get_session),
+):
+    assurance = session.get(AdminAuthAssurance, current_user.id)
+    if assurance is None:
+        return AdminAuthAssuranceRead(mfa_required=False, mfa_enrolled=False)
+    return AdminAuthAssuranceRead.model_validate(assurance)
+
+
+@router.post("/auth/step-up", response_model=TokenResponse)
+async def step_up_authentication(
+    payload: StepUpRequest,
+    current_user: User = Depends(get_current_active_user),
+    session: Session = Depends(get_session),
+):
+    if not AuthService.verify_password(payload.password, current_user.ps):
+        raise HTTPException(status_code=401, detail="Password verification failed")
+    assurance = session.get(AdminAuthAssurance, current_user.id)
+    if assurance is not None and assurance.mfa_required:
+        detail = (
+            "MFA verification provider is not configured"
+            if assurance.mfa_enrolled
+            else "Required MFA is not enrolled"
+        )
+        raise HTTPException(status_code=403, detail=detail)
+    now = datetime.now(UTC)
+    token = AuthService.create_access_token(
+        {
+            "sub": current_user.id,
+            "role": current_user.user_group,
+            "auth_time": int(now.timestamp()),
+            "step_up_until": int((now + timedelta(minutes=10)).timestamp()),
+            "amr": ["pwd"],
+        },
+        expires_delta=timedelta(minutes=10),
+    )
+    return TokenResponse(access_token=token)
 
 
 @router.post("/auth/change-password")

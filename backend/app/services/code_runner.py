@@ -8,11 +8,18 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from pathlib import Path
 
+from ..core.config import settings
+from .sandbox import NsJailLimits, NsJailSandboxRunner
+
 
 SUPPORTED_LANGUAGES = ("c", "cpp", "python", "java")
 
 
 class UnsupportedLanguageError(ValueError):
+    pass
+
+
+class UnsafeExecutionDisabledError(RuntimeError):
     pass
 
 
@@ -246,4 +253,108 @@ class SubprocessCodeRunner(CodeRunner):
 
 
 class CodeRunnerService(SubprocessCodeRunner):
-    pass
+    """Legacy host runner guarded by an environment-aware fail-closed gate."""
+
+    def run_code(
+        self,
+        language: str,
+        source_code: str,
+        *,
+        input_data: str = "",
+        source_name: str | None = None,
+        timeout_seconds: int = 10,
+    ) -> RunnerExecutionResult:
+        if not settings.HOST_CODE_EXECUTION_ALLOWED:
+            raise UnsafeExecutionDisabledError(
+                "Host code execution is disabled. Configure an isolated judge runner."
+            )
+        return super().run_code(
+            language,
+            source_code,
+            input_data=input_data,
+            source_name=source_name,
+            timeout_seconds=timeout_seconds,
+        )
+
+
+class NsJailCodeRunner(SubprocessCodeRunner):
+    """Compile and execute submissions only through the reviewed NsJail policy."""
+
+    def __init__(self, sandbox: NsJailSandboxRunner | None = None):
+        self.sandbox = sandbox or NsJailSandboxRunner()
+
+    def run_code(
+        self, language: str, source_code: str, *, input_data: str = "",
+        source_name: str | None = None, timeout_seconds: int = 10,
+    ) -> RunnerExecutionResult:
+        limits = NsJailLimits(
+            wall_seconds=max(int(timeout_seconds), 1) + 2,
+            cpu_seconds=max(int(timeout_seconds), 1),
+        )
+        return self.run_code_with_limits(
+            language, source_code, input_data=input_data, source_name=source_name,
+            limits=limits,
+        )
+
+    def run_code_with_limits(
+        self, language: str, source_code: str, *, input_data: str = "",
+        source_name: str | None = None, limits: NsJailLimits,
+    ) -> RunnerExecutionResult:
+        normalized = language.strip().lower()
+        self._ensure_supported_language(normalized)
+        resolved_name = self._resolve_source_name(normalized, source_name)
+        with tempfile.TemporaryDirectory(prefix="neoespa-sandbox-") as temp_dir:
+            workspace = Path(temp_dir)
+            (workspace / resolved_name).write_text(source_code, encoding="utf-8")
+            compile_command, run_command = self._sandbox_commands(normalized, resolved_name)
+            compile_result = self._sandbox_phase(compile_command, workspace, b"", limits)
+            if not compile_result.succeeded:
+                return RunnerExecutionResult(
+                    normalized, resolved_name, str(workspace), compile_result, None,
+                    "timeout" if compile_result.timed_out else "compile_error",
+                )
+            run_result, output_limited = self._sandbox_phase_with_limit(
+                run_command, workspace, input_data.encode(), limits
+            )
+            memory_limited = (
+                run_result.exit_code not in {None, 0}
+                and any(marker in run_result.stderr.lower() for marker in (
+                    "memoryerror", "bad_alloc", "cannot allocate memory", "rlimit_as",
+                ))
+            )
+            status = (
+                "output_limit" if output_limited else "timeout" if run_result.timed_out
+                else "memory_limit" if memory_limited
+                else "passed" if run_result.exit_code == 0 else "runtime_error"
+            )
+            return RunnerExecutionResult(
+                normalized, resolved_name, str(workspace), compile_result, run_result, status
+            )
+
+    def _sandbox_phase(
+        self, command: list[str], workspace: Path, stdin: bytes, limits: NsJailLimits
+    ) -> PhaseExecutionResult:
+        result, _ = self._sandbox_phase_with_limit(command, workspace, stdin, limits)
+        return result
+
+    def _sandbox_phase_with_limit(
+        self, command: list[str], workspace: Path, stdin: bytes, limits: NsJailLimits
+    ) -> tuple[PhaseExecutionResult, bool]:
+        executed = self.sandbox.run(command, workspace=workspace, stdin=stdin, limits=limits)
+        return PhaseExecutionResult(
+            command=command, stdout=executed.stdout.decode("utf-8", errors="replace"),
+            stderr=executed.stderr.decode("utf-8", errors="replace"),
+            exit_code=executed.exit_code, duration_ms=executed.duration_ms,
+            timed_out=executed.timed_out,
+        ), executed.output_limited
+
+    @staticmethod
+    def _sandbox_commands(language: str, source_name: str) -> tuple[list[str], list[str]]:
+        source = f"/workspace/{source_name}"
+        if language == "c":
+            return ["/usr/bin/gcc", source, "-O2", "-o", "/workspace/program"], ["/workspace/program"]
+        if language == "cpp":
+            return ["/usr/bin/g++", source, "-O2", "-std=c++17", "-o", "/workspace/program"], ["/workspace/program"]
+        if language == "java":
+            return ["/usr/bin/javac", source], ["/usr/bin/java", "-cp", "/workspace", Path(source_name).stem]
+        return ["/usr/bin/python3", "-m", "py_compile", source], ["/usr/bin/python3", source]

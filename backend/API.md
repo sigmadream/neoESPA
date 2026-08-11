@@ -68,6 +68,23 @@
 | PATCH | `/api/admin/settings` | 시스템 환경 설정 수정 |
 | GET | `/api/admin/audit-logs` | 시스템 감사 로그 조회 |
 | POST | `/api/admin/homeworks/{num}/plagiarism/run` | 표절 검사 실행 |
+| GET | `/api/admin/problems` | 문제와 revision 목록 조회 |
+| POST | `/api/admin/problems` | 문제 초안 생성 |
+| POST | `/api/admin/problems/{problem_id}/revisions/{revision_id}/validate` | revision 비동기 검증 |
+| POST | `/api/admin/problems/{problem_id}/revisions/{revision_id}/publish` | 검증된 revision 게시 |
+| POST | `/api/admin/rejudge-jobs/preview` | 일괄 재채점 대상 미리보기 |
+| POST | `/api/admin/rejudge-jobs` | 영속 일괄 재채점 작업 생성 |
+| GET | `/api/admin/judge-jobs` | 채점 작업 상태 및 오류 조회 |
+| GET | `/api/admin/judge-workers` | worker heartbeat·상태·capability 조회 |
+| GET | `/api/admin/grading/metrics` | 큐 및 판정 지표 조회 |
+| GET | `/api/admin/grading/incidents` | 문제·worker·runtime별 장애 조회 |
+| POST | `/api/admin/contests` | 대회 초안 생성 |
+| POST | `/api/admin/contests/{contest_id}/publish` | revision을 고정하여 대회 게시 |
+| GET | `/api/contests/{contest_id}/scoreboard` | live/system-testing event replay 스코어보드 |
 
 ---
-*주의: `/api/admin`으로 시작하는 모든 경로는 관리자 권한(`admin` role)이 필요합니다.*
+*주의: `/api/admin` 경로는 단일 `admin` 역할이 아니라 작업별 capability와 문제 소유권 범위를 검사합니다. 위험 작업은 step-up 인증 또는 2인 승인 정책이 추가로 적용될 수 있습니다.*
+
+기계 판독 가능한 전체 계약은 `openapi.json`이며 `python -m app.cli
+check-openapi --baseline openapi.json`으로 breaking change를 검사합니다. 오류 응답에는
+`code`, `message`, `field_errors`, `request_id`가 포함됩니다.

@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlmodel import Session
 
-from ...api.dependencies import require_roles
+from ...api.dependencies import require_capability
 from ...api.runtime import observability_service, plagiarism_service
 from ...core.db import get_session
 from ...models.schemas import Homework, PlagiarismPairRead, PlagiarismRunRead, User
@@ -14,7 +14,7 @@ router = APIRouter()
 @router.post("/admin/homeworks/{homework_num}/plagiarism/run", response_model=PlagiarismRunRead)
 def run_plagiarism_scan(
     homework_num: int,
-    current_user: User = Depends(require_roles(*ADMIN_ROLES)),
+    current_user: User = Depends(require_capability("plagiarism:operate")),
     session: Session = Depends(get_session),
 ):
     homework = session.get(Homework, homework_num)
@@ -39,7 +39,7 @@ def run_plagiarism_scan(
 
 @router.get("/admin/plagiarism/runs", response_model=list[PlagiarismRunRead])
 def list_plagiarism_runs(
-    _: User = Depends(require_roles(*ADMIN_ROLES)),
+    _: User = Depends(require_capability("plagiarism:operate")),
     session: Session = Depends(get_session),
 ):
     return plagiarism_service.list_runs(session)
@@ -48,7 +48,7 @@ def list_plagiarism_runs(
 @router.get("/admin/plagiarism/pairs", response_model=list[PlagiarismPairRead])
 def list_plagiarism_pairs(
     homework_num: int | None = Query(default=None),
-    _: User = Depends(require_roles(*ADMIN_ROLES)),
+    _: User = Depends(require_capability("plagiarism:operate")),
     session: Session = Depends(get_session),
 ):
     return plagiarism_service.list_pairs(session, homework_num=homework_num)
@@ -57,7 +57,7 @@ def list_plagiarism_pairs(
 @router.get("/admin/plagiarism/pairs/{pair_id}", response_model=PlagiarismPairRead)
 def get_plagiarism_pair(
     pair_id: int,
-    _: User = Depends(require_roles(*ADMIN_ROLES)),
+    _: User = Depends(require_capability("plagiarism:operate")),
     session: Session = Depends(get_session),
 ):
     pair = plagiarism_service.get_pair(session, pair_id)

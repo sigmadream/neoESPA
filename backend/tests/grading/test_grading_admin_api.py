@@ -110,8 +110,8 @@ def _auth_headers(token: str) -> dict[str, str]:
 
 
 def _reset_runtime_grading_queue() -> None:
-    grading_router.grading_queue._queue.clear()
-    grading_router.grading_queue._enqueued_submission_ids.clear()
+    # Grading jobs are persisted in the test database and removed with its tables.
+    pass
 
 def setup_function():
     _reset_runtime_grading_queue()

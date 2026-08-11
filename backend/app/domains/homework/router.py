@@ -18,7 +18,7 @@ from fastapi import (
 from pydantic import ValidationError
 from sqlmodel import Session, select
 
-from ...api.dependencies import get_optional_current_user, require_roles, require_staff
+from ...api.dependencies import get_optional_current_user, require_capability
 from ...api.runtime import observability_service
 from ...core.config import settings
 from ...core.db import get_session
@@ -227,7 +227,7 @@ def get_homework_detail(
 
 @router.get("/admin/homeworks", response_model=list[HomeworkAdminRead])
 async def list_admin_homeworks(
-    _: User = Depends(require_staff),
+    _: User = Depends(require_capability("homework:manage")),
     session: Session = Depends(get_session),
     limit: int = Query(default=100, ge=1, le=1000),
     offset: int = Query(default=0, ge=0),
@@ -243,7 +243,7 @@ async def list_admin_homeworks(
 @router.get("/admin/homeworks/{homework_num}", response_model=HomeworkAdminRead)
 async def get_admin_homework(
     homework_num: int,
-    _: User = Depends(require_staff),
+    _: User = Depends(require_capability("homework:manage")),
     session: Session = Depends(get_session),
 ):
     homework = session.get(Homework, homework_num)
@@ -257,7 +257,7 @@ async def get_admin_homework(
 @router.post("/admin/homeworks", response_model=HomeworkAdminRead)
 async def create_homework(
     payload: HomeworkAdminWrite,
-    current_user: User = Depends(require_staff),
+    current_user: User = Depends(require_capability("homework:manage")),
     session: Session = Depends(get_session),
 ):
     _validate_schedule_order(payload.starttime, payload.deadline)
@@ -309,7 +309,7 @@ async def import_homework(
     problem_file: UploadFile = File(...),
     input_zip: UploadFile = File(...),
     output_zip: UploadFile = File(...),
-    current_user: User = Depends(require_staff),
+    current_user: User = Depends(require_capability("homework:manage")),
     session: Session = Depends(get_session),
 ):
     normalized_lint_week = (
@@ -498,7 +498,7 @@ async def import_homework(
 async def update_homework(
     homework_num: int,
     payload: HomeworkAdminWrite,
-    current_user: User = Depends(require_staff),
+    current_user: User = Depends(require_capability("homework:manage")),
     session: Session = Depends(get_session),
 ):
     homework = session.get(Homework, homework_num)
@@ -540,7 +540,7 @@ async def update_homework(
 @router.delete("/admin/homeworks/{homework_num}")
 async def delete_homework(
     homework_num: int,
-    current_user: User = Depends(require_staff),
+    current_user: User = Depends(require_capability("homework:manage")),
     session: Session = Depends(get_session),
 ):
     from ...models.schemas import CodeSnapshot, CollabSession, GradingRule

@@ -3,7 +3,7 @@ from datetime import UTC, datetime
 from fastapi import APIRouter, Depends, HTTPException, WebSocket, WebSocketDisconnect, status
 from sqlmodel import Session, select
 
-from ...api.dependencies import get_current_active_user, require_roles
+from ...api.dependencies import get_current_active_user, require_capability
 from ...api.runtime import collab_ws_manager, observability_service
 from ...core.db import get_session
 from ...models.schemas import (
@@ -55,7 +55,7 @@ def list_collab_sessions(
 @router.post("/collab/sessions", response_model=CollabSessionRead)
 def create_collab_session(
     payload: CollabSessionCreate,
-    current_user: User = Depends(require_roles(*ADMIN_ROLES)),
+    current_user: User = Depends(require_capability("collaboration:manage")),
     session: Session = Depends(get_session),
 ):
     if payload.homework_num is not None and session.get(Homework, payload.homework_num) is None:

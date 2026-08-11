@@ -9,11 +9,51 @@ services:
       - DATABASE_URL=sqlite:////database/database.sqlite
       - JWT_SECRET=${JWT_SECRET}
       - APP_ENV=production
+      - AUTO_GRADING_ENABLED=true
+      - SANDBOX_READY=true
+      - SANDBOX_ATTESTATION_PATH=/var/lib/neoespa-sandbox/attestation.json
+      - NSJAIL_CONFIG_PATH=/etc/neoespa/nsjail.cfg
+      - JUDGE_RUNTIME_VERSION=${JUDGE_RUNTIME_VERSION:?Set immutable judge image runtime version}
+      - COURSE_BUNDLE_ROOT=/data/neoespa/course
+      - COURSE_ID=${COURSE_ID:?Set course identifier}
+      - COURSE_TERM=${COURSE_TERM:?Set course term}
       - CORS_ORIGINS=${CORS_ORIGINS:-http://localhost:3000}
       - NEOESPA_SUPPORT_DIR=/supportFiles
     volumes:
       - ./supportFiles:/supportFiles:ro
       - production_db:/database
+      - course_bundle:/data/neoespa/course
+      - sandbox_attestation:/var/lib/neoespa-sandbox:ro
+      - ./backend/deploy/nsjail.cfg:/etc/neoespa/nsjail.cfg:ro
+    restart: unless-stopped
+
+  judge-worker:
+    image: ${NEOESPA_JUDGE_IMAGE:-neoespa-judge:local-reviewed}
+    build:
+      context: ./backend
+      dockerfile: deploy/Dockerfile.judge
+    privileged: true
+    cgroup: host
+    environment:
+      - DATABASE_URL=sqlite:////database/database.sqlite
+      - APP_ENV=production
+      - AUTO_GRADING_ENABLED=true
+      - SANDBOX_READY=true
+      - COURSE_BUNDLE_ROOT=/data/neoespa/course
+      - COURSE_ID=${COURSE_ID:?Set course identifier}
+      - COURSE_TERM=${COURSE_TERM:?Set course term}
+      - NSJAIL_CONFIG_PATH=/etc/neoespa/nsjail.cfg
+      - JUDGE_RUNTIME_VERSION=${JUDGE_RUNTIME_VERSION:?Set immutable judge image runtime version}
+      - SANDBOX_ATTESTATION_PATH=/var/lib/neoespa-sandbox/attestation.json
+    volumes:
+      - production_db:/database
+      - course_bundle:/data/neoespa/course
+      - ./backend/deploy/nsjail.cfg:/etc/neoespa/nsjail.cfg:ro
+      - sandbox_attestation:/var/lib/neoespa-sandbox
+    command:
+      - sh
+      - -lc
+      - /app/.venv/bin/python -m app.cli run-sandbox-self-test --policy /etc/neoespa/nsjail.cfg --attestation /var/lib/neoespa-sandbox/attestation.json && /app/.venv/bin/python -m app.cli run-judge-worker
     restart: unless-stopped
 
   frontend:
@@ -30,3 +70,5 @@ services:
 
 volumes:
   production_db:
+  course_bundle:
+  sandbox_attestation:

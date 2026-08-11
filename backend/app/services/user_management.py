@@ -7,8 +7,11 @@ from ..models.schemas import AdminUserWrite, User
 from .auth_service import AuthService
 
 VALID_EMAIL_PATTERN = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
-ADMIN_ROLES = {"admin", "instructor", "ta"}
-MANAGEABLE_USER_ROLES = {"student", "ta", "instructor", "admin"}
+ADMIN_ROLES = {
+    "super_admin", "admin", "instructor", "ta", "problem_setter", "reviewer",
+    "judge_operator", "support", "viewer",
+}
+MANAGEABLE_USER_ROLES = ADMIN_ROLES | {"student"}
 
 
 class UserManagementError(ValueError):

@@ -16,6 +16,7 @@ services:
       # 프로덕션 배포는 docker-compose.prod.yml을 사용하며, 기본값 없이 JWT_SECRET 주입이 필수입니다.
       - JWT_SECRET=${JWT_SECRET:-super-secret-key-that-is-at-least-32-characters-long}
       - APP_ENV=${APP_ENV:-development}
+      - AUTO_GRADING_ENABLED=${AUTO_GRADING_ENABLED:-true}
       - NEOESPA_SUPPORT_DIR=/supportFiles
     command:
       - sh

@@ -3,7 +3,7 @@ from datetime import UTC, datetime
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlmodel import Session, select
 
-from ...api.dependencies import get_current_active_user, get_optional_current_user, require_roles
+from ...api.dependencies import get_current_active_user, get_optional_current_user, require_capability
 from ...api.runtime import observability_service
 from ...core.db import get_session
 from ...models.schemas import Exam, ExamRead, ExamResult, ExamSubmission, ExamSubmissionCreate, ExamSubmissionRead, ExamWrite, User
@@ -34,7 +34,7 @@ def list_exams(
 @router.post("/admin/exams", response_model=ExamRead)
 def create_exam(
     payload: ExamWrite,
-    current_user: User = Depends(require_roles(*ADMIN_ROLES)),
+    current_user: User = Depends(require_capability("exam:manage")),
     session: Session = Depends(get_session),
 ):
     import json

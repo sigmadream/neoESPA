@@ -43,6 +43,8 @@ def to_submission_read(session: Session, submission: Submission) -> SubmissionRe
     return SubmissionRead(
         id=submission.id or 0,
         homework_num=submission.homework_num,
+        problem_revision_id=submission.problem_revision_id,
+        selected_grading_run_id=submission.selected_grading_run_id,
         homework_title=homework.title if homework is not None else None,
         user_id=submission.user_id,
         submission_mode=submission.submission_mode,

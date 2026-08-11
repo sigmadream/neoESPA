@@ -3,7 +3,7 @@ from datetime import UTC, datetime
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlmodel import Session, select
 
-from ...api.dependencies import get_optional_current_user, require_roles
+from ...api.dependencies import get_optional_current_user, require_capability
 from ...api.runtime import notification_service, observability_service
 from ...core.db import get_session
 from ...models.schemas import Notice, NoticeAdminWrite, NoticeRead, User
@@ -45,7 +45,7 @@ def get_notice_detail(
 
 @router.get("/admin/notices", response_model=list[NoticeRead])
 def get_admin_notices(
-    _: User = Depends(require_roles(*ADMIN_ROLES)),
+    _: User = Depends(require_capability("content:manage")),
     session: Session = Depends(get_session),
 ):
     notices = session.exec(select(Notice)).all()
@@ -60,7 +60,7 @@ def get_admin_notices(
 )
 def create_notice(
     payload: NoticeAdminWrite,
-    current_user: User = Depends(require_roles(*ADMIN_ROLES)),
+    current_user: User = Depends(require_capability("content:manage")),
     session: Session = Depends(get_session),
 ):
     notice = Notice(
@@ -93,7 +93,7 @@ def create_notice(
 def update_notice(
     notice_num: int,
     payload: NoticeAdminWrite,
-    current_user: User = Depends(require_roles(*ADMIN_ROLES)),
+    current_user: User = Depends(require_capability("content:manage")),
     session: Session = Depends(get_session),
 ):
     notice = session.get(Notice, notice_num)
@@ -127,7 +127,7 @@ def update_notice(
 @router.delete("/admin/notices/{notice_num}")
 def delete_notice(
     notice_num: int,
-    current_user: User = Depends(require_roles(*ADMIN_ROLES)),
+    current_user: User = Depends(require_capability("content:manage")),
     session: Session = Depends(get_session),
 ):
     notice = session.get(Notice, notice_num)
