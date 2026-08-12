@@ -7,9 +7,14 @@ from sqlmodel.pool import StaticPool
 
 from app.core.db import get_session
 from app.main import app
-from app.models.schemas import GradingRule, Homework, Submission, SubmissionResult, User
+from app.models.schemas import (
+    GradingRule,
+    Homework,
+    Submission,
+    SubmissionResult,
+    User,
+)
 from app.services.auth_service import AuthService
-
 
 engine = create_engine(
     "sqlite://", connect_args={"check_same_thread": False}, poolclass=StaticPool
@@ -126,14 +131,18 @@ def _create_submission(
             total_score=total_score,
             submission_score=total_score,
             quality_score=0.0,
-            grader_summary="Graded" if status != "pending" else "Waiting for grading.",
+            grader_summary=(
+                "Graded" if status != "pending" else "Waiting for grading."
+            ),
         )
     )
     session.commit()
 
 
 def _login(client: TestClient, user_id: str, password: str) -> str:
-    response = client.post("/api/auth/login", json={"id": user_id, "ps": password})
+    response = client.post(
+        "/api/auth/login", json={"id": user_id, "ps": password}
+    )
     assert response.status_code == 200
     return response.json()["access_token"]
 
@@ -246,12 +255,17 @@ def test_student_dashboard_returns_submission_summary():
     assert homework_items[4]["schedule_status"] == "closed"
     assert homework_items[4]["submission_count"] == 0
 
-    assert [item["homework_num"] for item in payload["recent_submissions"]] == [3, 2]
+    assert [item["homework_num"] for item in payload["recent_submissions"]] == [
+        3,
+        2,
+    ]
 
 
 def test_admin_dashboard_returns_assignment_metrics():
     with Session(engine) as session:
-        _create_user(session, "dashboard-admin", 10043001, "admin-pass", role="admin")
+        _create_user(
+            session, "dashboard-admin", 10043001, "admin-pass", role="admin"
+        )
         _create_user(session, "student-one", 20243011, "student-pass")
         _create_user(session, "student-two", 20243012, "student-pass")
         _create_homework(
@@ -344,7 +358,9 @@ def test_admin_dashboard_returns_assignment_metrics():
     assert payload["active_students"] == 2
     assert payload["total_submissions"] == 3
     assert payload["queue"]["queue_size"] == 1
-    assert payload["queue"]["queued_submission_ids"] == [queued_submission.json()["id"]]
+    assert payload["queue"]["queued_submission_ids"] == [
+        queued_submission.json()["id"]
+    ]
 
     homework_metrics = {
         item["homework_num"]: item for item in payload["homework_metrics"]
@@ -357,6 +373,7 @@ def test_admin_dashboard_returns_assignment_metrics():
     assert homework_metrics[2]["pending_submission_count"] == 1
 
     failure_metrics = {
-        item["failure_type"]: item["count"] for item in payload["failure_metrics"]
+        item["failure_type"]: item["count"]
+        for item in payload["failure_metrics"]
     }
     assert failure_metrics["compile_failed"] == 1

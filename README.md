@@ -1,8 +1,8 @@
 ## neoESPA 프로젝트 실행 가이드
 
-neoESPA 프로젝트를 빠르게 실행하는 방법입니다.
+> neoESPA 프로젝트를 빠르게 실행하는 방법입니다.
 
-## 1. 도커(Docker) 기반 실행 방법
+## 도커(Docker) 기반 실행 방법
 
 Docker 및 Docker Compose가 설치된 환경에서 아래 명령어로 백엔드와 프론트엔드를 함께 기동합니다.
 
@@ -27,7 +27,7 @@ docker compose exec backend uv run python create_sample_data.py
 - 백엔드 API 문서(Swagger): http://localhost:8000/docs
 
 기본 샘플 계정:
-- 관리자 계정: admin / pllab818
+- 관리자 계정: admin / pllab2026
 - 학생 계정: testuser / qwer1234
 
 도커 컨테이너 중지:
@@ -44,7 +44,7 @@ Python 3.14 이상, uv, Node.js 22 이상 환경에서 직접 구동하는 방�
 
 ```bash
 git clone <repository-url>
-cd neoespa_v2
+cd neoespa
 ```
 
 ### 환경 변수 설정

@@ -1,8 +1,16 @@
 from sqlmodel import Session, select
-from ...models.schemas import LectureMaterial, LectureMaterialRead, MaterialComment, MaterialCommentRead, User
+from ...models.schemas import (
+    LectureMaterial,
+    LectureMaterialRead,
+    MaterialComment,
+    MaterialCommentRead,
+    User,
+)
 
 
-def to_lecture_material_read(material: LectureMaterial, session: Session | None = None) -> LectureMaterialRead:
+def to_lecture_material_read(
+    material: LectureMaterial, session: Session | None = None
+) -> LectureMaterialRead:
     comments_read: list[MaterialCommentRead] = []
     if session and material.id:
         raw_comments = session.exec(

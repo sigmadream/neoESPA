@@ -7,7 +7,12 @@ from datetime import datetime
 
 from sqlmodel import Session, select
 
-from ..models.schemas import AuditLog, AuditLogRead, SystemEventLog, SystemEventLogRead
+from ..models.schemas import (
+    AuditLog,
+    AuditLogRead,
+    SystemEventLog,
+    SystemEventLogRead,
+)
 from ..core.request_context import request_id_context
 
 logger = logging.getLogger(__name__)
@@ -82,8 +87,16 @@ class ObservabilityService:
             result=result,
             request_id=request_id or request_id_context.get(),
             job_id=job_id,
-            before_json=(json.dumps(before, ensure_ascii=False, sort_keys=True) if before else None),
-            after_json=(json.dumps(after, ensure_ascii=False, sort_keys=True) if after else None),
+            before_json=(
+                json.dumps(before, ensure_ascii=False, sort_keys=True)
+                if before
+                else None
+            ),
+            after_json=(
+                json.dumps(after, ensure_ascii=False, sort_keys=True)
+                if after
+                else None
+            ),
         )
         session.add(audit_log)
         return audit_log
@@ -99,7 +112,9 @@ class ObservabilityService:
         if category:
             statement = statement.where(SystemEventLog.category == category)
         events = session.exec(
-            statement.order_by(SystemEventLog.created_at.desc(), SystemEventLog.id.desc()).limit(limit)
+            statement.order_by(
+                SystemEventLog.created_at.desc(), SystemEventLog.id.desc()
+            ).limit(limit)
         ).all()
         return [self.to_event_read(event) for event in events]
 

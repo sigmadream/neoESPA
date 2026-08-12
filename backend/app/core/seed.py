@@ -52,8 +52,8 @@ SEEDED_HOMEWORKS = [
             "#include <stdio.h>\n\n"
             "int main(void) {\n"
             "    int a = 0, b = 0;\n"
-            "    if (scanf(\"%d %d\", &a, &b) == 2) {\n"
-            "        printf(\"%d\\n\", a + b);\n"
+            '    if (scanf("%d %d", &a, &b) == 2) {\n'
+            '        printf("%d\\n", a + b);\n'
             "    }\n"
             "    return 0;\n"
             "}\n"

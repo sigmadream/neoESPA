@@ -4,8 +4,11 @@ from sqlmodel import Session
 from ...api.dependencies import get_current_active_user
 from ...api.runtime import notification_service
 from ...core.db import get_session
-from ...models.schemas import NotificationMarkReadRequest, NotificationRead, User
-
+from ...models.schemas import (
+    NotificationMarkReadRequest,
+    NotificationRead,
+    User,
+)
 
 router = APIRouter()
 
@@ -26,4 +29,6 @@ def mark_notifications_read(
 ):
     if not payload.notification_ids:
         return []
-    return notification_service.mark_read(session, current_user.id, payload.notification_ids)
+    return notification_service.mark_read(
+        session, current_user.id, payload.notification_ids
+    )

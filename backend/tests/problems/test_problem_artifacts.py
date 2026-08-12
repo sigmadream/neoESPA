@@ -31,7 +31,10 @@ def test_artifact_store_deduplicates_and_verifies(tmp_path):
 
     assert first.sha256 == hashlib.sha256(b"same-content").hexdigest()
     assert first.relative_path == second.relative_path
-    assert store.resolve(first.relative_path, first.sha256).read_bytes() == b"same-content"
+    assert (
+        store.resolve(first.relative_path, first.sha256).read_bytes()
+        == b"same-content"
+    )
     assert len(list((tmp_path / "bundle" / "objects").rglob(first.sha256))) == 1
 
 
@@ -52,7 +55,12 @@ def test_admin_can_manage_testcase_files(
 
     created = client.post(
         f"{base}/testcases",
-        data={"case_name": "case-1", "position": 1, "score": 100, "is_sample": "false"},
+        data={
+            "case_name": "case-1",
+            "position": 1,
+            "score": 100,
+            "is_sample": "false",
+        },
         files={
             "input_file": ("1.in", b"1 2\n", "text/plain"),
             "output_file": ("1.out", b"3\n", "text/plain"),
@@ -83,7 +91,9 @@ def test_admin_can_manage_testcase_files(
     assert updated.status_code == 200
     assert updated.json()["score"] == 50
 
-    deleted = client.delete(f"{base}/testcases/{testcase['id']}", headers=headers)
+    deleted = client.delete(
+        f"{base}/testcases/{testcase['id']}", headers=headers
+    )
     assert deleted.status_code == 204
     assert session.exec(select(ProblemTestCase)).all() == []
     assert session.exec(select(ProblemAsset)).all() == []

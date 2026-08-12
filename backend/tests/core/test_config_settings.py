@@ -2,6 +2,7 @@ import pytest
 import os
 from app.core.config import Settings
 
+
 def test_settings_environment_normalization():
     # Dev / Development
     os.environ["APP_ENV"] = "dev"
@@ -27,10 +28,12 @@ def test_settings_environment_normalization():
     s5 = Settings()
     assert s5.ENVIRONMENT == "production"
 
+
 def test_cors_origins_parsing():
     os.environ["CORS_ORIGINS"] = "http://example.com , http://test.com "
     s = Settings()
     assert s.CORS_ORIGINS == ["http://example.com", "http://test.com"]
+
 
 def test_validate_security_production_check():
     os.environ["APP_ENV"] = "production"
@@ -64,28 +67,49 @@ def test_production_cannot_enable_legacy_host_runner(monkeypatch):
 def test_invalid_auto_grading_boolean_is_rejected(monkeypatch):
     monkeypatch.setenv("AUTO_GRADING_ENABLED", "sometimes")
 
-    with pytest.raises(RuntimeError, match="AUTO_GRADING_ENABLED must be a boolean"):
+    with pytest.raises(
+        RuntimeError, match="AUTO_GRADING_ENABLED must be a boolean"
+    ):
         _ = Settings().AUTO_GRADING_ENABLED
 
 
-def test_sandbox_ready_requires_policy_bound_hostile_attestation(monkeypatch, tmp_path):
+def test_sandbox_ready_requires_policy_bound_hostile_attestation(
+    monkeypatch, tmp_path
+):
     import hashlib
     import json
 
     policy = tmp_path / "nsjail.cfg"
     policy.write_text("secure-policy", encoding="utf-8")
     attestation = tmp_path / "attestation.json"
-    attestation.write_text(json.dumps({
-        "passed": True,
-        "fixtures": ["basic", "network", "root_write", "fork_bomb", "timeout", "output"],
-        "results": {
-            "basic": "passed", "network": "runtime_error",
-            "root_write": "runtime_error", "fork_bomb": "runtime_error",
-            "timeout": "timeout", "output": "output_limit",
-        },
-        "policy_sha256": hashlib.sha256(policy.read_bytes()).hexdigest(),
-        "runtime_version": "runtime-v1",
-    }), encoding="utf-8")
+    attestation.write_text(
+        json.dumps(
+            {
+                "passed": True,
+                "fixtures": [
+                    "basic",
+                    "network",
+                    "root_write",
+                    "fork_bomb",
+                    "timeout",
+                    "output",
+                ],
+                "results": {
+                    "basic": "passed",
+                    "network": "runtime_error",
+                    "root_write": "runtime_error",
+                    "fork_bomb": "runtime_error",
+                    "timeout": "timeout",
+                    "output": "output_limit",
+                },
+                "policy_sha256": hashlib.sha256(
+                    policy.read_bytes()
+                ).hexdigest(),
+                "runtime_version": "runtime-v1",
+            }
+        ),
+        encoding="utf-8",
+    )
     monkeypatch.setenv("SANDBOX_READY", "true")
     monkeypatch.setenv("NSJAIL_CONFIG_PATH", str(policy))
     monkeypatch.setenv("SANDBOX_ATTESTATION_PATH", str(attestation))

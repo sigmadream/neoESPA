@@ -45,7 +45,7 @@ test('admin_can_compare_flagged_submissions', async ({ page, request }) => {
     original_filename: 'main.py',
   });
 
-  await loginViaUi(page, { id: 'admin', password: 'pllab818' });
+  await loginViaUi(page, { id: 'admin', password: 'pllab2026' });
   await page.waitForURL('/');
   await page.goto('/admin');
   await page.getByRole('button', { name: 'Plagiarism' }).click();

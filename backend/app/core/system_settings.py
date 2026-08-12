@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from typing import Any
 
-
 SYSTEM_SETTING_DEFINITIONS: dict[str, dict[str, Any]] = {
     "lint_calc_weight": {
         "value_type": "number",
@@ -40,39 +39,60 @@ SYSTEM_SETTING_DEFINITIONS: dict[str, dict[str, Any]] = {
         "description": "If enabled, all default lint rules stay active regardless of week-specific rule mapping.",
     },
     "submission_max_source_bytes": {
-        "value_type": "number", "default_value": "1048576", "minimum": 1024,
-        "maximum": 10485760, "description": "Maximum accepted source size in bytes.",
+        "value_type": "number",
+        "default_value": "1048576",
+        "minimum": 1024,
+        "maximum": 10485760,
+        "description": "Maximum accepted source size in bytes.",
     },
     "submission_rate_limit_per_minute": {
-        "value_type": "number", "default_value": "30", "minimum": 1,
-        "maximum": 600, "description": "Maximum submissions per learner per minute.",
+        "value_type": "number",
+        "default_value": "30",
+        "minimum": 1,
+        "maximum": 600,
+        "description": "Maximum submissions per learner per minute.",
     },
     "judge_default_cpu_seconds": {
-        "value_type": "number", "default_value": "2", "minimum": 0.1,
-        "maximum": 60, "description": "Default judge CPU time limit.",
+        "value_type": "number",
+        "default_value": "2",
+        "minimum": 0.1,
+        "maximum": 60,
+        "description": "Default judge CPU time limit.",
     },
     "judge_default_memory_mb": {
-        "value_type": "number", "default_value": "256", "minimum": 16,
-        "maximum": 4096, "description": "Default judge memory limit.",
+        "value_type": "number",
+        "default_value": "256",
+        "minimum": 16,
+        "maximum": 4096,
+        "description": "Default judge memory limit.",
     },
     "judge_default_output_bytes": {
-        "value_type": "number", "default_value": "1048576", "minimum": 1024,
-        "maximum": 52428800, "description": "Default judge output limit.",
+        "value_type": "number",
+        "default_value": "1048576",
+        "minimum": 1024,
+        "maximum": 52428800,
+        "description": "Default judge output limit.",
     },
     "judge_default_process_limit": {
-        "value_type": "number", "default_value": "1", "minimum": 1,
-        "maximum": 32, "description": "Default sandbox process limit.",
+        "value_type": "number",
+        "default_value": "1",
+        "minimum": 1,
+        "maximum": 32,
+        "description": "Default sandbox process limit.",
     },
     "judge_enabled_languages": {
-        "value_type": "language_list", "default_value": "c,cpp,java,python",
+        "value_type": "language_list",
+        "default_value": "c,cpp,java,python",
         "description": "Comma-separated enabled submission languages.",
     },
     "retention_preserve_submission_source": {
-        "value_type": "boolean", "default_value": "true",
+        "value_type": "boolean",
+        "default_value": "true",
         "description": "Preserve original submission source as long-term course data.",
     },
     "problem_two_person_publish": {
-        "value_type": "boolean", "default_value": "false",
+        "value_type": "boolean",
+        "default_value": "false",
         "description": "Require approval by a reviewer other than the revision author.",
     },
 }
@@ -114,23 +134,35 @@ def normalize_setting_value(key: str, raw_value: Any) -> tuple[str, str]:
                 raise ValueError("Numeric setting must be non-negative")
             raise ValueError(f"Numeric setting must be at least {minimum:g}")
         if maximum is not None and numeric_value > float(maximum):
-            raise ValueError(f"Numeric setting must not exceed {float(maximum):g}")
+            raise ValueError(
+                f"Numeric setting must not exceed {float(maximum):g}"
+            )
         if numeric_value.is_integer():
             return str(int(numeric_value)), value_type
         return str(numeric_value), value_type
 
     if value_type == "boolean":
-        return ("true" if parse_boolean_setting(raw_value) else "false"), value_type
+        return (
+            "true" if parse_boolean_setting(raw_value) else "false"
+        ), value_type
 
     if value_type == "language_list":
         from ..services.code_runner import SUPPORTED_LANGUAGES
 
-        values = sorted({part.strip().lower() for part in str(raw_value).split(",") if part.strip()})
+        values = sorted(
+            {
+                part.strip().lower()
+                for part in str(raw_value).split(",")
+                if part.strip()
+            }
+        )
         if not values:
             raise ValueError("At least one language must be enabled")
         unsupported = set(values) - set(SUPPORTED_LANGUAGES)
         if unsupported:
-            raise ValueError(f"Unsupported languages: {', '.join(sorted(unsupported))}")
+            raise ValueError(
+                f"Unsupported languages: {', '.join(sorted(unsupported))}"
+            )
         return ",".join(values), value_type
 
     string_value = str(raw_value).strip()

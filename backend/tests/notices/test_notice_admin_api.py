@@ -7,13 +7,14 @@ from app.main import app
 from app.models.schemas import User
 from app.services.auth_service import AuthService
 
-
 engine = create_engine(
     "sqlite://", connect_args={"check_same_thread": False}, poolclass=StaticPool
 )
 
 
-def _create_user(session: Session, user_id: str, sid: int, password: str, role: str) -> None:
+def _create_user(
+    session: Session, user_id: str, sid: int, password: str, role: str
+) -> None:
     session.add(
         User(
             id=user_id,
@@ -29,7 +30,9 @@ def _create_user(session: Session, user_id: str, sid: int, password: str, role: 
 
 
 def _login(client: TestClient, user_id: str, password: str) -> str:
-    response = client.post("/api/auth/login", json={"id": user_id, "ps": password})
+    response = client.post(
+        "/api/auth/login", json={"id": user_id, "ps": password}
+    )
     assert response.status_code == 200
     return response.json()["access_token"]
 
@@ -106,7 +109,9 @@ def test_admin_can_create_update_delete_notice():
     assert update_response.json()["is_pinned"] is False
 
     assert list_response.status_code == 200
-    assert [notice["title"] for notice in list_response.json()] == ["Updated Notice"]
+    assert [notice["title"] for notice in list_response.json()] == [
+        "Updated Notice"
+    ]
 
     assert delete_response.status_code == 200
     assert delete_response.json()["message"] == "Notice deleted successfully"

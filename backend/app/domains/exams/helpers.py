@@ -22,7 +22,9 @@ def load_exam_languages(exam: Exam) -> list[str]:
 
 
 def to_exam_read(exam: Exam) -> ExamRead:
-    schedule_status, can_submit = compute_schedule_window(exam.starttime, exam.deadline)
+    schedule_status, can_submit = compute_schedule_window(
+        exam.starttime, exam.deadline
+    )
     return ExamRead(
         id=exam.id or 0,
         title=exam.title,

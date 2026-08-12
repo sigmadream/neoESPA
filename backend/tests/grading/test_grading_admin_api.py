@@ -20,8 +20,6 @@ from app.models.schemas import (
 )
 from app.services.auth_service import AuthService
 
-
-
 engine = create_engine(
     "sqlite://", connect_args={"check_same_thread": False}, poolclass=StaticPool
 )
@@ -100,7 +98,9 @@ def _create_testcase_rule(
 
 
 def _login(client: TestClient, user_id: str, password: str) -> str:
-    response = client.post("/api/auth/login", json={"id": user_id, "ps": password})
+    response = client.post(
+        "/api/auth/login", json={"id": user_id, "ps": password}
+    )
     assert response.status_code == 200
     return response.json()["access_token"]
 
@@ -113,6 +113,7 @@ def _reset_runtime_grading_queue() -> None:
     # Grading jobs are persisted in the test database and removed with its tables.
     pass
 
+
 def setup_function():
     _reset_runtime_grading_queue()
     SQLModel.metadata.create_all(engine)
@@ -123,12 +124,13 @@ def teardown_function():
     SQLModel.metadata.drop_all(engine)
 
 
-
 def test_admin_can_requeue_failed_submission():
     with Session(engine) as session:
         _create_homework(session, 1, "Requeue Homework")
         _create_testcase_rule(session, 1, expected_output="ok\n")
-        _create_user(session, "student-requeue", 20248001, "student-pass", "student")
+        _create_user(
+            session, "student-requeue", 20248001, "student-pass", "student"
+        )
         _create_user(session, "admin-requeue", 10008001, "admin-pass", "admin")
 
         def get_session_override():
@@ -160,7 +162,9 @@ def test_admin_can_requeue_failed_submission():
             headers=_auth_headers(admin_token),
         )
         stored_result = session.exec(
-            select(SubmissionResult).where(SubmissionResult.submission_id == submission_id)
+            select(SubmissionResult).where(
+                SubmissionResult.submission_id == submission_id
+            )
         ).first()
 
         app.dependency_overrides.clear()
@@ -183,7 +187,9 @@ def test_admin_can_adjust_submission_score():
     with Session(engine) as session:
         _create_homework(session, 2, "Adjust Homework")
         _create_testcase_rule(session, 2, expected_output="ok\n")
-        _create_user(session, "student-adjust", 20248002, "student-pass", "student")
+        _create_user(
+            session, "student-adjust", 20248002, "student-pass", "student"
+        )
         _create_user(session, "admin-adjust", 10008002, "admin-pass", "admin")
 
         def get_session_override():
@@ -223,7 +229,9 @@ def test_admin_can_adjust_submission_score():
             headers=_auth_headers(student_token),
         )
         stored_result = session.exec(
-            select(SubmissionResult).where(SubmissionResult.submission_id == submission_id)
+            select(SubmissionResult).where(
+                SubmissionResult.submission_id == submission_id
+            )
         ).first()
 
         app.dependency_overrides.clear()
@@ -233,7 +241,10 @@ def test_admin_can_adjust_submission_score():
     assert adjust_response.status_code == 200
     assert adjust_response.json()["total_score"] == 87.5
     assert adjust_response.json()["manual_total_score"] == 87.5
-    assert adjust_response.json()["score_adjustment_note"] == "Late penalty applied"
+    assert (
+        adjust_response.json()["score_adjustment_note"]
+        == "Late penalty applied"
+    )
     assert adjust_response.json()["score_adjusted_by"] == "admin-adjust"
     assert student_detail.status_code == 200
     assert student_detail.json()["total_score"] == 87.5
@@ -246,7 +257,9 @@ def test_admin_can_adjust_submission_score():
 def test_admin_cannot_grade_homework_without_testcases():
     with Session(engine) as session:
         _create_homework(session, 4, "Missing Testcase Homework")
-        _create_user(session, "student-missing", 20248004, "student-pass", "student")
+        _create_user(
+            session, "student-missing", 20248004, "student-pass", "student"
+        )
         _create_user(session, "admin-missing", 10008004, "admin-pass", "admin")
 
         def get_session_override():
@@ -274,14 +287,19 @@ def test_admin_cannot_grade_homework_without_testcases():
             headers=_auth_headers(admin_token),
         )
         stored_result = session.exec(
-            select(SubmissionResult).where(SubmissionResult.submission_id == submission_id)
+            select(SubmissionResult).where(
+                SubmissionResult.submission_id == submission_id
+            )
         ).first()
 
         app.dependency_overrides.clear()
 
     assert create_response.status_code == 201
     assert grade_response.status_code == 400
-    assert grade_response.json()["detail"] == "Homework has no active test cases configured"
+    assert (
+        grade_response.json()["detail"]
+        == "Homework has no active test cases configured"
+    )
     assert stored_result is not None
     assert stored_result.status == "retryable"
     assert stored_result.grader_summary == (
@@ -292,7 +310,9 @@ def test_admin_cannot_grade_homework_without_testcases():
 def test_failed_regrade_preserves_existing_result_data():
     with Session(engine) as session:
         _create_homework(session, 3, "Rollback Homework")
-        _create_user(session, "student-rollback", 20248003, "student-pass", "student")
+        _create_user(
+            session, "student-rollback", 20248003, "student-pass", "student"
+        )
         _create_user(session, "admin-rollback", 10008003, "admin-pass", "admin")
 
         submission = Submission(
@@ -354,7 +374,9 @@ def test_failed_regrade_preserves_existing_result_data():
             headers=_auth_headers(admin_token),
         )
         stored_result = session.exec(
-            select(SubmissionResult).where(SubmissionResult.submission_id == submission_id)
+            select(SubmissionResult).where(
+                SubmissionResult.submission_id == submission_id
+            )
         ).first()
         stored_case_results = session.exec(
             select(SubmissionCaseResult).where(
@@ -373,9 +395,12 @@ def test_failed_regrade_preserves_existing_result_data():
     assert len(stored_case_results) == 1
     assert stored_case_results[0].case_name == "sample"
 
+
 def test_admin_process_next_returns_404_when_queue_is_empty():
     with Session(engine) as session:
-        _create_user(session, "admin-empty-queue", 10008005, "admin-pass", "admin")
+        _create_user(
+            session, "admin-empty-queue", 10008005, "admin-pass", "admin"
+        )
 
         def get_session_override():
             return session
@@ -397,7 +422,9 @@ def test_admin_process_next_returns_404_when_queue_is_empty():
 
 def test_admin_queue_and_requeue_return_404_for_missing_submission():
     with Session(engine) as session:
-        _create_user(session, "admin-missing-submission", 10008006, "admin-pass", "admin")
+        _create_user(
+            session, "admin-missing-submission", 10008006, "admin-pass", "admin"
+        )
 
         def get_session_override():
             return session
@@ -425,7 +452,9 @@ def test_admin_queue_and_requeue_return_404_for_missing_submission():
 
 def test_admin_exports_return_404_for_missing_homework():
     with Session(engine) as session:
-        _create_user(session, "admin-missing-homework", 10008007, "admin-pass", "admin")
+        _create_user(
+            session, "admin-missing-homework", 10008007, "admin-pass", "admin"
+        )
 
         def get_session_override():
             return session
@@ -454,8 +483,16 @@ def test_admin_exports_return_404_for_missing_homework():
 def test_admin_adjust_score_rejects_pending_or_negative_values():
     with Session(engine) as session:
         _create_homework(session, 5, "Adjust Validation Homework")
-        _create_user(session, "student-adjust-validation", 20248005, "student-pass", "student")
-        _create_user(session, "admin-adjust-validation", 10008008, "admin-pass", "admin")
+        _create_user(
+            session,
+            "student-adjust-validation",
+            20248005,
+            "student-pass",
+            "student",
+        )
+        _create_user(
+            session, "admin-adjust-validation", 10008008, "admin-pass", "admin"
+        )
 
         pending_submission = Submission(
             homework_num=5,
@@ -504,16 +541,31 @@ def test_admin_adjust_score_rejects_pending_or_negative_values():
         app.dependency_overrides.clear()
 
     assert pending_response.status_code == 400
-    assert pending_response.json()["detail"] == "Cannot adjust score while grading is in progress"
+    assert (
+        pending_response.json()["detail"]
+        == "Cannot adjust score while grading is in progress"
+    )
     assert negative_response.status_code == 400
-    assert negative_response.json()["detail"] == "Adjusted score must be non-negative"
+    assert (
+        negative_response.json()["detail"]
+        == "Adjusted score must be non-negative"
+    )
+
 
 def test_admin_grade_submission_logs_event_on_unexpected_error():
     with Session(engine) as session:
         _create_homework(session, 6, "Unexpected Error Homework")
         _create_testcase_rule(session, 6, expected_output="ok\n")
-        _create_user(session, "student-runtime-grade", 20248006, "student-pass", "student")
-        _create_user(session, "admin-runtime-grade", 10008009, "admin-pass", "admin")
+        _create_user(
+            session,
+            "student-runtime-grade",
+            20248006,
+            "student-pass",
+            "student",
+        )
+        _create_user(
+            session, "admin-runtime-grade", 10008009, "admin-pass", "admin"
+        )
 
         submission = Submission(
             homework_num=6,
@@ -539,7 +591,9 @@ def test_admin_grade_submission_logs_event_on_unexpected_error():
         def explode(*args, **kwargs):
             raise RuntimeError("grader exploded")
 
-        original_grade_submission = grading_router.grading_service.grade_submission
+        original_grade_submission = (
+            grading_router.grading_service.grade_submission
+        )
         grading_router.grading_service.grade_submission = explode
         try:
             response = client.post(
@@ -547,12 +601,16 @@ def test_admin_grade_submission_logs_event_on_unexpected_error():
                 headers=_auth_headers(admin_token),
             )
         finally:
-            grading_router.grading_service.grade_submission = original_grade_submission
+            grading_router.grading_service.grade_submission = (
+                original_grade_submission
+            )
             app.dependency_overrides.clear()
 
         stored_submission = session.get(Submission, submission.id)
         event = session.exec(
-            select(SystemEventLog).where(SystemEventLog.event_type == "grading_failed")
+            select(SystemEventLog).where(
+                SystemEventLog.event_type == "grading_failed"
+            )
         ).first()
 
     assert response.status_code == 500
@@ -569,8 +627,16 @@ def test_admin_process_next_records_audit_for_graded_submission():
     with Session(engine) as session:
         _create_homework(session, 7, "Queue Success Homework")
         _create_testcase_rule(session, 7, expected_output="ok\n")
-        _create_user(session, "student-queue-success", 20248007, "student-pass", "student")
-        _create_user(session, "admin-queue-success", 10008010, "admin-pass", "admin")
+        _create_user(
+            session,
+            "student-queue-success",
+            20248007,
+            "student-pass",
+            "student",
+        )
+        _create_user(
+            session, "admin-queue-success", 10008010, "admin-pass", "admin"
+        )
 
         submission = Submission(
             homework_num=7,
@@ -603,10 +669,14 @@ def test_admin_process_next_records_audit_for_graded_submission():
         )
 
         audit_log = session.exec(
-            select(AuditLog).where(AuditLog.action_type == "process_grading_queue")
+            select(AuditLog).where(
+                AuditLog.action_type == "process_grading_queue"
+            )
         ).first()
         stored_result = session.exec(
-            select(SubmissionResult).where(SubmissionResult.submission_id == submission.id)
+            select(SubmissionResult).where(
+                SubmissionResult.submission_id == submission.id
+            )
         ).first()
 
         app.dependency_overrides.clear()
@@ -623,8 +693,12 @@ def test_admin_process_next_records_audit_for_graded_submission():
 
 def test_admin_process_next_records_event_for_retryable_submission():
     with Session(engine) as session:
-        _create_user(session, "student-queue-retry", 20248008, "student-pass", "student")
-        _create_user(session, "admin-queue-retry", 10008011, "admin-pass", "admin")
+        _create_user(
+            session, "student-queue-retry", 20248008, "student-pass", "student"
+        )
+        _create_user(
+            session, "admin-queue-retry", 10008011, "admin-pass", "admin"
+        )
 
         submission = Submission(
             homework_num=999,
@@ -657,13 +731,19 @@ def test_admin_process_next_records_event_for_retryable_submission():
         )
 
         retry_event = session.exec(
-            select(SystemEventLog).where(SystemEventLog.event_type == "queue_processing_failed")
+            select(SystemEventLog).where(
+                SystemEventLog.event_type == "queue_processing_failed"
+            )
         ).first()
         audit_log = session.exec(
-            select(AuditLog).where(AuditLog.action_type == "process_grading_queue")
+            select(AuditLog).where(
+                AuditLog.action_type == "process_grading_queue"
+            )
         ).first()
         stored_result = session.exec(
-            select(SubmissionResult).where(SubmissionResult.submission_id == submission.id)
+            select(SubmissionResult).where(
+                SubmissionResult.submission_id == submission.id
+            )
         ).first()
 
         app.dependency_overrides.clear()

@@ -46,7 +46,7 @@ CREATE TABLE `users` (
 
 -- Dump completed on 2019-11-12 15:22:42
 
-INSERT INTO `users` VALUES ('admin',100000001,'pllab818','Admin','3939','pllab@pusan.ac.kr','admin');
+INSERT INTO `users` VALUES ('admin',100000001,'pllab2026','Admin','3939','pllab@pusan.ac.kr','admin');
 create table `202400001AssTable` (Num int not null, SubTimes int null, constraint Num unique (Num));
 
 INSERT INTO `users` VALUES ('prof',100000002,'pl#304lab','Prof','3518','woogyun@pusan.ac.kr','admin');

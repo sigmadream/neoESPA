@@ -10,7 +10,6 @@ from app.main import app
 from app.models.schemas import CollabParticipant, User
 from app.services.auth_service import AuthService
 
-
 engine = create_engine(
     "sqlite://", connect_args={"check_same_thread": False}, poolclass=StaticPool
 )
@@ -31,22 +30,20 @@ def _create_user(session: Session, user_id: str, sid: int, role: str) -> None:
     session.commit()
 
 
-
 def _login(client: TestClient, user_id: str) -> str:
-    response = client.post("/api/auth/login", json={"id": user_id, "ps": "password"})
+    response = client.post(
+        "/api/auth/login", json={"id": user_id, "ps": "password"}
+    )
     assert response.status_code == 200
     return response.json()["access_token"]
-
 
 
 def setup_function():
     SQLModel.metadata.create_all(engine)
 
 
-
 def teardown_function():
     SQLModel.metadata.drop_all(engine)
-
 
 
 def test_code_changes_broadcast_to_participants():
@@ -76,15 +73,20 @@ def test_code_changes_broadcast_to_participants():
         )
         session_id = create_response.json()["id"]
 
-        with client.websocket_connect(
-            f"/ws/collab/sessions/{session_id}?token={student_a_token}"
-        ) as first_socket, client.websocket_connect(
-            f"/ws/collab/sessions/{session_id}?token={student_b_token}"
-        ) as second_socket:
+        with (
+            client.websocket_connect(
+                f"/ws/collab/sessions/{session_id}?token={student_a_token}"
+            ) as first_socket,
+            client.websocket_connect(
+                f"/ws/collab/sessions/{session_id}?token={student_b_token}"
+            ) as second_socket,
+        ):
             assert first_socket.receive_json()["type"] == "session_state"
             assert second_socket.receive_json()["type"] == "session_state"
 
-            first_socket.send_json({"type": "code_update", "code": "print('shared')\n"})
+            first_socket.send_json(
+                {"type": "code_update", "code": "print('shared')\n"}
+            )
             first_broadcast = first_socket.receive_json()
             second_broadcast = second_socket.receive_json()
 
@@ -110,12 +112,15 @@ async def test_async_history_read_reflects_websocket_updates():
 
     try:
         transport = ASGITransport(app=app)
-        async with AsyncClient(transport=transport, base_url="http://testserver") as client:
+        async with AsyncClient(
+            transport=transport, base_url="http://testserver"
+        ) as client:
             mentor_login = await client.post(
                 "/api/auth/login", json={"id": "mentor-async", "ps": "password"}
             )
             student_login = await client.post(
-                "/api/auth/login", json={"id": "student-async", "ps": "password"}
+                "/api/auth/login",
+                json={"id": "student-async", "ps": "password"},
             )
             assert mentor_login.status_code == 200
             assert student_login.status_code == 200
@@ -145,10 +150,15 @@ async def test_async_history_read_reflects_websocket_updates():
                     f"/ws/collab/sessions/{session_id}?token={student_token}"
                 ) as socket:
                     session_state = socket.receive_json()
-                    socket.send_json({"type": "chat", "content": "Need async help"})
+                    socket.send_json(
+                        {"type": "chat", "content": "Need async help"}
+                    )
                     chat_broadcast = socket.receive_json()
                     socket.send_json(
-                        {"type": "code_update", "code": "print('async-shared')\n"}
+                        {
+                            "type": "code_update",
+                            "code": "print('async-shared')\n",
+                        }
                     )
                     code_broadcast = socket.receive_json()
 
@@ -169,9 +179,13 @@ async def test_async_history_read_reflects_websocket_updates():
     assert code_broadcast["type"] == "code_update"
     assert code_broadcast["code"] == "print('async-shared')\n"
     assert history_response.status_code == 200
-    assert history_response.json()["messages"][-1]["content"] == "Need async help"
-    assert history_response.json()["code_snapshots"][-1]["code_text"] == "print('async-shared')\n"
-
+    assert (
+        history_response.json()["messages"][-1]["content"] == "Need async help"
+    )
+    assert (
+        history_response.json()["code_snapshots"][-1]["code_text"]
+        == "print('async-shared')\n"
+    )
 
 
 def test_create_collab_session_rejects_unknown_homework():
@@ -200,7 +214,6 @@ def test_create_collab_session_rejects_unknown_homework():
 
     assert create_response.status_code == 404
     assert create_response.json()["detail"] == "Homework not found"
-
 
 
 def test_inactive_participant_cannot_connect_to_collab_websocket():
@@ -248,6 +261,7 @@ def test_inactive_participant_cannot_connect_to_collab_websocket():
 
 def test_websocket_requires_token():
     with Session(engine) as session:
+
         def get_session_override():
             return session
 
@@ -342,10 +356,15 @@ def test_non_editor_receives_websocket_error_frame():
             f"/ws/collab/sessions/{session_id}?token={student_token}"
         ) as socket:
             assert socket.receive_json()["type"] == "session_state"
-            socket.send_json({"type": "code_update", "code": "print('blocked')\n"})
+            socket.send_json(
+                {"type": "code_update", "code": "print('blocked')\n"}
+            )
             error_response = socket.receive_json()
 
         app.dependency_overrides.clear()
 
     assert create_response.status_code == 200
-    assert error_response == {"type": "error", "detail": "Editing is not allowed."}
+    assert error_response == {
+        "type": "error",
+        "detail": "Editing is not allowed.",
+    }

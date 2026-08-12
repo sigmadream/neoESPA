@@ -25,7 +25,9 @@ def load_collab_participants(
     ).all()
 
 
-def to_collab_participant_read(participant: CollabParticipant) -> CollabParticipantRead:
+def to_collab_participant_read(
+    participant: CollabParticipant,
+) -> CollabParticipantRead:
     return CollabParticipantRead(
         user_id=participant.user_id,
         role=participant.role,
@@ -48,7 +50,8 @@ def to_collab_session_read(
         status=collab_session.status,
         current_code=collab_session.current_code,
         participants=[
-            to_collab_participant_read(participant) for participant in participants
+            to_collab_participant_read(participant)
+            for participant in participants
         ],
         created_at=collab_session.created_at,
         closed_at=collab_session.closed_at,
@@ -65,7 +68,9 @@ def to_collab_message_read(message: CollabMessage) -> CollabMessageRead:
     )
 
 
-def to_collab_snapshot_read(snapshot: CollabCodeSnapshot) -> CollabCodeSnapshotRead:
+def to_collab_snapshot_read(
+    snapshot: CollabCodeSnapshot,
+) -> CollabCodeSnapshotRead:
     return CollabCodeSnapshotRead(
         id=snapshot.id or 0,
         session_id=snapshot.session_id,

@@ -20,7 +20,7 @@
 
 ### 샘플 계정
 
-- 관리자: `admin / pllab818`
+- 관리자: `admin / pllab2026`
 - 학생: `testuser / qwer1234`
 
 ### 접근 권한

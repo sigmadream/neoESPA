@@ -9,7 +9,6 @@ from app.main import app
 from app.models.schemas import Homework, User
 from app.services.auth_service import AuthService
 
-
 engine = create_engine(
     "sqlite://", connect_args={"check_same_thread": False}, poolclass=StaticPool
 )
@@ -21,7 +20,9 @@ def _dt_string(offset_days: int, offset_hours: int = 0) -> str:
     ).strftime("%Y-%m-%d %H:%M:%S")
 
 
-def _create_user(session: Session, user_id: str, sid: int, password: str, role: str) -> None:
+def _create_user(
+    session: Session, user_id: str, sid: int, password: str, role: str
+) -> None:
     session.add(
         User(
             id=user_id,
@@ -37,7 +38,9 @@ def _create_user(session: Session, user_id: str, sid: int, password: str, role: 
 
 
 def _login(client: TestClient, user_id: str, password: str) -> str:
-    response = client.post("/api/auth/login", json={"id": user_id, "ps": password})
+    response = client.post(
+        "/api/auth/login", json={"id": user_id, "ps": password}
+    )
     assert response.status_code == 200
     return response.json()["access_token"]
 
@@ -66,7 +69,9 @@ def test_list_homeworks_for_student():
             )
         )
         session.commit()
-        _create_user(session, "student-homework", 20241001, "student-pass", "student")
+        _create_user(
+            session, "student-homework", 20241001, "student-pass", "student"
+        )
 
         def get_session_override():
             return session
@@ -142,7 +147,9 @@ def test_future_homework_is_hidden_from_student():
             )
         )
         session.commit()
-        _create_user(session, "student-hidden", 20241002, "student-pass", "student")
+        _create_user(
+            session, "student-hidden", 20241002, "student-pass", "student"
+        )
 
         def get_session_override():
             return session

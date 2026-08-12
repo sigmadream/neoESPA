@@ -12,9 +12,15 @@ def test_worker_heartbeat_drain_disable_enable_and_metrics(
     assert workers.status_code == 200
     assert workers.json()[0]["status"] == "online"
 
-    drained = client.post("/api/admin/judge-workers/worker-one/drain", headers=headers)
-    disabled = client.post("/api/admin/judge-workers/worker-one/disable", headers=headers)
-    enabled = client.post("/api/admin/judge-workers/worker-one/enable", headers=headers)
+    drained = client.post(
+        "/api/admin/judge-workers/worker-one/drain", headers=headers
+    )
+    disabled = client.post(
+        "/api/admin/judge-workers/worker-one/disable", headers=headers
+    )
+    enabled = client.post(
+        "/api/admin/judge-workers/worker-one/enable", headers=headers
+    )
     metrics = client.get("/api/admin/grading/metrics", headers=headers)
 
     assert drained.json()["status"] == "draining"

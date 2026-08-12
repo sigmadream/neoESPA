@@ -8,8 +8,6 @@ from app.main import app
 from app.models.schemas import Notification, Submission, SubmissionResult, User
 from app.services.auth_service import AuthService
 
-
-
 engine = create_engine(
     "sqlite://", connect_args={"check_same_thread": False}, poolclass=StaticPool
 )
@@ -38,9 +36,10 @@ def _create_user(
     session.commit()
 
 
-
 def _login(client: TestClient, user_id: str) -> str:
-    response = client.post("/api/auth/login", json={"id": user_id, "ps": "password"})
+    response = client.post(
+        "/api/auth/login", json={"id": user_id, "ps": "password"}
+    )
     assert response.status_code == 200
     return response.json()["access_token"]
 
@@ -146,6 +145,7 @@ def test_notice_update_does_not_duplicate_publication_notifications():
     assert list_response.status_code == 200
     assert len(list_response.json()) == 1
 
+
 def test_mark_notifications_read_returns_empty_list_for_empty_payload():
     with Session(engine) as session:
         _create_user(session, "notice-student-3", 20254003, "student")
@@ -202,7 +202,9 @@ def test_mark_notifications_read_updates_only_current_user_notifications():
             ]
         )
         session.commit()
-        notifications = session.exec(select(Notification).order_by(Notification.id)).all()
+        notifications = session.exec(
+            select(Notification).order_by(Notification.id)
+        ).all()
 
         def get_session_override():
             return session
@@ -213,11 +215,15 @@ def test_mark_notifications_read_updates_only_current_user_notifications():
         student_token = _login(client, "notice-reader-a")
         response = client.post(
             "/api/notifications/read",
-            json={"notification_ids": [notifications[0].id, notifications[2].id]},
+            json={
+                "notification_ids": [notifications[0].id, notifications[2].id]
+            },
             headers={"Authorization": f"Bearer {student_token}"},
         )
 
-        refreshed_notifications = session.exec(select(Notification).order_by(Notification.id)).all()
+        refreshed_notifications = session.exec(
+            select(Notification).order_by(Notification.id)
+        ).all()
         app.dependency_overrides.clear()
 
     assert response.status_code == 200
@@ -231,7 +237,13 @@ def test_notice_publication_skips_inactive_students():
     with Session(engine) as session:
         _create_user(session, "notice-admin-3", 10054003, "admin")
         _create_user(session, "notice-student-active", 20254006, "student")
-        _create_user(session, "notice-student-inactive", 20254007, "student", is_active=False)
+        _create_user(
+            session,
+            "notice-student-inactive",
+            20254007,
+            "student",
+            is_active=False,
+        )
 
         def get_session_override():
             return session
@@ -252,7 +264,9 @@ def test_notice_publication_skips_inactive_students():
             },
             headers={"Authorization": f"Bearer {admin_token}"},
         )
-        created_notifications = session.exec(select(Notification).order_by(Notification.id)).all()
+        created_notifications = session.exec(
+            select(Notification).order_by(Notification.id)
+        ).all()
 
         app.dependency_overrides.clear()
 
@@ -289,7 +303,9 @@ def test_grade_notification_uses_manual_score_when_present():
         session.commit()
         submission_id = submission.id or 0
 
-        notification = notification_service.notify_submission_graded(session, submission, result)
+        notification = notification_service.notify_submission_graded(
+            session, submission, result
+        )
         session.commit()
         session.refresh(notification)
 

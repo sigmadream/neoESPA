@@ -5,12 +5,20 @@ from sqlmodel import Session, select
 
 from ...api.dependencies import get_current_active_user
 from ...core.db import get_session
-from ...models.schemas import Homework, StudentDashboardOverview, StudentDashboardRead, Submission, User
+from ...models.schemas import (
+    Homework,
+    StudentDashboardOverview,
+    StudentDashboardRead,
+    Submission,
+    User,
+)
 from ..dashboard.helpers import to_student_dashboard_homework_item
 from ..shared.schedules import compute_schedule_window
-from ..submissions.helpers import build_submission_result_map, to_submission_read
+from ..submissions.helpers import (
+    build_submission_result_map,
+    to_submission_read,
+)
 from ..users.serializers import is_staff
-
 
 router = APIRouter()
 
@@ -24,7 +32,9 @@ def get_student_dashboard(
     visible_homeworks: list[Homework] = []
 
     for homework in homeworks:
-        schedule_status, _ = compute_schedule_window(homework.starttime, homework.deadline)
+        schedule_status, _ = compute_schedule_window(
+            homework.starttime, homework.deadline
+        )
         if schedule_status == "upcoming" and not is_staff(current_user):
             continue
         visible_homeworks.append(homework)
@@ -36,7 +46,9 @@ def get_student_dashboard(
     ).all()
     submissions_by_homework: dict[int, list[Submission]] = {}
     for submission in submissions:
-        submissions_by_homework.setdefault(submission.homework_num, []).append(submission)
+        submissions_by_homework.setdefault(submission.homework_num, []).append(
+            submission
+        )
 
     result_by_submission_id = build_submission_result_map(session, submissions)
     homework_items = [
@@ -49,11 +61,15 @@ def get_student_dashboard(
     ]
 
     latest_scores = [
-        item.latest_score for item in homework_items if item.latest_score is not None
+        item.latest_score
+        for item in homework_items
+        if item.latest_score is not None
     ]
     overview = StudentDashboardOverview(
         total_homeworks=len(homework_items),
-        submitted_homeworks=sum(1 for item in homework_items if item.submission_count > 0),
+        submitted_homeworks=sum(
+            1 for item in homework_items if item.submission_count > 0
+        ),
         graded_homeworks=sum(
             1
             for item in homework_items
@@ -70,7 +86,9 @@ def get_student_dashboard(
             if item.schedule_status == "closed" and item.submission_count == 0
         ),
         closing_soon_homeworks=sum(
-            1 for item in homework_items if item.schedule_status == "closing_soon"
+            1
+            for item in homework_items
+            if item.schedule_status == "closing_soon"
         ),
         average_latest_score=(
             round(sum(latest_scores) / len(latest_scores), 2)
@@ -84,6 +102,7 @@ def get_student_dashboard(
         overview=overview,
         homework_items=homework_items,
         recent_submissions=[
-            to_submission_read(session, submission) for submission in submissions[:5]
+            to_submission_read(session, submission)
+            for submission in submissions[:5]
         ],
     )

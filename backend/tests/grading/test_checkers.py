@@ -1,6 +1,10 @@
 import pytest
 
-from app.services.checkers import CheckerError, FloatingPointChecker, get_checker
+from app.services.checkers import (
+    CheckerError,
+    FloatingPointChecker,
+    get_checker,
+)
 from app.services.scoring import CaseScore, GroupPolicy, calculate_group_score
 
 
@@ -40,5 +44,8 @@ def test_group_scoring_rejects_dependency_cycle():
     with pytest.raises(ValueError, match="cycle"):
         calculate_group_score(
             [],
-            [GroupPolicy("a", dependency="b"), GroupPolicy("b", dependency="a")],
+            [
+                GroupPolicy("a", dependency="b"),
+                GroupPolicy("b", dependency="a"),
+            ],
         )

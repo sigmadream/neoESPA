@@ -12,7 +12,6 @@ from sqlmodel import Session, select
 from ..models.schemas import JudgeJob, ProblemAsset, Submission, SubmissionFile
 from .artifact_store import LocalArtifactStore
 
-
 BUNDLE_FORMAT_VERSION = "1"
 
 
@@ -36,7 +35,9 @@ class CourseBundleService:
     def initialize(self) -> None:
         self.store.initialize()
         for name in ("database", "manifests", "exports", "snapshots"):
-            (self.store.root / name).mkdir(parents=True, exist_ok=True, mode=0o700)
+            (self.store.root / name).mkdir(
+                parents=True, exist_ok=True, mode=0o700
+            )
         version = self.store.root / "VERSION"
         if not version.exists():
             version.write_text(BUNDLE_FORMAT_VERSION + "\n", encoding="utf-8")
@@ -51,7 +52,9 @@ class CourseBundleService:
                 expected[submission.storage_path] = submission.storage_sha256
         for submission_file in session.exec(select(SubmissionFile)).all():
             if submission_file.storage_path and submission_file.storage_sha256:
-                expected[submission_file.storage_path] = submission_file.storage_sha256
+                expected[submission_file.storage_path] = (
+                    submission_file.storage_sha256
+                )
         missing: list[str] = []
         mismatch: list[str] = []
         present = 0
@@ -106,7 +109,13 @@ class CourseBundleService:
                 continue
             relative = path.relative_to(self.store.root).as_posix()
             digest = hashlib.sha256(path.read_bytes()).hexdigest()
-            objects.append({"path": relative, "sha256": digest, "size_bytes": path.stat().st_size})
+            objects.append(
+                {
+                    "path": relative,
+                    "sha256": digest,
+                    "size_bytes": path.stat().st_size,
+                }
+            )
             checksum_lines.append(f"{digest}  {relative}")
         snapshot_digest = hashlib.sha256(snapshot.read_bytes()).hexdigest()
         snapshot_relative = snapshot.relative_to(self.store.root).as_posix()
@@ -130,7 +139,9 @@ class CourseBundleService:
             encoding="utf-8",
         )
         (manifests / "objects.jsonl").write_text(
-            "".join(json.dumps(item, sort_keys=True) + "\n" for item in objects),
+            "".join(
+                json.dumps(item, sort_keys=True) + "\n" for item in objects
+            ),
             encoding="utf-8",
         )
         (manifests / "checksums.sha256").write_text(
@@ -142,20 +153,33 @@ class CourseBundleService:
         return snapshot
 
     def create_operational_snapshot(
-        self, session: Session, database_path: Path, *, course_id: str, term: str,
-        schema_version: str, write_frozen: bool = False,
+        self,
+        session: Session,
+        database_path: Path,
+        *,
+        course_id: str,
+        term: str,
+        schema_version: str,
+        write_frozen: bool = False,
     ) -> Path:
         active_jobs = session.exec(
-            select(JudgeJob.id).where(JudgeJob.status.in_(["queued", "leased", "running"])).limit(1)
+            select(JudgeJob.id)
+            .where(JudgeJob.status.in_(["queued", "leased", "running"]))
+            .limit(1)
         ).first()
         if active_jobs is not None and not write_frozen:
-            raise ValueError("Queue must be idle or course writes must be frozen before snapshot")
+            raise ValueError(
+                "Queue must be idle or course writes must be frozen before snapshot"
+            )
         # Checkpoint only while the coordinator is idle/frozen. SQLite Backup
         # remains the actual snapshot mechanism, so no WAL file is copied alone.
         session.connection().exec_driver_sql("PRAGMA wal_checkpoint(PASSIVE)")
         session.commit()
         return self.create_snapshot(
-            database_path, course_id=course_id, term=term, schema_version=schema_version
+            database_path,
+            course_id=course_id,
+            term=term,
+            schema_version=schema_version,
         )
 
     def verify(self) -> list[str]:
@@ -187,7 +211,9 @@ class CourseBundleService:
                 errors.append(f"Checksum mismatch: {relative}")
         return errors
 
-    def restore_snapshot(self, target: Path, *, replace: bool = False) -> dict[str, int]:
+    def restore_snapshot(
+        self, target: Path, *, replace: bool = False
+    ) -> dict[str, int]:
         errors = self.verify()
         if errors:
             raise ValueError("Bundle verification failed: " + "; ".join(errors))
@@ -196,7 +222,9 @@ class CourseBundleService:
             raise FileExistsError(f"Restore target already exists: {target}")
         target.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
         metadata = json.loads(
-            (self.store.root / "manifests" / "course.json").read_text(encoding="utf-8")
+            (self.store.root / "manifests" / "course.json").read_text(
+                encoding="utf-8"
+            )
         )
         snapshot = (self.store.root / metadata["database_snapshot"]).resolve()
         if self.store.root not in snapshot.parents:
@@ -207,7 +235,9 @@ class CourseBundleService:
             source.backup(destination)
             integrity = destination.execute("PRAGMA integrity_check").fetchone()
             if integrity is None or integrity[0] != "ok":
-                raise ValueError("Restored SQLite database failed integrity_check")
+                raise ValueError(
+                    "Restored SQLite database failed integrity_check"
+                )
             tables = destination.execute(
                 "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'"
             ).fetchall()
@@ -225,4 +255,6 @@ class CourseBundleService:
 
     @staticmethod
     def report_json(report: ReconciliationReport) -> str:
-        return json.dumps(asdict(report), ensure_ascii=False, indent=2, sort_keys=True)
+        return json.dumps(
+            asdict(report), ensure_ascii=False, indent=2, sort_keys=True
+        )

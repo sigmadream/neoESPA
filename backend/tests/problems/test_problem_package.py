@@ -5,7 +5,10 @@ from io import BytesIO
 
 import pytest
 
-from app.services.problem_package import ProblemPackageError, parse_problem_package
+from app.services.problem_package import (
+    ProblemPackageError,
+    parse_problem_package,
+)
 
 
 def _package(manifest: dict, files: dict[str, bytes]) -> bytes:
@@ -19,8 +22,18 @@ def _package(manifest: dict, files: dict[str, bytes]) -> bytes:
 
 def test_parse_problem_package_pairs_manifest_files():
     content = _package(
-        {"testcases": [{"name": "sample", "position": 1, "score": 100,
-                         "sample": True, "input": "data/1.in", "output": "data/1.out"}]},
+        {
+            "testcases": [
+                {
+                    "name": "sample",
+                    "position": 1,
+                    "score": 100,
+                    "sample": True,
+                    "input": "data/1.in",
+                    "output": "data/1.out",
+                }
+            ]
+        },
         {"data/1.in": b"1\n", "data/1.out": b"2\n"},
     )
     cases = parse_problem_package(content)
@@ -31,8 +44,16 @@ def test_parse_problem_package_pairs_manifest_files():
 
 def test_parse_problem_package_rejects_missing_pair():
     content = _package(
-        {"testcases": [{"name": "broken", "position": 1,
-                         "input": "1.in", "output": "1.out"}]},
+        {
+            "testcases": [
+                {
+                    "name": "broken",
+                    "position": 1,
+                    "input": "1.in",
+                    "output": "1.out",
+                }
+            ]
+        },
         {"1.in": b"1\n"},
     )
     with pytest.raises(ProblemPackageError, match="files or score"):

@@ -33,7 +33,6 @@ from ..shared.schedules import compute_schedule_window
 from ..submissions.helpers import to_submission_read
 from ..settings.helpers import get_system_setting_value
 
-
 router = APIRouter()
 
 
@@ -84,7 +83,9 @@ def create_submission(
 ):
     homework = session.get(Homework, payload.homework_num)
     if homework is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Homework not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Homework not found"
+        )
 
     language = payload.language.strip().lower()
     if language not in SUPPORTED_LANGUAGES:
@@ -122,7 +123,11 @@ def create_submission(
             detail=f"Submission source exceeds {max_source_bytes} byte limit",
         )
     rate_limit = int(
-        float(get_system_setting_value(session, "submission_rate_limit_per_minute"))
+        float(
+            get_system_setting_value(
+                session, "submission_rate_limit_per_minute"
+            )
+        )
     )
     recent_cutoff = datetime.now(UTC) - timedelta(minutes=1)
     recent_ids = session.exec(
@@ -137,14 +142,18 @@ def create_submission(
             detail="Submission rate limit exceeded",
         )
 
-    schedule_status, can_submit = compute_schedule_window(homework.starttime, homework.deadline)
+    schedule_status, can_submit = compute_schedule_window(
+        homework.starttime, homework.deadline
+    )
     if not can_submit:
         detail = (
             "Submission window has not opened"
             if schedule_status == "upcoming"
             else "Submission deadline has passed"
         )
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=detail)
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail=detail
+        )
 
     for _ in range(SUBMISSION_ATTEMPT_RETRY_LIMIT):
         last_attempt = session.exec(
@@ -209,14 +218,14 @@ def create_submission(
 
         if not settings.AUTOMATIC_GRADING_AVAILABLE:
             result_obj = session.exec(
-                select(SubmissionResult).where(SubmissionResult.submission_id == submission.id)
+                select(SubmissionResult).where(
+                    SubmissionResult.submission_id == submission.id
+                )
             ).first()
             submission.status = "pending_manual"
             if result_obj is not None:
                 result_obj.status = "pending_manual"
-                result_obj.grader_summary = (
-                    "Automatic grading is disabled until an isolated judge runner is ready."
-                )
+                result_obj.grader_summary = "Automatic grading is disabled until an isolated judge runner is ready."
                 session.add(result_obj)
             session.add(submission)
             session.commit()
@@ -244,7 +253,9 @@ def list_submissions(
     submissions = session.exec(
         statement.order_by(Submission.submitted_at.desc(), Submission.id.desc())
     ).all()
-    return [to_submission_read(session, submission) for submission in submissions]
+    return [
+        to_submission_read(session, submission) for submission in submissions
+    ]
 
 
 @router.get("/submissions/{submission_id}", response_model=SubmissionRead)
@@ -255,7 +266,9 @@ def get_submission_detail(
 ):
     submission = session.get(Submission, submission_id)
     if submission is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Submission not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Submission not found"
+        )
 
     is_staff_user = current_user.user_group in ADMIN_ROLES
     if submission.user_id != current_user.id and not is_staff_user:
@@ -267,7 +280,10 @@ def get_submission_detail(
     return to_submission_read(session, submission)
 
 
-@router.get("/submissions/{submission_id}/feedback", response_model=SubmissionFeedbackRead)
+@router.get(
+    "/submissions/{submission_id}/feedback",
+    response_model=SubmissionFeedbackRead,
+)
 def get_submission_feedback(
     submission_id: int,
     current_user: User = Depends(get_current_active_user),
@@ -275,7 +291,9 @@ def get_submission_feedback(
 ):
     submission = session.get(Submission, submission_id)
     if submission is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Submission not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Submission not found"
+        )
     is_staff_user = current_user.user_group in ADMIN_ROLES
     if submission.user_id != current_user.id and not is_staff_user:
         raise HTTPException(
@@ -285,11 +303,17 @@ def get_submission_feedback(
 
     homework = session.get(Homework, submission.homework_num)
     if homework is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Homework not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Homework not found"
+        )
     result = session.exec(
-        select(SubmissionResult).where(SubmissionResult.submission_id == submission_id)
+        select(SubmissionResult).where(
+            SubmissionResult.submission_id == submission_id
+        )
     ).first()
-    return feedback_service.build_submission_feedback(session, submission, homework, result)
+    return feedback_service.build_submission_feedback(
+        session, submission, homework, result
+    )
 
 
 @router.post(
@@ -304,7 +328,9 @@ def save_code_snapshot(
 ):
     homework = session.get(Homework, payload.homework_num)
     if homework is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Homework not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Homework not found"
+        )
 
     last_snapshot = session.exec(
         select(CodeSnapshot)
@@ -315,7 +341,10 @@ def save_code_snapshot(
         .order_by(CodeSnapshot.created_at.desc())
     ).first()
 
-    if last_snapshot and decompress_text(last_snapshot.code_text) == payload.code_text:
+    if (
+        last_snapshot
+        and decompress_text(last_snapshot.code_text) == payload.code_text
+    ):
         return to_code_snapshot_read(last_snapshot)
     enforce_snapshot_rate_limit(session, current_user.id)
 
@@ -332,7 +361,10 @@ def save_code_snapshot(
     return to_code_snapshot_read(snapshot)
 
 
-@router.get("/homeworks/{homework_num}/snapshots/latest", response_model=CodeSnapshotRead | None)
+@router.get(
+    "/homeworks/{homework_num}/snapshots/latest",
+    response_model=CodeSnapshotRead | None,
+)
 def get_latest_snapshot(
     homework_num: int,
     current_user: User = Depends(get_current_active_user),
@@ -351,7 +383,10 @@ def get_latest_snapshot(
     return snapshot
 
 
-@router.get("/admin/homeworks/{homework_num}/snapshots/{user_id}", response_model=list[CodeSnapshotRead])
+@router.get(
+    "/admin/homeworks/{homework_num}/snapshots/{user_id}",
+    response_model=list[CodeSnapshotRead],
+)
 def get_student_snapshots(
     homework_num: int,
     user_id: str,

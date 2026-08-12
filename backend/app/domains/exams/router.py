@@ -3,14 +3,31 @@ from datetime import UTC, datetime
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlmodel import Session, select
 
-from ...api.dependencies import get_current_active_user, get_optional_current_user, require_capability
+from ...api.dependencies import (
+    get_current_active_user,
+    get_optional_current_user,
+    require_capability,
+)
 from ...api.runtime import observability_service
 from ...core.db import get_session
-from ...models.schemas import Exam, ExamRead, ExamResult, ExamSubmission, ExamSubmissionCreate, ExamSubmissionRead, ExamWrite, User
-from ..exams.helpers import load_exam_languages, normalize_exam_languages, to_exam_read, to_exam_submission_read
+from ...models.schemas import (
+    Exam,
+    ExamRead,
+    ExamResult,
+    ExamSubmission,
+    ExamSubmissionCreate,
+    ExamSubmissionRead,
+    ExamWrite,
+    User,
+)
+from ..exams.helpers import (
+    load_exam_languages,
+    normalize_exam_languages,
+    to_exam_read,
+    to_exam_submission_read,
+)
 from ..shared.schedules import compute_schedule_window
 from ..users.serializers import is_staff
-
 
 router = APIRouter()
 
@@ -23,7 +40,9 @@ def list_exams(
     exams = session.exec(select(Exam).order_by(Exam.id.desc())).all()
     visible_exams: list[ExamRead] = []
     for exam in exams:
-        schedule_status, _ = compute_schedule_window(exam.starttime, exam.deadline)
+        schedule_status, _ = compute_schedule_window(
+            exam.starttime, exam.deadline
+        )
         if schedule_status == "upcoming" and not is_staff(current_user):
             continue
         visible_exams.append(to_exam_read(exam))
@@ -44,7 +63,9 @@ def create_exam(
         codeName=payload.codeName,
         starttime=payload.starttime,
         deadline=payload.deadline,
-        allowed_languages_json=json.dumps(normalize_exam_languages(payload.allowed_languages)),
+        allowed_languages_json=json.dumps(
+            normalize_exam_languages(payload.allowed_languages)
+        ),
         created_by=current_user.id,
         updated_at=datetime.now(UTC),
     )
@@ -69,16 +90,22 @@ def get_exam(
 ):
     exam = session.get(Exam, exam_id)
     if exam is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Exam not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Exam not found"
+        )
 
     schedule_status, _ = compute_schedule_window(exam.starttime, exam.deadline)
     if schedule_status == "upcoming" and not is_staff(current_user):
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Exam not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Exam not found"
+        )
 
     return to_exam_read(exam)
 
 
-@router.get("/exams/{exam_id}/submissions", response_model=list[ExamSubmissionRead])
+@router.get(
+    "/exams/{exam_id}/submissions", response_model=list[ExamSubmissionRead]
+)
 def list_exam_submissions(
     exam_id: int,
     current_user: User = Depends(get_current_active_user),
@@ -86,11 +113,16 @@ def list_exam_submissions(
 ):
     exam = session.get(Exam, exam_id)
     if exam is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Exam not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Exam not found"
+        )
 
     submissions = session.exec(
         select(ExamSubmission)
-        .where(ExamSubmission.exam_id == exam_id, ExamSubmission.user_id == current_user.id)
+        .where(
+            ExamSubmission.exam_id == exam_id,
+            ExamSubmission.user_id == current_user.id,
+        )
         .order_by(ExamSubmission.id.desc())
     ).all()
 
@@ -110,16 +142,22 @@ def submit_exam(
 ):
     exam = session.get(Exam, exam_id)
     if exam is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Exam not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Exam not found"
+        )
 
-    schedule_status, can_submit = compute_schedule_window(exam.starttime, exam.deadline)
+    schedule_status, can_submit = compute_schedule_window(
+        exam.starttime, exam.deadline
+    )
     if not can_submit:
         detail = (
             "Exam has not opened yet"
             if schedule_status == "upcoming"
             else "Exam submission deadline has passed"
         )
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=detail)
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail=detail
+        )
 
     language = payload.language.strip().lower()
     if language not in load_exam_languages(exam):

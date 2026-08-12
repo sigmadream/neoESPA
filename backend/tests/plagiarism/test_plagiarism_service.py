@@ -3,10 +3,15 @@ from datetime import UTC, datetime, timedelta
 from sqlmodel import Session, SQLModel, create_engine, select
 from sqlmodel.pool import StaticPool
 
-from app.models.schemas import Homework, PlagiarismPair, Submission, SubmissionResult, User
+from app.models.schemas import (
+    Homework,
+    PlagiarismPair,
+    Submission,
+    SubmissionResult,
+    User,
+)
 from app.services.auth_service import AuthService
 from app.services.plagiarism_service import PlagiarismService
-
 
 engine = create_engine(
     "sqlite://", connect_args={"check_same_thread": False}, poolclass=StaticPool
@@ -14,7 +19,9 @@ engine = create_engine(
 
 
 def _dt_string(offset_days: int) -> str:
-    return (datetime.now(UTC) + timedelta(days=offset_days)).strftime("%Y-%m-%d %H:%M:%S")
+    return (datetime.now(UTC) + timedelta(days=offset_days)).strftime(
+        "%Y-%m-%d %H:%M:%S"
+    )
 
 
 def _create_user(session: Session, user_id: str, sid: int) -> None:
@@ -32,7 +39,9 @@ def _create_user(session: Session, user_id: str, sid: int) -> None:
     session.commit()
 
 
-def _create_submission(session: Session, homework_num: int, user_id: str, code_text: str) -> None:
+def _create_submission(
+    session: Session, homework_num: int, user_id: str, code_text: str
+) -> None:
     submission = Submission(
         homework_num=homework_num,
         user_id=user_id,
@@ -45,7 +54,9 @@ def _create_submission(session: Session, homework_num: int, user_id: str, code_t
     )
     session.add(submission)
     session.flush()
-    session.add(SubmissionResult(submission_id=submission.id or 0, status="graded"))
+    session.add(
+        SubmissionResult(submission_id=submission.id or 0, status="graded")
+    )
     session.commit()
 
 
@@ -76,7 +87,9 @@ def test_identical_submissions_are_flagged():
         _create_submission(session, 1, "copy-b", "print('same output')\n")
 
         service = PlagiarismService()
-        run = service.run_for_homework(session, homework_num=1, created_by="copy-a")
+        run = service.run_for_homework(
+            session, homework_num=1, created_by="copy-a"
+        )
         stored_pairs = session.exec(select(PlagiarismPair)).all()
         stored_results = session.exec(select(SubmissionResult)).all()
 

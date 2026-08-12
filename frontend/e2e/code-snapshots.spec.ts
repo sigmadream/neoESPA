@@ -87,7 +87,7 @@ test('admin_can_view_student_snapshot_timeline', async ({ page, request }) => {
     .toBeGreaterThanOrEqual(2);
 
   // 3. Login as Admin and check timeline
-  await authenticatePage(page, request, { id: 'admin', password: 'pllab818' });
+  await authenticatePage(page, request, { id: 'admin', password: 'pllab2026' });
   await page.goto(`/admin/snapshots/${homework.num}/${user.id}`);
   
   // 4. Verify timeline has 2 snapshots

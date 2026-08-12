@@ -4,7 +4,13 @@ from sqlmodel import Session, create_engine, select
 from sqlmodel.pool import StaticPool
 
 from app.core.seed import seed_database
-from app.models.schemas import GradingRule, Homework, Notice, SystemSetting, User
+from app.models.schemas import (
+    GradingRule,
+    Homework,
+    Notice,
+    SystemSetting,
+    User,
+)
 from app.services.auth_service import AuthService
 
 
@@ -56,5 +62,10 @@ def test_seed_creates_admin_and_sample_homework():
         assert lint_weight is not None
         assert lint_weight.value == "50"
 
-        assert len(session.exec(select(User).where(User.id == "admin")).all()) == 1
-        assert len(session.exec(select(Homework).where(Homework.num == 1)).all()) == 1
+        assert (
+            len(session.exec(select(User).where(User.id == "admin")).all()) == 1
+        )
+        assert (
+            len(session.exec(select(Homework).where(Homework.num == 1)).all())
+            == 1
+        )

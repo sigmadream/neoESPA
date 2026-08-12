@@ -8,7 +8,8 @@ from app.services.sandbox.selftest import run_hostile_selftest
 
 
 def test_hostile_selftest_writes_policy_and_result_bound_attestation(
-    tmp_path, monkeypatch,
+    tmp_path,
+    monkeypatch,
 ):
     policy = tmp_path / "nsjail.cfg"
     policy.write_text("reviewed-policy", encoding="utf-8")
@@ -27,7 +28,11 @@ def test_hostile_selftest_writes_policy_and_result_bound_attestation(
 
         def run_code(self, _language, source, timeout_seconds):
             assert timeout_seconds == 2
-            if "socket" in source or "host-escape" in source or "fork" in source:
+            if (
+                "socket" in source
+                or "host-escape" in source
+                or "fork" in source
+            ):
                 status = "runtime_error"
             elif "while True: pass" in source:
                 status = "timeout"
@@ -37,15 +42,24 @@ def test_hostile_selftest_writes_policy_and_result_bound_attestation(
                 status = "passed"
             return SimpleNamespace(status=status)
 
-    monkeypatch.setattr("app.services.sandbox.selftest.NsJailSandboxRunner", ReadySandbox)
-    monkeypatch.setattr("app.services.sandbox.selftest.NsJailCodeRunner", FixtureRunner)
+    monkeypatch.setattr(
+        "app.services.sandbox.selftest.NsJailSandboxRunner", ReadySandbox
+    )
+    monkeypatch.setattr(
+        "app.services.sandbox.selftest.NsJailCodeRunner", FixtureRunner
+    )
 
     payload = run_hostile_selftest(
-        policy_path=policy, attestation_path=attestation, runtime_version="image@sha256:abc"
+        policy_path=policy,
+        attestation_path=attestation,
+        runtime_version="image@sha256:abc",
     )
 
     assert json.loads(attestation.read_text("utf-8")) == payload
-    assert payload["policy_sha256"] == hashlib.sha256(policy.read_bytes()).hexdigest()
+    assert (
+        payload["policy_sha256"]
+        == hashlib.sha256(policy.read_bytes()).hexdigest()
+    )
     assert payload["results"]["network"] == "runtime_error"
     assert payload["results"]["output"] == "output_limit"
 
@@ -63,11 +77,15 @@ def test_failed_recheck_invalidates_previous_attestation(tmp_path, monkeypatch):
         def readiness_errors(self):
             return ["nsjail unavailable"]
 
-    monkeypatch.setattr("app.services.sandbox.selftest.NsJailSandboxRunner", NotReadySandbox)
+    monkeypatch.setattr(
+        "app.services.sandbox.selftest.NsJailSandboxRunner", NotReadySandbox
+    )
 
     with pytest.raises(RuntimeError, match="nsjail unavailable"):
         run_hostile_selftest(
-            policy_path=policy, attestation_path=attestation, runtime_version="runtime-v1"
+            policy_path=policy,
+            attestation_path=attestation,
+            runtime_version="runtime-v1",
         )
 
     assert not attestation.exists()

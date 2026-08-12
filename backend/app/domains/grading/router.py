@@ -5,17 +5,35 @@ from fastapi.responses import Response
 from sqlmodel import Session, select
 
 from ...api.dependencies import require_capability
-from ...api.runtime import export_service, grading_service, judge_job_service, notification_service, observability_service
+from ...api.runtime import (
+    export_service,
+    grading_service,
+    judge_job_service,
+    notification_service,
+    observability_service,
+)
 from ...core.config import settings
 from ...core.db import get_session
-from ...models.schemas import Homework, JudgeJob, Submission, SubmissionRead, SubmissionResult, SubmissionScoreAdjustRequest, User
-from ..submissions.helpers import get_or_create_submission_result, to_submission_read
-
+from ...models.schemas import (
+    Homework,
+    JudgeJob,
+    Submission,
+    SubmissionRead,
+    SubmissionResult,
+    SubmissionScoreAdjustRequest,
+    User,
+)
+from ..submissions.helpers import (
+    get_or_create_submission_result,
+    to_submission_read,
+)
 
 router = APIRouter()
 
 
-@router.post("/admin/submissions/{submission_id}/grade", response_model=SubmissionRead)
+@router.post(
+    "/admin/submissions/{submission_id}/grade", response_model=SubmissionRead
+)
 def grade_submission(
     submission_id: int,
     current_user: User = Depends(require_capability("grading:manual")),
@@ -81,7 +99,9 @@ def grade_submission(
 
     session.refresh(submission)
     result = session.exec(
-        select(SubmissionResult).where(SubmissionResult.submission_id == submission_id)
+        select(SubmissionResult).where(
+            SubmissionResult.submission_id == submission_id
+        )
     ).first()
     if result is not None:
         queued_jobs = session.exec(
@@ -95,7 +115,9 @@ def grade_submission(
             queued_job.status = "cancelled"
             queued_job.finished_at = datetime.now(UTC)
             session.add(queued_job)
-        notification_service.notify_submission_graded(session, submission, result)
+        notification_service.notify_submission_graded(
+            session, submission, result
+        )
         observability_service.record_audit(
             session,
             actor_user_id=current_user.id,
@@ -108,7 +130,9 @@ def grade_submission(
     return to_submission_read(session, submission)
 
 
-@router.post("/admin/submissions/{submission_id}/queue", response_model=SubmissionRead)
+@router.post(
+    "/admin/submissions/{submission_id}/queue", response_model=SubmissionRead
+)
 def queue_submission_for_grading(
     submission_id: int,
     _: User = Depends(require_capability("grading:manual")),
@@ -121,7 +145,9 @@ def queue_submission_for_grading(
     return to_submission_read(session, submission)
 
 
-@router.post("/admin/submissions/{submission_id}/requeue", response_model=SubmissionRead)
+@router.post(
+    "/admin/submissions/{submission_id}/requeue", response_model=SubmissionRead
+)
 def requeue_submission_for_grading(
     submission_id: int,
     _: User = Depends(require_capability("grading:manual")),
@@ -138,7 +164,9 @@ def requeue_submission_for_grading(
     return to_submission_read(session, submission)
 
 
-def _enqueue_persistent_grading_job(session: Session, submission: Submission) -> None:
+def _enqueue_persistent_grading_job(
+    session: Session, submission: Submission
+) -> None:
     result = get_or_create_submission_result(session, submission.id or 0)
     submission.status = "pending"
     result.status = "pending"
@@ -172,7 +200,9 @@ def _enqueue_persistent_grading_job(session: Session, submission: Submission) ->
     session.refresh(submission)
 
 
-@router.patch("/admin/submissions/{submission_id}/score", response_model=SubmissionRead)
+@router.patch(
+    "/admin/submissions/{submission_id}/score", response_model=SubmissionRead
+)
 def adjust_submission_score(
     submission_id: int,
     payload: SubmissionScoreAdjustRequest,
@@ -225,7 +255,9 @@ def process_next_grading_job(
     session: Session = Depends(get_session),
 ):
     if not settings.HOST_CODE_EXECUTION_ALLOWED:
-        raise HTTPException(status_code=503, detail="Isolated automatic grading is disabled")
+        raise HTTPException(
+            status_code=503, detail="Isolated automatic grading is disabled"
+        )
     job = judge_job_service.claim_next(
         session,
         f"admin-compat-{current_user.id}",
@@ -243,10 +275,18 @@ def process_next_grading_job(
     if submission is None:
         raise HTTPException(status_code=404, detail="Submission not found")
     result = session.exec(
-        select(SubmissionResult).where(SubmissionResult.submission_id == (submission.id or 0))
+        select(SubmissionResult).where(
+            SubmissionResult.submission_id == (submission.id or 0)
+        )
     ).first()
-    if result is not None and result.status in {"graded", "failed", "retryable"}:
-        notification_service.notify_submission_graded(session, submission, result)
+    if result is not None and result.status in {
+        "graded",
+        "failed",
+        "retryable",
+    }:
+        notification_service.notify_submission_graded(
+            session, submission, result
+        )
         if result.status == "retryable":
             observability_service.log_event(
                 session,
@@ -312,7 +352,9 @@ def export_latest_submissions_archive(
             detail="Homework not found",
         )
 
-    archive_bytes = export_service.build_latest_submission_archive(session, homework)
+    archive_bytes = export_service.build_latest_submission_archive(
+        session, homework
+    )
     return Response(
         content=archive_bytes,
         media_type="application/zip",

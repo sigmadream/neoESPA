@@ -22,7 +22,6 @@ from app.services.code_runner import (
 )
 from app.services.grading_service import GradingService, MISSING_TESTCASES_ERROR
 
-
 engine = create_engine(
     "sqlite://", connect_args={"check_same_thread": False}, poolclass=StaticPool
 )
@@ -46,7 +45,12 @@ class StubRunner(CodeRunner):
             source_name=source_name or "main.py",
             workspace="/tmp/stub",
             compile_result=PhaseExecutionResult(
-                command=["python3", "-m", "py_compile", source_name or "main.py"],
+                command=[
+                    "python3",
+                    "-m",
+                    "py_compile",
+                    source_name or "main.py",
+                ],
                 exit_code=0,
                 duration_ms=1,
             ),
@@ -127,7 +131,9 @@ def _create_submission(session: Session, homework_num: int) -> Submission:
     return submission
 
 
-def _create_testcase_rule(session: Session, homework_num: int, cases: list[dict]) -> None:
+def _create_testcase_rule(
+    session: Session, homework_num: int, cases: list[dict]
+) -> None:
     session.add(
         GradingRule(
             scope="homework",
@@ -250,7 +256,9 @@ def test_grading_requires_active_testcases():
         max_size=5,
     ),
 )
-def test_grading_score_stays_within_case_bounds(case_scores: list[int], passed_cases: list[bool]):
+def test_grading_score_stays_within_case_bounds(
+    case_scores: list[int], passed_cases: list[bool]
+):
     case_count = min(len(case_scores), len(passed_cases))
     case_scores = case_scores[:case_count]
     passed_cases = passed_cases[:case_count]
@@ -280,7 +288,9 @@ def test_grading_score_stays_within_case_bounds(case_scores: list[int], passed_c
                     "is_hidden": False,
                 }
             )
-            runner_outputs[case_input] = expected_output if should_pass else f"wrong-{index}\n"
+            runner_outputs[case_input] = (
+                expected_output if should_pass else f"wrong-{index}\n"
+            )
 
         _create_testcase_rule(session, 4, cases)
 
@@ -288,7 +298,13 @@ def test_grading_score_stays_within_case_bounds(case_scores: list[int], passed_c
         result = grading_service.grade_submission(session, submission, homework)
 
     expected_score = float(
-        sum(score for score, should_pass in zip(case_scores, passed_cases, strict=True) if should_pass)
+        sum(
+            score
+            for score, should_pass in zip(
+                case_scores, passed_cases, strict=True
+            )
+            if should_pass
+        )
     )
     max_score = float(sum(case_scores))
 

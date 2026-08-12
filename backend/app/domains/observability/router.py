@@ -5,9 +5,13 @@ from datetime import datetime
 from ...api.dependencies import require_capability
 from ...api.runtime import observability_service
 from ...core.db import get_session
-from ...models.schemas import AdminDashboardRead, AuditLogRead, SystemEventLogRead, User
+from ...models.schemas import (
+    AdminDashboardRead,
+    AuditLogRead,
+    SystemEventLogRead,
+    User,
+)
 from ..observability.helpers import build_admin_dashboard
-
 
 router = APIRouter()
 
@@ -20,7 +24,9 @@ def get_admin_dashboard(
     return build_admin_dashboard(session)
 
 
-@router.get("/admin/observability/events", response_model=list[SystemEventLogRead])
+@router.get(
+    "/admin/observability/events", response_model=list[SystemEventLogRead]
+)
 def list_system_events(
     category: str | None = Query(default=None),
     _: User = Depends(require_capability("observability:read")),

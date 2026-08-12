@@ -26,7 +26,9 @@ from app.services.grading_service import GradingService
 class SuccessfulGradingService:
     def grade_submission(self, session, submission, homework):
         result = session.exec(
-            select(SubmissionResult).where(SubmissionResult.submission_id == submission.id)
+            select(SubmissionResult).where(
+                SubmissionResult.submission_id == submission.id
+            )
         ).first()
         if result is None:
             result = SubmissionResult(submission_id=submission.id)
@@ -50,10 +52,14 @@ class BrokenCheckerGradingService:
 
 
 class HeartbeatingGradingService(GradingService):
-    def grade_submission(self, session, submission, homework=None, progress_callback=None):
+    def grade_submission(
+        self, session, submission, homework=None, progress_callback=None
+    ):
         assert progress_callback is not None
         progress_callback(1, 2, 45)
-        return SuccessfulGradingService().grade_submission(session, submission, homework)
+        return SuccessfulGradingService().grade_submission(
+            session, submission, homework
+        )
 
 
 def test_enqueue_is_idempotent_and_rejects_changed_payload(session):
@@ -171,7 +177,9 @@ def test_validation_worker_marks_revision_ready(session):
 
     claimed = service.claim_next(session, "validation-worker")
     assert claimed is not None
-    completed = service.process_validation_job(session, claimed, "validation-worker")
+    completed = service.process_validation_job(
+        session, claimed, "validation-worker"
+    )
 
     session.refresh(revision)
     assert completed.status == "succeeded"
@@ -219,36 +227,56 @@ def test_grading_job_records_immutable_run_and_selects_it(session):
     )
     session.commit()
 
-    claimed = service.claim_next(session, "judge-worker", job_types=["grade_submission"])
+    claimed = service.claim_next(
+        session, "judge-worker", job_types=["grade_submission"]
+    )
     assert claimed is not None
     completed = service.process_grading_job(session, claimed, "judge-worker")
 
     session.refresh(submission)
-    run = session.exec(select(GradingRun).where(GradingRun.job_id == job.id)).one()
+    run = session.exec(
+        select(GradingRun).where(GradingRun.job_id == job.id)
+    ).one()
     assert completed.status == "succeeded"
     assert run.verdict == "AC"
     assert submission.selected_grading_run_id == run.id
 
 
 def test_real_grading_protocol_heartbeats_during_long_running_job(session):
-    session.add(User(
-        id="heartbeat-user", sid=20259205, name="Heartbeat", phone="010",
-        email="heartbeat@example.com", user_group="student", ps="hash",
-    ))
-    session.add(Homework(num=903, title="Heartbeat", intro="Heartbeat", codeName="main"))
+    session.add(
+        User(
+            id="heartbeat-user",
+            sid=20259205,
+            name="Heartbeat",
+            phone="010",
+            email="heartbeat@example.com",
+            user_group="student",
+            ps="hash",
+        )
+    )
+    session.add(
+        Homework(num=903, title="Heartbeat", intro="Heartbeat", codeName="main")
+    )
     session.flush()
     submission = Submission(
-        homework_num=903, user_id="heartbeat-user", language="python", code_text="print(1)"
+        homework_num=903,
+        user_id="heartbeat-user",
+        language="python",
+        code_text="print(1)",
     )
     session.add(submission)
     session.flush()
     service = JudgeJobService(grading_service=HeartbeatingGradingService())
     job = service.enqueue(
-        session, job_type="grade_submission", payload={"submission_id": submission.id},
+        session,
+        job_type="grade_submission",
+        payload={"submission_id": submission.id},
         submission_id=submission.id,
     )
     session.commit()
-    claimed = service.claim_next(session, "heartbeat-judge", job_types=["grade_submission"])
+    claimed = service.claim_next(
+        session, "heartbeat-judge", job_types=["grade_submission"]
+    )
     assert claimed is not None
 
     service.process_grading_job(session, claimed, "heartbeat-judge")
@@ -260,28 +288,44 @@ def test_real_grading_protocol_heartbeats_during_long_running_job(session):
 
 
 def test_checker_failure_records_ie_instead_of_wa(session):
-    session.add(User(
-        id="ie-user", sid=20259204, name="IE", phone="010", email="ie@example.com",
-        user_group="student", ps="hash",
-    ))
+    session.add(
+        User(
+            id="ie-user",
+            sid=20259204,
+            name="IE",
+            phone="010",
+            email="ie@example.com",
+            user_group="student",
+            ps="hash",
+        )
+    )
     session.add(Homework(num=902, title="IE", intro="IE", codeName="main"))
     session.flush()
     submission = Submission(
-        homework_num=902, user_id="ie-user", language="python", code_text="print(1)"
+        homework_num=902,
+        user_id="ie-user",
+        language="python",
+        code_text="print(1)",
     )
     session.add(submission)
     session.flush()
     service = JudgeJobService(grading_service=BrokenCheckerGradingService())
     job = service.enqueue(
-        session, job_type="grade_submission", payload={"submission_id": submission.id},
+        session,
+        job_type="grade_submission",
+        payload={"submission_id": submission.id},
         submission_id=submission.id,
     )
     session.commit()
-    claimed = service.claim_next(session, "ie-worker", job_types=["grade_submission"])
+    claimed = service.claim_next(
+        session, "ie-worker", job_types=["grade_submission"]
+    )
     assert claimed is not None
     failed = service.process_grading_job(session, claimed, "ie-worker")
     session.refresh(submission)
-    run = session.exec(select(GradingRun).where(GradingRun.job_id == job.id)).one()
+    run = session.exec(
+        select(GradingRun).where(GradingRun.job_id == job.id)
+    ).one()
     assert failed.status == "failed"
     assert run.verdict == "IE"
     assert submission.status == "judge_error"
@@ -290,12 +334,18 @@ def test_checker_failure_records_ie_instead_of_wa(session):
 
 def test_failed_job_can_be_explicitly_retried(session):
     service = JudgeJobService()
-    job = service.enqueue(session, job_type="problem_validation", payload={"revision_id": 1})
+    job = service.enqueue(
+        session, job_type="problem_validation", payload={"revision_id": 1}
+    )
     session.commit()
     claimed = service.claim_next(session, "retry-worker")
     assert claimed is not None
     failed = service.fail(
-        session, claimed.id or 0, "retry-worker", claimed.lease_generation, "temporary error"
+        session,
+        claimed.id or 0,
+        "retry-worker",
+        claimed.lease_generation,
+        "temporary error",
     )
     retried = service.retry(session, failed)
     assert retried.status == "queued"
@@ -327,21 +377,31 @@ def test_heartbeat_extends_only_current_lease_generation(session):
     assert claimed is not None
     original_expiry = claimed.lease_expires_at
     renewed = service.heartbeat(
-        session, claimed.id or 0, "heartbeat-worker", claimed.lease_generation,
-        lease_seconds=60, progress=25,
+        session,
+        claimed.id or 0,
+        "heartbeat-worker",
+        claimed.lease_generation,
+        lease_seconds=60,
+        progress=25,
     )
     assert renewed.lease_expires_at > original_expiry
     assert renewed.progress == 25
     with pytest.raises(JobConflictError, match="Stale or foreign"):
         service.heartbeat(
-            session, renewed.id or 0, "heartbeat-worker", renewed.lease_generation - 1
+            session,
+            renewed.id or 0,
+            "heartbeat-worker",
+            renewed.lease_generation - 1,
         )
 
 
 def test_two_coordinators_cannot_claim_the_same_job(tmp_path):
-    engine = configure_sqlite_foreign_keys(create_engine(
-        f"sqlite:///{tmp_path / 'race.sqlite3'}", connect_args={"check_same_thread": False}
-    ))
+    engine = configure_sqlite_foreign_keys(
+        create_engine(
+            f"sqlite:///{tmp_path / 'race.sqlite3'}",
+            connect_args={"check_same_thread": False},
+        )
+    )
     SQLModel.metadata.create_all(engine)
     with Session(engine) as session:
         JudgeJobService().enqueue(session, job_type="noop", payload={})

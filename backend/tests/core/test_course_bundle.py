@@ -10,7 +10,9 @@ from app.models.schemas import JudgeJob
 def test_course_bundle_snapshot_manifest_and_verify(tmp_path):
     database = tmp_path / "source.sqlite3"
     connection = sqlite3.connect(database)
-    connection.execute("CREATE TABLE sample (id INTEGER PRIMARY KEY, value TEXT)")
+    connection.execute(
+        "CREATE TABLE sample (id INTEGER PRIMARY KEY, value TEXT)"
+    )
     connection.execute("INSERT INTO sample (value) VALUES ('preserved')")
     connection.commit()
     connection.close()
@@ -26,7 +28,10 @@ def test_course_bundle_snapshot_manifest_and_verify(tmp_path):
     )
 
     restored = sqlite3.connect(snapshot)
-    assert restored.execute("SELECT value FROM sample").fetchone()[0] == "preserved"
+    assert (
+        restored.execute("SELECT value FROM sample").fetchone()[0]
+        == "preserved"
+    )
     restored.close()
     assert service.verify() == []
     assert (store.root / "manifests" / "objects.jsonl").is_file()
@@ -52,8 +57,12 @@ def test_course_bundle_detects_checksum_mismatch(tmp_path):
 def test_course_bundle_restore_rehearsal_preserves_rows(tmp_path):
     database = tmp_path / "source.sqlite3"
     connection = sqlite3.connect(database)
-    connection.execute("CREATE TABLE sample (id INTEGER PRIMARY KEY, value TEXT)")
-    connection.executemany("INSERT INTO sample (value) VALUES (?)", [("one",), ("two",)])
+    connection.execute(
+        "CREATE TABLE sample (id INTEGER PRIMARY KEY, value TEXT)"
+    )
+    connection.executemany(
+        "INSERT INTO sample (value) VALUES (?)", [("one",), ("two",)]
+    )
     connection.commit()
     connection.close()
     service = CourseBundleService(LocalArtifactStore(tmp_path / "bundle"))
@@ -63,7 +72,9 @@ def test_course_bundle_restore_rehearsal_preserves_rows(tmp_path):
     restored = tmp_path / "restored.sqlite3"
     counts = service.restore_snapshot(restored)
     connection = sqlite3.connect(restored)
-    values = connection.execute("SELECT value FROM sample ORDER BY id").fetchall()
+    values = connection.execute(
+        "SELECT value FROM sample ORDER BY id"
+    ).fetchall()
     connection.close()
     assert counts == {"sample": 2}
     assert values == [("one",), ("two",)]
@@ -73,7 +84,9 @@ def test_course_bundle_restore_refuses_unverified_or_existing_target(tmp_path):
     database = tmp_path / "source.sqlite3"
     sqlite3.connect(database).close()
     service = CourseBundleService(LocalArtifactStore(tmp_path / "bundle"))
-    service.create_snapshot(database, course_id="CS101", term="2026", schema_version="test")
+    service.create_snapshot(
+        database, course_id="CS101", term="2026", schema_version="test"
+    )
     target = tmp_path / "target.sqlite3"
     target.write_bytes(b"keep")
     try:
@@ -81,24 +94,38 @@ def test_course_bundle_restore_refuses_unverified_or_existing_target(tmp_path):
     except FileExistsError:
         pass
     else:
-        raise AssertionError("existing restore target must require replace=True")
+        raise AssertionError(
+            "existing restore target must require replace=True"
+        )
     assert target.read_bytes() == b"keep"
 
 
-def test_operational_snapshot_refuses_active_queue_without_write_freeze(tmp_path):
+def test_operational_snapshot_refuses_active_queue_without_write_freeze(
+    tmp_path,
+):
     database = tmp_path / "course.sqlite3"
     engine = create_engine(f"sqlite:///{database}")
     SQLModel.metadata.create_all(engine)
     with Session(engine) as session:
-        session.add(JudgeJob(job_type="noop", payload_hash="x" * 64, status="queued"))
+        session.add(
+            JudgeJob(job_type="noop", payload_hash="x" * 64, status="queued")
+        )
         session.commit()
         service = CourseBundleService(LocalArtifactStore(tmp_path / "bundle"))
         with pytest.raises(ValueError, match="Queue must be idle"):
             service.create_operational_snapshot(
-                session, database, course_id="C", term="T", schema_version="test"
+                session,
+                database,
+                course_id="C",
+                term="T",
+                schema_version="test",
             )
         snapshot = service.create_operational_snapshot(
-            session, database, course_id="C", term="T", schema_version="test",
+            session,
+            database,
+            course_id="C",
+            term="T",
+            schema_version="test",
             write_frozen=True,
         )
         assert snapshot.is_file()

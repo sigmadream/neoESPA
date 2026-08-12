@@ -3,7 +3,10 @@ from sqlmodel import Session, select
 
 from app.models.schemas import SystemEventLog, User
 
-def test_password_change_invalidates_old_password(client: TestClient, create_user, login_user, auth_headers):
+
+def test_password_change_invalidates_old_password(
+    client: TestClient, create_user, login_user, auth_headers
+):
     create_user("pwuser", 20240201, "old-password")
 
     token = login_user("pwuser", "old-password")
@@ -15,7 +18,7 @@ def test_password_change_invalidates_old_password(client: TestClient, create_use
         },
         headers=auth_headers(token),
     )
-    
+
     # login_user returns None if login fails
     old_token = login_user("pwuser", "old-password")
     new_token = login_user("pwuser", "new-password")
@@ -25,7 +28,9 @@ def test_password_change_invalidates_old_password(client: TestClient, create_use
     assert new_token is not None
 
 
-def test_inactive_user_cannot_login(client: TestClient, create_user, login_user, auth_headers):
+def test_inactive_user_cannot_login(
+    client: TestClient, create_user, login_user, auth_headers
+):
     create_user("managed-user", 20240202, "student-pass")
     create_user("admin-user", 10000012, "admin-pass", role="admin")
 
@@ -71,7 +76,9 @@ def test_register_rejects_duplicate_sid(client: TestClient):
     assert second_response.json()["detail"] == "Student ID already exists"
 
 
-def test_register_creates_user_and_event_log(client: TestClient, session: Session):
+def test_register_creates_user_and_event_log(
+    client: TestClient, session: Session
+):
     response = client.post(
         "/api/auth/register",
         json={
@@ -94,6 +101,7 @@ def test_register_creates_user_and_event_log(client: TestClient, session: Sessio
     assert logged_event.event_type == "register_success"
     assert logged_event.request_path == "/auth/register"
 
+
 def test_register_rejects_invalid_email_policy(client: TestClient):
     response = client.post(
         "/api/auth/register",
@@ -108,4 +116,7 @@ def test_register_rejects_invalid_email_policy(client: TestClient):
     )
 
     assert response.status_code == 400
-    assert response.json()["detail"] == "Email does not satisfy the registration policy"
+    assert (
+        response.json()["detail"]
+        == "Email does not satisfy the registration policy"
+    )

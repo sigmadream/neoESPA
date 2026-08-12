@@ -23,9 +23,14 @@ def test_required_mfa_fails_closed_until_provider_verifies_factor(
     client, session, create_user, login_user, auth_headers
 ):
     create_user("admin-mfa", 9002, "admin-password", role="admin")
-    session.add(AdminAuthAssurance(
-        user_id="admin-mfa", mfa_required=True, mfa_enrolled=True, mfa_method="totp"
-    ))
+    session.add(
+        AdminAuthAssurance(
+            user_id="admin-mfa",
+            mfa_required=True,
+            mfa_enrolled=True,
+            mfa_method="totp",
+        )
+    )
     session.commit()
     token = login_user("admin-mfa", "admin-password")
     response = client.post(

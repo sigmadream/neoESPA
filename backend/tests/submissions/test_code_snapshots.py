@@ -136,7 +136,9 @@ def test_save_duplicate_snapshot_keeps_single_compressed_record(
     assert snapshots[0].code_text != original_code
     assert decompress_text(snapshots[0].code_text) == original_code
 
-    latest_response = client.get("/api/homeworks/2/snapshots/latest", headers=headers)
+    latest_response = client.get(
+        "/api/homeworks/2/snapshots/latest", headers=headers
+    )
     assert latest_response.status_code == 200
     assert latest_response.json()["id"] == first_response.json()["id"]
     assert latest_response.json()["code_text"] == original_code
@@ -163,7 +165,9 @@ def test_save_code_snapshot_returns_404_for_missing_homework(
     assert response.json()["detail"] == "Homework not found"
 
 
-def test_get_latest_snapshot(client: TestClient, create_user, login_user, auth_headers, session: Session):
+def test_get_latest_snapshot(
+    client: TestClient, create_user, login_user, auth_headers, session: Session
+):
     create_test_homework(session, 3)
     create_user("student3", 20240003, "password")
     token = login_user("student3", "password")
@@ -171,12 +175,20 @@ def test_get_latest_snapshot(client: TestClient, create_user, login_user, auth_h
 
     client.post(
         "/api/submissions/snapshots",
-        json={"homework_num": 3, "language": "python", "code_text": "first version"},
+        json={
+            "homework_num": 3,
+            "language": "python",
+            "code_text": "first version",
+        },
         headers=headers,
     )
     client.post(
         "/api/submissions/snapshots",
-        json={"homework_num": 3, "language": "python", "code_text": "latest version"},
+        json={
+            "homework_num": 3,
+            "language": "python",
+            "code_text": "latest version",
+        },
         headers=headers,
     )
 
@@ -186,7 +198,9 @@ def test_get_latest_snapshot(client: TestClient, create_user, login_user, auth_h
     assert response.json()["code_text"] == "latest version"
 
 
-def test_admin_can_list_student_snapshots(client: TestClient, create_user, login_user, auth_headers, session: Session):
+def test_admin_can_list_student_snapshots(
+    client: TestClient, create_user, login_user, auth_headers, session: Session
+):
     create_test_homework(session, 4)
     create_user("student4", 20240004, "password")
     create_user("admin1", 10000001, "admin-pass", role="admin")
@@ -199,18 +213,26 @@ def test_admin_can_list_student_snapshots(client: TestClient, create_user, login
 
     client.post(
         "/api/submissions/snapshots",
-        json={"homework_num": 4, "language": "python", "code_text": "working code"},
+        json={
+            "homework_num": 4,
+            "language": "python",
+            "code_text": "working code",
+        },
         headers=student_headers,
     )
 
-    response = client.get("/api/admin/homeworks/4/snapshots/student4", headers=admin_headers)
+    response = client.get(
+        "/api/admin/homeworks/4/snapshots/student4", headers=admin_headers
+    )
 
     assert response.status_code == 200
     assert len(response.json()) == 1
     assert response.json()[0]["code_text"] == "working code"
 
 
-def test_non_admin_cannot_list_student_snapshots(client: TestClient, create_user, login_user, auth_headers, session: Session):
+def test_non_admin_cannot_list_student_snapshots(
+    client: TestClient, create_user, login_user, auth_headers, session: Session
+):
     create_test_homework(session, 5)
     create_user("student5", 20240005, "password")
     create_user("student6", 20240006, "password")
@@ -218,22 +240,33 @@ def test_non_admin_cannot_list_student_snapshots(client: TestClient, create_user
     token5 = login_user("student5", "password")
     headers5 = auth_headers(token5)
 
-    response = client.get("/api/admin/homeworks/5/snapshots/student6", headers=headers5)
+    response = client.get(
+        "/api/admin/homeworks/5/snapshots/student6", headers=headers5
+    )
 
     assert response.status_code == 403
 
-def test_staff_roles_can_list_student_snapshots(client: TestClient, create_user, login_user, auth_headers, session: Session):
+
+def test_staff_roles_can_list_student_snapshots(
+    client: TestClient, create_user, login_user, auth_headers, session: Session
+):
     create_test_homework(session, 6)
     create_user("snapshot-student", 20240007, "password")
     create_user("snapshot-admin", 10000007, "staff-pass", role="admin")
-    create_user("snapshot-instructor", 10000008, "staff-pass", role="instructor")
+    create_user(
+        "snapshot-instructor", 10000008, "staff-pass", role="instructor"
+    )
     create_user("snapshot-ta", 10000009, "staff-pass", role="ta")
 
     student_token = login_user("snapshot-student", "password")
     student_headers = auth_headers(student_token)
     client.post(
         "/api/submissions/snapshots",
-        json={"homework_num": 6, "language": "python", "code_text": "staff visible code"},
+        json={
+            "homework_num": 6,
+            "language": "python",
+            "code_text": "staff visible code",
+        },
         headers=student_headers,
     )
 
@@ -248,10 +281,17 @@ def test_staff_roles_can_list_student_snapshots(client: TestClient, create_user,
 
 
 def test_save_code_snapshot_rate_limit_blocks_excess_requests(
-    client: TestClient, create_user, login_user, auth_headers, session: Session, monkeypatch
+    client: TestClient,
+    create_user,
+    login_user,
+    auth_headers,
+    session: Session,
+    monkeypatch,
 ):
     monkeypatch.setattr(app_settings, "SNAPSHOT_RATE_LIMIT_COUNT", 2)
-    monkeypatch.setattr(app_settings, "SNAPSHOT_RATE_LIMIT_WINDOW_SECONDS", 3600)
+    monkeypatch.setattr(
+        app_settings, "SNAPSHOT_RATE_LIMIT_WINDOW_SECONDS", 3600
+    )
 
     create_test_homework(session, 7)
     create_user("rate-limit-student", 20240010, "password")
@@ -260,17 +300,29 @@ def test_save_code_snapshot_rate_limit_blocks_excess_requests(
 
     first_response = client.post(
         "/api/submissions/snapshots",
-        json={"homework_num": 7, "language": "python", "code_text": "print('one')"},
+        json={
+            "homework_num": 7,
+            "language": "python",
+            "code_text": "print('one')",
+        },
         headers=headers,
     )
     second_response = client.post(
         "/api/submissions/snapshots",
-        json={"homework_num": 7, "language": "python", "code_text": "print('two')"},
+        json={
+            "homework_num": 7,
+            "language": "python",
+            "code_text": "print('two')",
+        },
         headers=headers,
     )
     third_response = client.post(
         "/api/submissions/snapshots",
-        json={"homework_num": 7, "language": "python", "code_text": "print('three')"},
+        json={
+            "homework_num": 7,
+            "language": "python",
+            "code_text": "print('three')",
+        },
         headers=headers,
     )
 
@@ -288,7 +340,12 @@ def test_save_code_snapshot_rate_limit_blocks_excess_requests(
 
 
 def test_save_code_snapshot_rate_limit_allows_new_snapshot_after_window(
-    client: TestClient, create_user, login_user, auth_headers, session: Session, monkeypatch
+    client: TestClient,
+    create_user,
+    login_user,
+    auth_headers,
+    session: Session,
+    monkeypatch,
 ):
     monkeypatch.setattr(app_settings, "SNAPSHOT_RATE_LIMIT_COUNT", 1)
     monkeypatch.setattr(app_settings, "SNAPSHOT_RATE_LIMIT_WINDOW_SECONDS", 60)
@@ -311,21 +368,34 @@ def test_save_code_snapshot_rate_limit_allows_new_snapshot_after_window(
     headers = auth_headers(token)
     response = client.post(
         "/api/submissions/snapshots",
-        json={"homework_num": 8, "language": "python", "code_text": "print('new')"},
+        json={
+            "homework_num": 8,
+            "language": "python",
+            "code_text": "print('new')",
+        },
         headers=headers,
     )
 
     assert response.status_code == 201
-    latest_response = client.get("/api/homeworks/8/snapshots/latest", headers=headers)
+    latest_response = client.get(
+        "/api/homeworks/8/snapshots/latest", headers=headers
+    )
     assert latest_response.status_code == 200
     assert latest_response.json()["code_text"] == "print('new')"
 
 
 def test_save_code_snapshot_rate_limit_is_scoped_per_user(
-    client: TestClient, create_user, login_user, auth_headers, session: Session, monkeypatch
+    client: TestClient,
+    create_user,
+    login_user,
+    auth_headers,
+    session: Session,
+    monkeypatch,
 ):
     monkeypatch.setattr(app_settings, "SNAPSHOT_RATE_LIMIT_COUNT", 1)
-    monkeypatch.setattr(app_settings, "SNAPSHOT_RATE_LIMIT_WINDOW_SECONDS", 3600)
+    monkeypatch.setattr(
+        app_settings, "SNAPSHOT_RATE_LIMIT_WINDOW_SECONDS", 3600
+    )
 
     create_test_homework(session, 9)
     create_user("rate-limit-user-a", 20240012, "password")
@@ -336,17 +406,29 @@ def test_save_code_snapshot_rate_limit_is_scoped_per_user(
 
     first_user_first_response = client.post(
         "/api/submissions/snapshots",
-        json={"homework_num": 9, "language": "python", "code_text": "print('a1')"},
+        json={
+            "homework_num": 9,
+            "language": "python",
+            "code_text": "print('a1')",
+        },
         headers=headers_a,
     )
     first_user_second_response = client.post(
         "/api/submissions/snapshots",
-        json={"homework_num": 9, "language": "python", "code_text": "print('a2')"},
+        json={
+            "homework_num": 9,
+            "language": "python",
+            "code_text": "print('a2')",
+        },
         headers=headers_a,
     )
     second_user_response = client.post(
         "/api/submissions/snapshots",
-        json={"homework_num": 9, "language": "python", "code_text": "print('b1')"},
+        json={
+            "homework_num": 9,
+            "language": "python",
+            "code_text": "print('b1')",
+        },
         headers=headers_b,
     )
 

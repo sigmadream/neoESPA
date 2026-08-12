@@ -84,7 +84,9 @@ class NsJailSandboxRunner:
         policy = self.config_path.read_text(encoding="utf-8")
         for marker in self.REQUIRED_CONFIG_MARKERS:
             if marker not in policy:
-                errors.append(f"NsJail policy is missing required marker: {marker}")
+                errors.append(
+                    f"NsJail policy is missing required marker: {marker}"
+                )
         return errors
 
     def run(
@@ -99,7 +101,9 @@ class NsJailSandboxRunner:
         if errors:
             raise SandboxNotReadyError("; ".join(errors))
         if not command or not command[0].startswith("/"):
-            raise ValueError("Sandbox command must use an absolute in-jail executable path")
+            raise ValueError(
+                "Sandbox command must use an absolute in-jail executable path"
+            )
         resolved_workspace = workspace.resolve()
         if not resolved_workspace.is_dir():
             raise ValueError("Sandbox workspace must be an existing directory")
@@ -137,7 +141,10 @@ class NsJailSandboxRunner:
         ]
         started = time.perf_counter()
         try:
-            with tempfile.TemporaryFile() as stdout_file, tempfile.TemporaryFile() as stderr_file:
+            with (
+                tempfile.TemporaryFile() as stdout_file,
+                tempfile.TemporaryFile() as stderr_file,
+            ):
                 completed = subprocess.run(
                     nsjail_command,
                     input=stdin,
@@ -158,7 +165,8 @@ class NsJailSandboxRunner:
                     stderr = completed.stderr
                 duration_ms = int((time.perf_counter() - started) * 1000)
                 output_limited = (
-                    len(stdout) > selected.output_bytes or len(stderr) > selected.output_bytes
+                    len(stdout) > selected.output_bytes
+                    or len(stderr) > selected.output_bytes
                 )
                 stdout = stdout[: selected.output_bytes]
                 stderr = stderr[: selected.output_bytes]

@@ -6,7 +6,7 @@ test('admin_can_edit_homework_settings', async ({ page }) => {
   const initialTitle = `UI Homework ${Date.now()}`;
   const updatedTitle = `${initialTitle} Updated`;
 
-  await loginViaUi(page, { id: 'admin', password: 'pllab818' });
+  await loginViaUi(page, { id: 'admin', password: 'pllab2026' });
   await page.waitForURL('/');
   await page.goto('/admin');
   await page.getByRole('button', { name: 'Homework' }).click();

@@ -25,12 +25,14 @@ def run_hostile_selftest(
     fixtures = {
         "basic": ("print('ok')", "passed"),
         "network": (
-            "import socket\ns=socket.socket(); s.connect(('1.1.1.1', 53))", "runtime_error"
+            "import socket\ns=socket.socket(); s.connect(('1.1.1.1', 53))",
+            "runtime_error",
         ),
-        "root_write": ("open('/host-escape', 'w').write('bad')", "runtime_error"),
-        "fork_bomb": (
-            "import os\nwhile True:\n os.fork()", "runtime_error"
+        "root_write": (
+            "open('/host-escape', 'w').write('bad')",
+            "runtime_error",
         ),
+        "fork_bomb": ("import os\nwhile True:\n os.fork()", "runtime_error"),
         "timeout": ("while True: pass", "timeout"),
         "output": ("while True: print('x' * 4096)", "output_limit"),
     }
@@ -40,16 +42,23 @@ def run_hostile_selftest(
         result = runner.run_code("python", source, timeout_seconds=2)
         results[name] = result.status
         if result.status != expected:
-            raise RuntimeError(f"Hostile fixture {name} returned {result.status}, expected {expected}")
+            raise RuntimeError(
+                f"Hostile fixture {name} returned {result.status}, expected {expected}"
+            )
         passed.append(name)
     payload = {
-        "passed": True, "fixtures": passed, "results": results,
+        "passed": True,
+        "fixtures": passed,
+        "results": results,
         "policy_sha256": hashlib.sha256(policy_path.read_bytes()).hexdigest(),
-        "runtime_version": runtime_version, "tested_at": datetime.now(UTC).isoformat(),
+        "runtime_version": runtime_version,
+        "tested_at": datetime.now(UTC).isoformat(),
     }
     attestation_path.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
     temporary = attestation_path.with_suffix(".tmp")
-    temporary.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    temporary.write_text(
+        json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+    )
     temporary.chmod(0o600)
     os.replace(temporary, attestation_path)
     return payload

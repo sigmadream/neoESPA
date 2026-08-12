@@ -3,7 +3,9 @@ from sqlmodel import select
 from app.models.schemas import AssignmentProblem, AuditLog, ProblemRevision
 
 
-def _create_problem(client, headers, *, code="sum-two", statement="Add two integers"):
+def _create_problem(
+    client, headers, *, code="sum-two", statement="Add two integers"
+):
     return client.post(
         "/api/admin/problems",
         json={
@@ -59,15 +61,21 @@ def test_problem_draft_validate_publish_and_revision_history(
     audit_actions = {
         log.action_type for log in session.exec(select(AuditLog)).all()
     }
-    assert {"create_problem", "validate_problem_revision", "publish_problem_revision"}.issubset(
-        audit_actions
-    )
+    assert {
+        "create_problem",
+        "validate_problem_revision",
+        "publish_problem_revision",
+    }.issubset(audit_actions)
 
 
-def test_invalid_revision_cannot_publish(client, create_user, login_user, auth_headers):
+def test_invalid_revision_cannot_publish(
+    client, create_user, login_user, auth_headers
+):
     create_user("problem-admin-2", 20259002, "password", role="admin")
     headers = auth_headers(login_user("problem-admin-2"))
-    problem = _create_problem(client, headers, code="empty", statement="").json()
+    problem = _create_problem(
+        client, headers, code="empty", statement=""
+    ).json()
     revision = client.get(
         f"/api/admin/problems/{problem['id']}/revisions", headers=headers
     ).json()[0]
@@ -85,7 +93,9 @@ def test_invalid_revision_cannot_publish(client, create_user, login_user, auth_h
     assert publish.status_code == 409
 
 
-def test_student_cannot_use_problem_admin_api(client, create_user, login_user, auth_headers):
+def test_student_cannot_use_problem_admin_api(
+    client, create_user, login_user, auth_headers
+):
     create_user("problem-student", 20259003, "password", role="student")
     headers = auth_headers(login_user("problem-student"))
 

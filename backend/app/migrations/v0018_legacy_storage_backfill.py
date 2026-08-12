@@ -18,5 +18,9 @@ def upgrade(engine) -> None:
             columns = {item["name"] for item in inspector.get_columns(table)}
             for name, definition in additions.items():
                 if name not in columns:
-                    connection.execute(text(f"ALTER TABLE {table} ADD COLUMN {name} {definition}"))
+                    connection.execute(
+                        text(
+                            f"ALTER TABLE {table} ADD COLUMN {name} {definition}"
+                        )
+                    )
     SQLModel.metadata.create_all(engine)

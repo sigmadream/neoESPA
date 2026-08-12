@@ -1,20 +1,20 @@
 import logging
 import uuid
 from contextlib import asynccontextmanager
+from datetime import UTC, datetime
 
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from sqlalchemy import text
+from sqlmodel import Session, select
 
 from .api.router import router as api_router, ws_router
 from .core.config import settings
 from .core.db import engine
 from .core.migrations import apply_migrations
 from .core.request_context import request_id_context
-from sqlalchemy import text
-from sqlmodel import Session, select
-from datetime import UTC, datetime
 from .models.schemas import JudgeWorker
 from .services.artifact_store import LocalArtifactStore
 
@@ -56,7 +56,9 @@ def health_ready():
     except Exception as error:
         errors.append(f"artifact_store: {error}")
     if errors:
-        return JSONResponse(status_code=503, content={"status": "not_ready", "errors": errors})
+        return JSONResponse(
+            status_code=503, content={"status": "not_ready", "errors": errors}
+        )
     return {"status": "ready"}
 
 
@@ -70,7 +72,10 @@ def health_judge():
         heartbeat = worker.heartbeat_at
         if heartbeat.tzinfo is None:
             heartbeat = heartbeat.replace(tzinfo=UTC)
-        if worker.status in {"online", "draining"} and (now - heartbeat).total_seconds() <= 60:
+        if (
+            worker.status in {"online", "draining"}
+            and (now - heartbeat).total_seconds() <= 60
+        ):
             online.append(worker.worker_id)
     available = settings.AUTOMATIC_GRADING_AVAILABLE and bool(online)
     return JSONResponse(
@@ -101,7 +106,9 @@ async def request_id_middleware(request: Request, call_next):
 @app.exception_handler(HTTPException)
 async def http_error_envelope(request: Request, error: HTTPException):
     request_id = getattr(request.state, "request_id", uuid.uuid4().hex)
-    message = error.detail if isinstance(error.detail, str) else "Request failed"
+    message = (
+        error.detail if isinstance(error.detail, str) else "Request failed"
+    )
     return JSONResponse(
         status_code=error.status_code,
         headers=error.headers,
@@ -116,11 +123,15 @@ async def http_error_envelope(request: Request, error: HTTPException):
 
 
 @app.exception_handler(RequestValidationError)
-async def validation_error_envelope(request: Request, error: RequestValidationError):
+async def validation_error_envelope(
+    request: Request, error: RequestValidationError
+):
     request_id = getattr(request.state, "request_id", uuid.uuid4().hex)
     field_errors = [
         {
-            "field": ".".join(str(part) for part in item["loc"] if part != "body"),
+            "field": ".".join(
+                str(part) for part in item["loc"] if part != "body"
+            ),
             "message": item["msg"],
             "type": item["type"],
         }
@@ -136,6 +147,7 @@ async def validation_error_envelope(request: Request, error: RequestValidationEr
             "request_id": request_id,
         },
     )
+
 
 app.add_middleware(
     CORSMiddleware,

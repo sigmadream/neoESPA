@@ -26,7 +26,9 @@ def calculate_group_score(
     policy_by_key = {policy.key: policy for policy in policies}
     unknown = set(grouped) - set(policy_by_key)
     if unknown:
-        raise ValueError(f"Missing group policies: {', '.join(sorted(unknown))}")
+        raise ValueError(
+            f"Missing group policies: {', '.join(sorted(unknown))}"
+        )
 
     scores: dict[str, float] = {}
     visiting: set[str] = set()
@@ -40,14 +42,20 @@ def calculate_group_score(
         policy = policy_by_key[key]
         if policy.dependency:
             if policy.dependency not in policy_by_key:
-                raise ValueError(f"Unknown dependency group: {policy.dependency}")
+                raise ValueError(
+                    f"Unknown dependency group: {policy.dependency}"
+                )
             if score_group(policy.dependency) <= 0:
                 scores[key] = 0.0
                 visiting.remove(key)
                 return 0.0
         group_cases = grouped.get(key, [])
         if policy.policy == "all_or_nothing":
-            value = sum(case.score for case in group_cases) if all(case.passed for case in group_cases) else 0.0
+            value = (
+                sum(case.score for case in group_cases)
+                if all(case.passed for case in group_cases)
+                else 0.0
+            )
         elif policy.policy == "sum":
             value = sum(case.score for case in group_cases if case.passed)
         else:

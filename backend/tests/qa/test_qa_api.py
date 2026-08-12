@@ -7,7 +7,6 @@ from app.main import app
 from app.models.schemas import User
 from app.services.auth_service import AuthService
 
-
 engine = create_engine(
     "sqlite://", connect_args={"check_same_thread": False}, poolclass=StaticPool
 )
@@ -29,7 +28,9 @@ def _create_user(session: Session, user_id: str, sid: int, role: str) -> None:
 
 
 def _login(client: TestClient, user_id: str) -> str:
-    response = client.post("/api/auth/login", json={"id": user_id, "ps": "password"})
+    response = client.post(
+        "/api/auth/login", json={"id": user_id, "ps": "password"}
+    )
     assert response.status_code == 200
     return response.json()["access_token"]
 
@@ -61,27 +62,39 @@ def test_qa_post_creation_and_visibility():
         # Create public & private posts
         pub_resp = client.post(
             "/api/qa",
-            json={"title": "Public Question", "content": "How to use pointers?", "is_private": False},
+            json={
+                "title": "Public Question",
+                "content": "How to use pointers?",
+                "is_private": False,
+            },
             headers={"Authorization": f"Bearer {s1_token}"},
         )
         assert pub_resp.status_code == 201
 
         priv_resp = client.post(
             "/api/qa",
-            json={"title": "Private Question", "content": "Grade check inquiry", "is_private": True},
+            json={
+                "title": "Private Question",
+                "content": "Grade check inquiry",
+                "is_private": True,
+            },
             headers={"Authorization": f"Bearer {s1_token}"},
         )
         assert priv_resp.status_code == 201
         priv_id = priv_resp.json()["id"]
 
         # List posts for s2 (other student) -> should only see public
-        s2_list = client.get("/api/qa", headers={"Authorization": f"Bearer {s2_token}"})
+        s2_list = client.get(
+            "/api/qa", headers={"Authorization": f"Bearer {s2_token}"}
+        )
         assert s2_list.status_code == 200
         assert len(s2_list.json()) == 1
         assert s2_list.json()[0]["title"] == "Public Question"
 
         # List posts for admin -> sees both
-        admin_list = client.get("/api/qa", headers={"Authorization": f"Bearer {admin_token}"})
+        admin_list = client.get(
+            "/api/qa", headers={"Authorization": f"Bearer {admin_token}"}
+        )
         assert admin_list.status_code == 200
         assert len(admin_list.json()) == 2
 

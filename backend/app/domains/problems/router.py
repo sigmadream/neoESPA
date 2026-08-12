@@ -3,7 +3,16 @@ import hashlib
 import json
 from pathlib import Path
 
-from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, UploadFile, status
+from fastapi import (
+    APIRouter,
+    Depends,
+    File,
+    Form,
+    HTTPException,
+    Query,
+    UploadFile,
+    status,
+)
 from fastapi.responses import FileResponse
 from sqlalchemy.exc import IntegrityError
 from sqlmodel import Session, select
@@ -47,13 +56,17 @@ from ...services.problem_service import (
     ProblemValidationError,
 )
 from ...services.problem_package import (
-    ProblemPackageError, parse_problem_package, read_limited_package,
+    ProblemPackageError,
+    parse_problem_package,
+    read_limited_package,
 )
-from ...services.artifact_store import ArtifactValidationError, LocalArtifactStore
+from ...services.artifact_store import (
+    ArtifactValidationError,
+    LocalArtifactStore,
+)
 from ...services.judge_job_service import JobConflictError, JudgeJobService
 from ...services.authorization_service import AuthorizationService
 from ..settings.helpers import get_system_setting_value
-
 
 router = APIRouter(prefix="/admin")
 problem_service = ProblemService()
@@ -66,10 +79,16 @@ def _enqueue_upload_validation(
 ) -> None:
     digest = hashlib.sha256(":".join(sorted(hashes)).encode()).hexdigest()[:24]
     job_service.enqueue(
-        session, job_type="problem_validation",
-        payload={"problem_id": problem_id, "revision_id": revision_id, "source": "upload"},
+        session,
+        job_type="problem_validation",
+        payload={
+            "problem_id": problem_id,
+            "revision_id": revision_id,
+            "source": "upload",
+        },
         idempotency_key=f"problem-validation:{revision_id}:{digest}",
-        problem_id=problem_id, revision_id=revision_id,
+        problem_id=problem_id,
+        revision_id=revision_id,
     )
 
 
@@ -80,15 +99,23 @@ def _problem_or_404(session: Session, problem_id: int) -> Problem:
     return problem
 
 
-def _revision_or_404(session: Session, problem_id: int, revision_id: int) -> ProblemRevision:
+def _revision_or_404(
+    session: Session, problem_id: int, revision_id: int
+) -> ProblemRevision:
     revision = session.get(ProblemRevision, revision_id)
     if revision is None or revision.problem_id != problem_id:
-        raise HTTPException(status_code=404, detail="Problem revision not found")
+        raise HTTPException(
+            status_code=404, detail="Problem revision not found"
+        )
     return revision
 
 
 def _raise_problem_error(error: ValueError) -> None:
-    code = status.HTTP_409_CONFLICT if isinstance(error, ProblemConflictError) else 400
+    code = (
+        status.HTTP_409_CONFLICT
+        if isinstance(error, ProblemConflictError)
+        else 400
+    )
     raise HTTPException(status_code=code, detail=str(error)) from error
 
 
@@ -97,15 +124,21 @@ def _editable_revision_or_409(
 ) -> ProblemRevision:
     revision = _revision_or_404(session, problem_id, revision_id)
     if revision.status != "draft":
-        raise HTTPException(status_code=409, detail="Only draft revisions can change test data")
+        raise HTTPException(
+            status_code=409, detail="Only draft revisions can change test data"
+        )
     return revision
 
 
 def _authorize_problem_scope(
     session: Session, user: User, problem: Problem, capability: str
 ) -> None:
-    if not authorization_service.can_access_problem(session, user, problem, capability):
-        raise HTTPException(status_code=403, detail="Problem is outside the user's scope")
+    if not authorization_service.can_access_problem(
+        session, user, problem, capability
+    ):
+        raise HTTPException(
+            status_code=403, detail="Problem is outside the user's scope"
+        )
 
 
 def _asset_read(asset: ProblemAsset) -> ProblemAssetRead:
@@ -142,7 +175,9 @@ def create_problem(
     session: Session = Depends(get_session),
 ):
     try:
-        problem, revision = problem_service.create_problem(session, payload, current_user.id)
+        problem, revision = problem_service.create_problem(
+            session, payload, current_user.id
+        )
         observability_service.record_audit(
             session,
             actor_user_id=current_user.id,
@@ -159,7 +194,9 @@ def create_problem(
         _raise_problem_error(error)
     except IntegrityError as error:
         session.rollback()
-        raise HTTPException(status_code=409, detail="Problem code already exists") from error
+        raise HTTPException(
+            status_code=409, detail="Problem code already exists"
+        ) from error
 
 
 @router.get("/problems/{problem_id}", response_model=ProblemRead)
@@ -169,11 +206,16 @@ def get_problem(
     session: Session = Depends(get_session),
 ):
     problem = _problem_or_404(session, problem_id)
-    _authorize_problem_scope(session, current_user, problem, "problem:data.read")
+    _authorize_problem_scope(
+        session, current_user, problem, "problem:data.read"
+    )
     return problem_service.to_problem_read(session, problem)
 
 
-@router.get("/problems/{problem_id}/collaborators", response_model=list[ProblemCollaboratorRead])
+@router.get(
+    "/problems/{problem_id}/collaborators",
+    response_model=list[ProblemCollaboratorRead],
+)
 def list_problem_collaborators(
     problem_id: int,
     current_user: User = Depends(require_capability("problem:edit")),
@@ -182,7 +224,8 @@ def list_problem_collaborators(
     problem = _problem_or_404(session, problem_id)
     _authorize_problem_scope(session, current_user, problem, "problem:edit")
     return session.exec(
-        select(ProblemCollaborator).where(ProblemCollaborator.problem_id == problem_id)
+        select(ProblemCollaborator)
+        .where(ProblemCollaborator.problem_id == problem_id)
         .order_by(ProblemCollaborator.user_id)
     ).all()
 
@@ -202,25 +245,42 @@ def add_problem_collaborator(
     _authorize_problem_scope(session, current_user, problem, "problem:edit")
     collaborator_user = session.get(User, payload.user_id)
     if collaborator_user is None:
-        raise HTTPException(status_code=404, detail="Collaborator user not found")
-    if not authorization_service.has_capability(session, collaborator_user, "problem:data.read"):
-        raise HTTPException(status_code=400, detail="Collaborator role cannot access problem data")
-    collaborator = ProblemCollaborator(problem_id=problem_id, **payload.model_dump())
+        raise HTTPException(
+            status_code=404, detail="Collaborator user not found"
+        )
+    if not authorization_service.has_capability(
+        session, collaborator_user, "problem:data.read"
+    ):
+        raise HTTPException(
+            status_code=400,
+            detail="Collaborator role cannot access problem data",
+        )
+    collaborator = ProblemCollaborator(
+        problem_id=problem_id, **payload.model_dump()
+    )
     session.add(collaborator)
     try:
         observability_service.record_audit(
-            session, actor_user_id=current_user.id, action_type="add_problem_collaborator",
-            target_type="problem", target_id=str(problem_id), after=payload.model_dump(),
+            session,
+            actor_user_id=current_user.id,
+            action_type="add_problem_collaborator",
+            target_type="problem",
+            target_id=str(problem_id),
+            after=payload.model_dump(),
         )
         session.commit()
         session.refresh(collaborator)
         return collaborator
     except IntegrityError as error:
         session.rollback()
-        raise HTTPException(status_code=409, detail="Problem collaborator already exists") from error
+        raise HTTPException(
+            status_code=409, detail="Problem collaborator already exists"
+        ) from error
 
 
-@router.delete("/problems/{problem_id}/collaborators/{user_id}", status_code=204)
+@router.delete(
+    "/problems/{problem_id}/collaborators/{user_id}", status_code=204
+)
 def remove_problem_collaborator(
     problem_id: int,
     user_id: str,
@@ -236,11 +296,17 @@ def remove_problem_collaborator(
         )
     ).first()
     if collaborator is None:
-        raise HTTPException(status_code=404, detail="Problem collaborator not found")
+        raise HTTPException(
+            status_code=404, detail="Problem collaborator not found"
+        )
     session.delete(collaborator)
     observability_service.record_audit(
-        session, actor_user_id=current_user.id, action_type="remove_problem_collaborator",
-        target_type="problem", target_id=str(problem_id), before={"user_id": user_id},
+        session,
+        actor_user_id=current_user.id,
+        action_type="remove_problem_collaborator",
+        target_type="problem",
+        target_id=str(problem_id),
+        before={"user_id": user_id},
     )
     session.commit()
     return None
@@ -268,14 +334,21 @@ def update_problem(
         action_type="update_problem",
         target_type="problem",
         target_id=str(problem.id),
-        payload={"before": before, "after": payload.model_dump(exclude_none=True)},
+        payload={
+            "before": before,
+            "after": payload.model_dump(exclude_none=True),
+        },
     )
     session.commit()
     session.refresh(problem)
     return problem_service.to_problem_read(session, problem)
 
 
-@router.post("/problems/{problem_id}/revisions", response_model=ProblemRevisionRead, status_code=201)
+@router.post(
+    "/problems/{problem_id}/revisions",
+    response_model=ProblemRevisionRead,
+    status_code=201,
+)
 def create_revision(
     problem_id: int,
     payload: ProblemRevisionCreate,
@@ -285,7 +358,9 @@ def create_revision(
     problem = _problem_or_404(session, problem_id)
     _authorize_problem_scope(session, current_user, problem, "problem:edit")
     try:
-        revision = problem_service.create_revision(session, problem, payload, current_user.id)
+        revision = problem_service.create_revision(
+            session, problem, payload, current_user.id
+        )
         session.commit()
         session.refresh(revision)
         return problem_service.to_revision_read(revision)
@@ -294,23 +369,32 @@ def create_revision(
         _raise_problem_error(error)
 
 
-@router.get("/problems/{problem_id}/revisions", response_model=list[ProblemRevisionRead])
+@router.get(
+    "/problems/{problem_id}/revisions", response_model=list[ProblemRevisionRead]
+)
 def list_revisions(
     problem_id: int,
     current_user: User = Depends(require_capability("problem:data.read")),
     session: Session = Depends(get_session),
 ):
     problem = _problem_or_404(session, problem_id)
-    _authorize_problem_scope(session, current_user, problem, "problem:data.read")
+    _authorize_problem_scope(
+        session, current_user, problem, "problem:data.read"
+    )
     revisions = session.exec(
         select(ProblemRevision)
         .where(ProblemRevision.problem_id == problem_id)
         .order_by(ProblemRevision.revision_no.desc())
     ).all()
-    return [problem_service.to_revision_read(revision) for revision in revisions]
+    return [
+        problem_service.to_revision_read(revision) for revision in revisions
+    ]
 
 
-@router.get("/problems/{problem_id}/revisions/{revision_id}", response_model=ProblemRevisionRead)
+@router.get(
+    "/problems/{problem_id}/revisions/{revision_id}",
+    response_model=ProblemRevisionRead,
+)
 def get_revision(
     problem_id: int,
     revision_id: int,
@@ -318,11 +402,18 @@ def get_revision(
     session: Session = Depends(get_session),
 ):
     problem = _problem_or_404(session, problem_id)
-    _authorize_problem_scope(session, current_user, problem, "problem:data.read")
-    return problem_service.to_revision_read(_revision_or_404(session, problem_id, revision_id))
+    _authorize_problem_scope(
+        session, current_user, problem, "problem:data.read"
+    )
+    return problem_service.to_revision_read(
+        _revision_or_404(session, problem_id, revision_id)
+    )
 
 
-@router.patch("/problems/{problem_id}/revisions/{revision_id}", response_model=ProblemRevisionRead)
+@router.patch(
+    "/problems/{problem_id}/revisions/{revision_id}",
+    response_model=ProblemRevisionRead,
+)
 def update_draft_revision(
     problem_id: int,
     revision_id: int,
@@ -336,8 +427,14 @@ def update_draft_revision(
     before = problem_service.to_revision_read(revision).model_dump(mode="json")
     values = payload.model_dump(exclude_none=True)
     scalar_fields = {
-        "statement", "input_description", "output_description", "time_limit_ms",
-        "memory_limit_mb", "output_limit_kb", "process_limit", "source_limit_kb",
+        "statement",
+        "input_description",
+        "output_description",
+        "time_limit_ms",
+        "memory_limit_mb",
+        "output_limit_kb",
+        "process_limit",
+        "source_limit_kb",
         "checker_type",
         "problem_mode",
     }
@@ -348,7 +445,9 @@ def update_draft_revision(
             problem_service.validate_languages(values["allowed_languages"])
         )
     if "checker_config" in values:
-        revision.checker_config_json = json.dumps(values["checker_config"], sort_keys=True)
+        revision.checker_config_json = json.dumps(
+            values["checker_config"], sort_keys=True
+        )
     if "language_multipliers" in values:
         revision.language_multipliers_json = json.dumps(
             values["language_multipliers"], sort_keys=True
@@ -356,9 +455,13 @@ def update_draft_revision(
     revision.validation_report = None
     session.add(revision)
     observability_service.record_audit(
-        session, actor_user_id=current_user.id, action_type="update_problem_revision",
-        target_type="problem_revision", target_id=str(revision_id),
-        before=before, after=values,
+        session,
+        actor_user_id=current_user.id,
+        action_type="update_problem_revision",
+        target_type="problem_revision",
+        target_id=str(revision_id),
+        before=before,
+        after=values,
     )
     session.commit()
     session.refresh(revision)
@@ -384,16 +487,23 @@ def archive_problem(
     problem.updated_at = datetime.now(UTC)
     session.add(problem)
     observability_service.record_audit(
-        session, actor_user_id=current_user.id, action_type="archive_problem",
-        target_type="problem", target_id=str(problem_id),
-        before={"is_active": True}, after={"is_active": False},
+        session,
+        actor_user_id=current_user.id,
+        action_type="archive_problem",
+        target_type="problem",
+        target_id=str(problem_id),
+        before={"is_active": True},
+        after={"is_active": False},
     )
     session.commit()
     session.refresh(problem)
     return problem_service.to_problem_read(session, problem)
 
 
-@router.post("/problems/{problem_id}/revisions/{revision_id}/validate", response_model=ProblemRevisionRead)
+@router.post(
+    "/problems/{problem_id}/revisions/{revision_id}/validate",
+    response_model=ProblemRevisionRead,
+)
 def validate_revision(
     problem_id: int,
     revision_id: int,
@@ -478,16 +588,23 @@ def create_problem_dry_run(
     session: Session = Depends(get_session),
 ):
     if not settings.SANDBOX_READY:
-        raise HTTPException(status_code=503, detail="Sandbox hostile-fixture gate is not enabled")
+        raise HTTPException(
+            status_code=503,
+            detail="Sandbox hostile-fixture gate is not enabled",
+        )
     problem = _problem_or_404(session, problem_id)
     _authorize_problem_scope(session, current_user, problem, "problem:review")
     revision = _revision_or_404(session, problem_id, revision_id)
     if revision.status not in {"draft", "ready"}:
-        raise HTTPException(status_code=409, detail="Dry-runs require a draft or ready revision")
+        raise HTTPException(
+            status_code=409, detail="Dry-runs require a draft or ready revision"
+        )
     allowed = set(json.loads(revision.allowed_languages_json))
     normalized_language = language.strip().lower()
     if normalized_language not in allowed:
-        raise HTTPException(status_code=400, detail="Language is not allowed by revision")
+        raise HTTPException(
+            status_code=400, detail="Language is not allowed by revision"
+        )
     try:
         stored = LocalArtifactStore().put_stream(
             source_file.file, max_bytes=revision.source_limit_kb * 1024
@@ -503,24 +620,34 @@ def create_problem_dry_run(
     ).first()
     if asset is None:
         asset = ProblemAsset(
-            revision_id=revision_id, asset_kind="reference_solution",
+            revision_id=revision_id,
+            asset_kind="reference_solution",
             display_name=(
                 f"reference-{stored.sha256[:12]}-{Path(source_file.filename or 'main.txt').name}"
-            ), storage_path=stored.relative_path,
-            sha256=stored.sha256, size_bytes=stored.size_bytes,
-            content_type=source_file.content_type, is_hidden=True,
+            ),
+            storage_path=stored.relative_path,
+            sha256=stored.sha256,
+            size_bytes=stored.size_bytes,
+            content_type=source_file.content_type,
+            is_hidden=True,
         )
         session.add(asset)
         session.flush()
     job = job_service.enqueue(
-        session, job_type="problem_dry_run",
+        session,
+        job_type="problem_dry_run",
         payload={"asset_id": asset.id, "language": normalized_language},
         idempotency_key=f"dry-run:{revision_id}:{normalized_language}:{stored.sha256}",
-        problem_id=problem_id, revision_id=revision_id,
+        problem_id=problem_id,
+        revision_id=revision_id,
     )
     observability_service.record_audit(
-        session, actor_user_id=current_user.id, action_type="create_problem_dry_run",
-        target_type="judge_job", target_id=str(job.id), job_id=job.id,
+        session,
+        actor_user_id=current_user.id,
+        action_type="create_problem_dry_run",
+        target_type="judge_job",
+        target_id=str(job.id),
+        job_id=job.id,
         payload={"revision_id": revision_id, "language": normalized_language},
     )
     session.commit()
@@ -528,7 +655,10 @@ def create_problem_dry_run(
     return job_service.to_read(job)
 
 
-@router.post("/problems/{problem_id}/revisions/{revision_id}/publish", response_model=ProblemRevisionRead)
+@router.post(
+    "/problems/{problem_id}/revisions/{revision_id}/publish",
+    response_model=ProblemRevisionRead,
+)
 def publish_revision(
     problem_id: int,
     revision_id: int,
@@ -538,7 +668,10 @@ def publish_revision(
     problem = _problem_or_404(session, problem_id)
     _authorize_problem_scope(session, current_user, problem, "problem:publish")
     revision = _revision_or_404(session, problem_id, revision_id)
-    if get_system_setting_value(session, "problem_two_person_publish") == "true":
+    if (
+        get_system_setting_value(session, "problem_two_person_publish")
+        == "true"
+    ):
         approval = session.exec(
             select(ProblemRevisionApproval).where(
                 ProblemRevisionApproval.revision_id == revision_id,
@@ -547,7 +680,10 @@ def publish_revision(
             )
         ).first()
         if approval is None:
-            raise HTTPException(status_code=409, detail="Independent reviewer approval is required")
+            raise HTTPException(
+                status_code=409,
+                detail="Independent reviewer approval is required",
+            )
     try:
         problem_service.publish_revision(session, problem, revision)
         observability_service.record_audit(
@@ -556,7 +692,10 @@ def publish_revision(
             action_type="publish_problem_revision",
             target_type="problem_revision",
             target_id=str(revision.id),
-            payload={"problem_id": problem_id, "revision_no": revision.revision_no},
+            payload={
+                "problem_id": problem_id,
+                "revision_no": revision.revision_no,
+            },
         )
         session.commit()
         session.refresh(revision)
@@ -582,31 +721,49 @@ def review_problem_revision(
     _authorize_problem_scope(session, current_user, problem, "problem:review")
     revision = _revision_or_404(session, problem_id, revision_id)
     if revision.status != "ready":
-        raise HTTPException(status_code=409, detail="Only ready revisions can be reviewed")
+        raise HTTPException(
+            status_code=409, detail="Only ready revisions can be reviewed"
+        )
     if current_user.id == revision.created_by:
-        raise HTTPException(status_code=409, detail="Revision author cannot independently approve it")
+        raise HTTPException(
+            status_code=409,
+            detail="Revision author cannot independently approve it",
+        )
     if payload.decision not in {"approved", "rejected"}:
-        raise HTTPException(status_code=400, detail="Unsupported review decision")
+        raise HTTPException(
+            status_code=400, detail="Unsupported review decision"
+        )
     approval = ProblemRevisionApproval(
-        revision_id=revision_id, reviewer_id=current_user.id,
-        decision=payload.decision, note=payload.note,
+        revision_id=revision_id,
+        reviewer_id=current_user.id,
+        decision=payload.decision,
+        note=payload.note,
     )
     session.add(approval)
     try:
         observability_service.record_audit(
-            session, actor_user_id=current_user.id,
-            action_type="review_problem_revision", target_type="problem_revision",
-            target_id=str(revision_id), after=payload.model_dump(),
+            session,
+            actor_user_id=current_user.id,
+            action_type="review_problem_revision",
+            target_type="problem_revision",
+            target_id=str(revision_id),
+            after=payload.model_dump(),
         )
         session.commit()
         session.refresh(approval)
         return approval
     except IntegrityError as error:
         session.rollback()
-        raise HTTPException(status_code=409, detail="Reviewer already decided this revision") from error
+        raise HTTPException(
+            status_code=409, detail="Reviewer already decided this revision"
+        ) from error
 
 
-@router.post("/homeworks/{homework_num}/problems", response_model=AssignmentProblemRead, status_code=201)
+@router.post(
+    "/homeworks/{homework_num}/problems",
+    response_model=AssignmentProblemRead,
+    status_code=201,
+)
 def attach_problem_to_homework(
     homework_num: int,
     payload: AssignmentProblemCreate,
@@ -617,11 +774,15 @@ def attach_problem_to_homework(
         raise HTTPException(status_code=404, detail="Homework not found")
     revision = session.get(ProblemRevision, payload.revision_id)
     if revision is None:
-        raise HTTPException(status_code=404, detail="Problem revision not found")
+        raise HTTPException(
+            status_code=404, detail="Problem revision not found"
+        )
     problem = _problem_or_404(session, revision.problem_id)
     _authorize_problem_scope(session, current_user, problem, "problem:publish")
     if revision.status != "published":
-        raise HTTPException(status_code=409, detail="Only published revisions can be assigned")
+        raise HTTPException(
+            status_code=409, detail="Only published revisions can be assigned"
+        )
     assignment = AssignmentProblem(
         homework_num=homework_num,
         revision_id=revision.id or 0,
@@ -643,7 +804,9 @@ def attach_problem_to_homework(
         return AssignmentProblemRead.model_validate(assignment)
     except IntegrityError as error:
         session.rollback()
-        raise HTTPException(status_code=409, detail="Homework problem position already exists") from error
+        raise HTTPException(
+            status_code=409, detail="Homework problem position already exists"
+        ) from error
 
 
 @router.get(
@@ -657,7 +820,9 @@ def list_assets(
     session: Session = Depends(get_session),
 ):
     problem = _problem_or_404(session, problem_id)
-    _authorize_problem_scope(session, current_user, problem, "problem:data.read")
+    _authorize_problem_scope(
+        session, current_user, problem, "problem:data.read"
+    )
     _revision_or_404(session, problem_id, revision_id)
     assets = session.exec(
         select(ProblemAsset)
@@ -683,9 +848,17 @@ def upload_problem_asset(
     problem = _problem_or_404(session, problem_id)
     _authorize_problem_scope(session, current_user, problem, "problem:edit")
     revision = _editable_revision_or_409(session, problem_id, revision_id)
-    allowed_kinds = {"attachment", "image", "checker", "generator", "reference_solution"}
+    allowed_kinds = {
+        "attachment",
+        "image",
+        "checker",
+        "generator",
+        "reference_solution",
+    }
     if asset_kind not in allowed_kinds:
-        raise HTTPException(status_code=400, detail="Unsupported problem asset kind")
+        raise HTTPException(
+            status_code=400, detail="Unsupported problem asset kind"
+        )
     suffix = Path(asset_file.filename or "").suffix.lower()
     # SpecialJudgeChecker currently has one explicit, sandboxed contract: a
     # Python program invoked with input/expected/actual paths.  Do not accept
@@ -694,29 +867,51 @@ def upload_problem_asset(
     # here and may use any supported source language.
     allowed_executable_suffixes = {".py", ".c", ".cc", ".cpp", ".java"}
     if asset_kind == "checker" and suffix != ".py":
-        raise HTTPException(status_code=400, detail="Special checker must be a Python source file")
-    if asset_kind in {"generator", "reference_solution"} and suffix not in allowed_executable_suffixes:
-        raise HTTPException(status_code=400, detail="Executable asset extension is not allowed")
+        raise HTTPException(
+            status_code=400,
+            detail="Special checker must be a Python source file",
+        )
+    if (
+        asset_kind in {"generator", "reference_solution"}
+        and suffix not in allowed_executable_suffixes
+    ):
+        raise HTTPException(
+            status_code=400, detail="Executable asset extension is not allowed"
+        )
     store = LocalArtifactStore()
     try:
-        stored = store.put_stream(asset_file.file, max_bytes=revision.source_limit_kb * 1024)
+        stored = store.put_stream(
+            asset_file.file, max_bytes=revision.source_limit_kb * 1024
+        )
     except ArtifactValidationError as error:
         raise HTTPException(status_code=400, detail=str(error)) from error
     asset = ProblemAsset(
-        revision_id=revision_id, asset_kind=asset_kind,
-        display_name=Path(asset_file.filename or f"{asset_kind}-{stored.sha256[:12]}").name,
-        storage_path=stored.relative_path, sha256=stored.sha256,
-        size_bytes=stored.size_bytes, content_type=asset_file.content_type, is_hidden=True,
+        revision_id=revision_id,
+        asset_kind=asset_kind,
+        display_name=Path(
+            asset_file.filename or f"{asset_kind}-{stored.sha256[:12]}"
+        ).name,
+        storage_path=stored.relative_path,
+        sha256=stored.sha256,
+        size_bytes=stored.size_bytes,
+        content_type=asset_file.content_type,
+        is_hidden=True,
     )
     session.add(asset)
     try:
         session.flush()
         _enqueue_upload_validation(
-            session, problem_id=problem_id, revision_id=revision_id, hashes=[stored.sha256]
+            session,
+            problem_id=problem_id,
+            revision_id=revision_id,
+            hashes=[stored.sha256],
         )
         observability_service.record_audit(
-            session, actor_user_id=current_user.id, action_type="upload_problem_asset",
-            target_type="problem_asset", target_id=str(asset.id),
+            session,
+            actor_user_id=current_user.id,
+            action_type="upload_problem_asset",
+            target_type="problem_asset",
+            target_id=str(asset.id),
             payload={"kind": asset_kind, "sha256": stored.sha256},
         )
         session.commit()
@@ -725,10 +920,14 @@ def upload_problem_asset(
     except IntegrityError as error:
         session.rollback()
         store.discard_new(stored)
-        raise HTTPException(status_code=409, detail="Problem asset name already exists") from error
+        raise HTTPException(
+            status_code=409, detail="Problem asset name already exists"
+        ) from error
 
 
-@router.get("/problems/{problem_id}/revisions/{revision_id}/assets/{asset_id}/download")
+@router.get(
+    "/problems/{problem_id}/revisions/{revision_id}/assets/{asset_id}/download"
+)
 def download_asset(
     problem_id: int,
     revision_id: int,
@@ -737,7 +936,9 @@ def download_asset(
     session: Session = Depends(get_session),
 ):
     problem = _problem_or_404(session, problem_id)
-    _authorize_problem_scope(session, current_user, problem, "problem:data.read")
+    _authorize_problem_scope(
+        session, current_user, problem, "problem:data.read"
+    )
     _revision_or_404(session, problem_id, revision_id)
     asset = session.get(ProblemAsset, asset_id)
     if asset is None or asset.revision_id != revision_id:
@@ -745,9 +946,13 @@ def download_asset(
     try:
         path = LocalArtifactStore().resolve(asset.storage_path, asset.sha256)
     except FileNotFoundError as error:
-        raise HTTPException(status_code=410, detail="Problem asset is missing") from error
+        raise HTTPException(
+            status_code=410, detail="Problem asset is missing"
+        ) from error
     except ArtifactValidationError as error:
-        raise HTTPException(status_code=500, detail="Problem asset failed integrity check") from error
+        raise HTTPException(
+            status_code=500, detail="Problem asset failed integrity check"
+        ) from error
     observability_service.record_audit(
         session,
         actor_user_id=current_user.id,
@@ -757,7 +962,9 @@ def download_asset(
         payload={"revision_id": revision_id, "asset_kind": asset.asset_kind},
     )
     session.commit()
-    return FileResponse(path, media_type=asset.content_type, filename=asset.display_name)
+    return FileResponse(
+        path, media_type=asset.content_type, filename=asset.display_name
+    )
 
 
 @router.get(
@@ -771,10 +978,13 @@ def list_testcase_groups(
     session: Session = Depends(get_session),
 ):
     problem = _problem_or_404(session, problem_id)
-    _authorize_problem_scope(session, current_user, problem, "problem:data.read")
+    _authorize_problem_scope(
+        session, current_user, problem, "problem:data.read"
+    )
     _revision_or_404(session, problem_id, revision_id)
     return session.exec(
-        select(TestCaseGroup).where(TestCaseGroup.revision_id == revision_id)
+        select(TestCaseGroup)
+        .where(TestCaseGroup.revision_id == revision_id)
         .order_by(TestCaseGroup.position, TestCaseGroup.id)
     ).all()
 
@@ -795,11 +1005,16 @@ def create_testcase_group(
     _authorize_problem_scope(session, current_user, problem, "problem:edit")
     _editable_revision_or_409(session, problem_id, revision_id)
     if payload.scoring_policy not in {"sum", "all_or_nothing"}:
-        raise HTTPException(status_code=400, detail="Unsupported testcase group policy")
+        raise HTTPException(
+            status_code=400, detail="Unsupported testcase group policy"
+        )
     if payload.dependency_group_id is not None:
         dependency = session.get(TestCaseGroup, payload.dependency_group_id)
         if dependency is None or dependency.revision_id != revision_id:
-            raise HTTPException(status_code=400, detail="Dependency group does not belong to revision")
+            raise HTTPException(
+                status_code=400,
+                detail="Dependency group does not belong to revision",
+            )
     group = TestCaseGroup(revision_id=revision_id, **payload.model_dump())
     session.add(group)
     try:
@@ -808,7 +1023,9 @@ def create_testcase_group(
         return group
     except IntegrityError as error:
         session.rollback()
-        raise HTTPException(status_code=409, detail="Testcase group key already exists") from error
+        raise HTTPException(
+            status_code=409, detail="Testcase group key already exists"
+        ) from error
 
 
 @router.get(
@@ -822,7 +1039,9 @@ def list_testcases(
     session: Session = Depends(get_session),
 ):
     problem = _problem_or_404(session, problem_id)
-    _authorize_problem_scope(session, current_user, problem, "problem:data.read")
+    _authorize_problem_scope(
+        session, current_user, problem, "problem:data.read"
+    )
     _revision_or_404(session, problem_id, revision_id)
     testcases = session.exec(
         select(ProblemTestCase)
@@ -856,7 +1075,10 @@ def create_testcase(
     if group_id is not None:
         group = session.get(TestCaseGroup, group_id)
         if group is None or group.revision_id != revision_id:
-            raise HTTPException(status_code=400, detail="Testcase group does not belong to revision")
+            raise HTTPException(
+                status_code=400,
+                detail="Testcase group does not belong to revision",
+            )
     store = LocalArtifactStore()
     stored_objects = []
     try:
@@ -911,10 +1133,16 @@ def create_testcase(
             action_type="create_problem_testcase",
             target_type="problem_revision",
             target_id=str(revision_id),
-            payload={"case_name": case_name, "position": position, "is_sample": is_sample},
+            payload={
+                "case_name": case_name,
+                "position": position,
+                "is_sample": is_sample,
+            },
         )
         _enqueue_upload_validation(
-            session, problem_id=problem_id, revision_id=revision_id,
+            session,
+            problem_id=problem_id,
+            revision_id=revision_id,
             hashes=[input_stored.sha256, output_stored.sha256],
         )
         session.commit()
@@ -924,7 +1152,9 @@ def create_testcase(
         session.rollback()
         for stored in stored_objects:
             store.discard_new(stored)
-        raise HTTPException(status_code=409, detail="Testcase name or position already exists") from error
+        raise HTTPException(
+            status_code=409, detail="Testcase name or position already exists"
+        ) from error
 
 
 @router.post(
@@ -955,36 +1185,55 @@ def import_testcase_package(
             output_stored = store.put_bytes(case.output_content)
             stored_objects.extend([input_stored, output_stored])
             input_asset = ProblemAsset(
-                revision_id=revision_id, asset_kind="test_input",
-                display_name=case.input_name, storage_path=input_stored.relative_path,
-                sha256=input_stored.sha256, size_bytes=input_stored.size_bytes,
-                content_type="application/octet-stream", is_hidden=not case.is_sample,
+                revision_id=revision_id,
+                asset_kind="test_input",
+                display_name=case.input_name,
+                storage_path=input_stored.relative_path,
+                sha256=input_stored.sha256,
+                size_bytes=input_stored.size_bytes,
+                content_type="application/octet-stream",
+                is_hidden=not case.is_sample,
             )
             output_asset = ProblemAsset(
-                revision_id=revision_id, asset_kind="test_output",
-                display_name=case.output_name, storage_path=output_stored.relative_path,
-                sha256=output_stored.sha256, size_bytes=output_stored.size_bytes,
-                content_type="application/octet-stream", is_hidden=not case.is_sample,
+                revision_id=revision_id,
+                asset_kind="test_output",
+                display_name=case.output_name,
+                storage_path=output_stored.relative_path,
+                sha256=output_stored.sha256,
+                size_bytes=output_stored.size_bytes,
+                content_type="application/octet-stream",
+                is_hidden=not case.is_sample,
             )
             session.add(input_asset)
             session.add(output_asset)
             session.flush()
             testcase = ProblemTestCase(
-                revision_id=revision_id, case_name=case.name, position=case.position,
-                input_asset_id=input_asset.id or 0, output_asset_id=output_asset.id or 0,
-                score=case.score, is_sample=case.is_sample,
+                revision_id=revision_id,
+                case_name=case.name,
+                position=case.position,
+                input_asset_id=input_asset.id or 0,
+                output_asset_id=output_asset.id or 0,
+                score=case.score,
+                is_sample=case.is_sample,
             )
             session.add(testcase)
             session.flush()
             created.append(testcase)
         observability_service.record_audit(
-            session, actor_user_id=current_user.id,
+            session,
+            actor_user_id=current_user.id,
             action_type="import_problem_testcase_package",
-            target_type="problem_revision", target_id=str(revision_id),
-            payload={"filename": package.filename, "testcase_count": len(created)},
+            target_type="problem_revision",
+            target_id=str(revision_id),
+            payload={
+                "filename": package.filename,
+                "testcase_count": len(created),
+            },
         )
         _enqueue_upload_validation(
-            session, problem_id=problem_id, revision_id=revision_id,
+            session,
+            problem_id=problem_id,
+            revision_id=revision_id,
             hashes=[stored.sha256 for stored in stored_objects],
         )
         session.commit()
@@ -995,7 +1244,9 @@ def import_testcase_package(
         session.rollback()
         for stored in stored_objects:
             store.discard_new(stored)
-        raise HTTPException(status_code=409, detail="Package conflicts with existing test data") from error
+        raise HTTPException(
+            status_code=409, detail="Package conflicts with existing test data"
+        ) from error
 
 
 @router.patch(
@@ -1019,7 +1270,10 @@ def update_testcase(
     if payload.group_id is not None:
         group = session.get(TestCaseGroup, payload.group_id)
         if group is None or group.revision_id != revision_id:
-            raise HTTPException(status_code=400, detail="Testcase group does not belong to revision")
+            raise HTTPException(
+                status_code=400,
+                detail="Testcase group does not belong to revision",
+            )
     for field, value in payload.model_dump(exclude_none=True).items():
         setattr(testcase, field, value)
     session.add(testcase)
@@ -1029,7 +1283,9 @@ def update_testcase(
         return _testcase_read(testcase)
     except IntegrityError as error:
         session.rollback()
-        raise HTTPException(status_code=409, detail="Testcase name or position already exists") from error
+        raise HTTPException(
+            status_code=409, detail="Testcase name or position already exists"
+        ) from error
 
 
 @router.delete(

@@ -5,7 +5,7 @@ import { loginViaUi } from './helpers';
 test('admin_can_publish_notice', async ({ page, browser }) => {
   const title = `Published Notice ${Date.now()}`;
 
-  await loginViaUi(page, { id: 'admin', password: 'pllab818' });
+  await loginViaUi(page, { id: 'admin', password: 'pllab2026' });
   await page.waitForURL('/');
   await page.goto('/admin');
   await page.getByRole('button', { name: 'Notices' }).click();

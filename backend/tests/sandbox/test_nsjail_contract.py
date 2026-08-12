@@ -2,10 +2,13 @@ from unittest.mock import patch
 
 import pytest
 
-from app.services.sandbox import NsJailLimits, NsJailSandboxRunner, SandboxNotReadyError
+from app.services.sandbox import (
+    NsJailLimits,
+    NsJailSandboxRunner,
+    SandboxNotReadyError,
+)
 from app.services.sandbox import SandboxExecutionResult
 from app.services.code_runner import NsJailCodeRunner
-
 
 SECURE_POLICY = """
 clone_newnet: true
@@ -75,7 +78,10 @@ def test_code_runner_reports_output_limit_without_host_execution():
             self.calls += 1
             return SandboxExecutionResult(
                 stdout=b"compiled" if self.calls == 1 else b"x" * 10,
-                stderr=b"", exit_code=0, duration_ms=1, timed_out=False,
+                stderr=b"",
+                exit_code=0,
+                duration_ms=1,
+                timed_out=False,
                 output_limited=self.calls == 2,
             )
 
@@ -93,11 +99,16 @@ def test_code_runner_distinguishes_memory_limit():
         def run(self, command, **_kwargs):
             self.calls += 1
             return SandboxExecutionResult(
-                stdout=b"", stderr=b"MemoryError" if self.calls == 2 else b"",
-                exit_code=1 if self.calls == 2 else 0, duration_ms=1, timed_out=False,
+                stdout=b"",
+                stderr=b"MemoryError" if self.calls == 2 else b"",
+                exit_code=1 if self.calls == 2 else 0,
+                duration_ms=1,
+                timed_out=False,
             )
 
-    result = NsJailCodeRunner(FakeSandbox()).run_code("python", "x = bytearray(10**12)")
+    result = NsJailCodeRunner(FakeSandbox()).run_code(
+        "python", "x = bytearray(10**12)"
+    )
     assert result.status == "memory_limit"
 
 
@@ -109,12 +120,16 @@ def test_runner_maps_nsjail_cpu_limit_sigkill_to_timeout(tmp_path, monkeypatch):
     monkeypatch.setattr("platform.system", lambda: "Linux")
     monkeypatch.setattr("shutil.which", lambda _binary: "/usr/bin/nsjail")
 
-    with patch("subprocess.run") as run, patch("time.perf_counter", side_effect=[1.0, 3.0]):
+    with (
+        patch("subprocess.run") as run,
+        patch("time.perf_counter", side_effect=[1.0, 3.0]),
+    ):
         run.return_value.stdout = b""
         run.return_value.stderr = b"terminated with signal: SIGKILL (9)"
         run.return_value.returncode = 137
         result = NsJailSandboxRunner(config_path=policy).run(
-            ["/usr/bin/python3"], workspace=workspace,
+            ["/usr/bin/python3"],
+            workspace=workspace,
             limits=NsJailLimits(cpu_seconds=2, wall_seconds=4),
         )
 

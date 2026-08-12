@@ -9,10 +9,16 @@ from sqlmodel.pool import StaticPool
 
 from app.core.db import get_session
 from app.main import app
-from app.models.schemas import GradingRule, Homework, JudgeJob, Submission, SubmissionResult, User
+from app.models.schemas import (
+    GradingRule,
+    Homework,
+    JudgeJob,
+    Submission,
+    SubmissionResult,
+    User,
+)
 from app.services.auth_service import AuthService
 from app.core.compression import decompress_text
-
 
 engine = create_engine(
     "sqlite://", connect_args={"check_same_thread": False}, poolclass=StaticPool
@@ -48,7 +54,9 @@ def _create_user(
     session.commit()
 
 
-def _create_allowed_languages_rule(session: Session, homework_num: int, languages: list[str]) -> None:
+def _create_allowed_languages_rule(
+    session: Session, homework_num: int, languages: list[str]
+) -> None:
     session.add(
         GradingRule(
             scope="homework",
@@ -59,6 +67,7 @@ def _create_allowed_languages_rule(session: Session, homework_num: int, language
         )
     )
     session.commit()
+
 
 def _create_homework(
     session: Session,
@@ -81,7 +90,9 @@ def _create_homework(
 
 
 def _login(client: TestClient, user_id: str, password: str) -> str:
-    response = client.post("/api/auth/login", json={"id": user_id, "ps": password})
+    response = client.post(
+        "/api/auth/login", json={"id": user_id, "ps": password}
+    )
     assert response.status_code == 200
     return response.json()["access_token"]
 
@@ -106,7 +117,9 @@ def test_create_submission_with_code_body(
     login_user,
     auth_headers,
 ):
-    create_homework(1, "Open Homework", start_offset_days=-1, deadline_offset_days=2)
+    create_homework(
+        1, "Open Homework", start_offset_days=-1, deadline_offset_days=2
+    )
     create_user("submitter", 20242001, "student-pass")
 
     token = login_user("submitter", "student-pass")
@@ -133,9 +146,15 @@ def test_create_submission_with_code_body(
     assert payload["run_status"] == "not_started"
     assert len(saved_submissions) == 1
     assert saved_submissions[0].code_text != "print('hello world')"
-    assert decompress_text(saved_submissions[0].code_text) == "print('hello world')"
+    assert (
+        decompress_text(saved_submissions[0].code_text)
+        == "print('hello world')"
+    )
     assert len(saved_results) == 1
-    assert saved_results[0].grader_summary == "Submission accepted. Waiting for grading."
+    assert (
+        saved_results[0].grader_summary
+        == "Submission accepted. Waiting for grading."
+    )
     job = session.exec(select(JudgeJob)).one()
     assert job.job_type == "grade_submission"
     assert job.submission_id == saved_submissions[0].id
@@ -152,7 +171,12 @@ def test_production_submission_is_saved_without_host_execution(
 ):
     monkeypatch.setenv("APP_ENV", "production")
     monkeypatch.setenv("AUTO_GRADING_ENABLED", "true")
-    create_homework(101, "Production Safe Homework", start_offset_days=-1, deadline_offset_days=2)
+    create_homework(
+        101,
+        "Production Safe Homework",
+        start_offset_days=-1,
+        deadline_offset_days=2,
+    )
     create_user("safe-submitter", 20242101, "student-pass")
 
     token = login_user("safe-submitter", "student-pass")
@@ -181,7 +205,9 @@ def test_reject_submission_after_deadline(
     login_user,
     auth_headers,
 ):
-    create_homework(2, "Closed Homework", start_offset_days=-3, deadline_offset_days=-1)
+    create_homework(
+        2, "Closed Homework", start_offset_days=-3, deadline_offset_days=-1
+    )
     create_user("late-student", 20242002, "student-pass")
 
     token = login_user("late-student", "student-pass")
@@ -199,7 +225,6 @@ def test_reject_submission_after_deadline(
     assert response.json()["detail"] == "Submission deadline has passed"
 
 
-
 def test_reject_submission_before_opening(
     client,
     create_user,
@@ -207,7 +232,9 @@ def test_reject_submission_before_opening(
     login_user,
     auth_headers,
 ):
-    create_homework(6, "Upcoming Homework", start_offset_days=2, deadline_offset_days=5)
+    create_homework(
+        6, "Upcoming Homework", start_offset_days=2, deadline_offset_days=5
+    )
     create_user("early-student", 20242008, "student-pass")
 
     token = login_user("early-student", "student-pass")
@@ -306,7 +333,10 @@ def test_reject_submission_for_disallowed_language():
         app.dependency_overrides.clear()
 
     assert response.status_code == 400
-    assert response.json()["detail"] == "Submission language is not allowed for this homework"
+    assert (
+        response.json()["detail"]
+        == "Submission language is not allowed for this homework"
+    )
 
 
 def test_reject_submission_with_blank_code():
@@ -375,7 +405,9 @@ def test_owner_and_admin_can_read_submission_detail_and_feedback():
     with Session(engine) as session:
         _create_homework(session, 11, "Feedback Homework", -1, 2)
         _create_user(session, "feedback-owner", 20242014, "student-pass")
-        _create_user(session, "feedback-admin", 10002014, "admin-pass", role="admin")
+        _create_user(
+            session, "feedback-admin", 10002014, "admin-pass", role="admin"
+        )
 
         def get_session_override():
             return session
@@ -456,6 +488,7 @@ def test_student_cannot_read_others_feedback():
     assert create_response.status_code == 201
     assert response.status_code == 403
     assert response.json()["detail"] == "You cannot access this submission"
+
 
 def test_student_can_list_own_submissions():
     with Session(engine) as session:
@@ -575,7 +608,8 @@ def test_create_submission_retries_after_attempt_conflict(tmp_path):
 
         def flush_with_conflict(*args, **kwargs):
             pending_submission = any(
-                isinstance(instance, Submission) and instance.user_id == "race-student"
+                isinstance(instance, Submission)
+                and instance.user_id == "race-student"
                 for instance in session.new
             )
             if conflict_state["triggered"] or not pending_submission:
@@ -596,7 +630,9 @@ def test_create_submission_retries_after_attempt_conflict(tmp_path):
                 competing_session.add(competing_submission)
                 competing_session.commit()
 
-            raise IntegrityError("INSERT INTO submissions", {}, Exception("attempt conflict"))
+            raise IntegrityError(
+                "INSERT INTO submissions", {}, Exception("attempt conflict")
+            )
 
         with patch.object(session, "flush", side_effect=flush_with_conflict):
             response = client.post(
@@ -619,9 +655,15 @@ def test_create_submission_retries_after_attempt_conflict(tmp_path):
 
     assert response.status_code == 201
     assert response.json()["attempt_no"] == 2
-    assert [submission.attempt_no for submission in stored_submissions] == [1, 2]
+    assert [submission.attempt_no for submission in stored_submissions] == [
+        1,
+        2,
+    ]
 
-def test_create_submission_returns_conflict_after_retry_limit_exhausted(tmp_path):
+
+def test_create_submission_returns_conflict_after_retry_limit_exhausted(
+    tmp_path,
+):
     race_engine = create_engine(
         f"sqlite:///{tmp_path / 'submission-race-exhausted.sqlite'}",
         connect_args={"check_same_thread": False},
@@ -641,11 +683,14 @@ def test_create_submission_returns_conflict_after_retry_limit_exhausted(tmp_path
 
         def always_conflict_flush(*args, **kwargs):
             pending_submission = any(
-                isinstance(instance, Submission) and instance.user_id == "race-exhausted"
+                isinstance(instance, Submission)
+                and instance.user_id == "race-exhausted"
                 for instance in session.new
             )
             if pending_submission:
-                raise IntegrityError("INSERT INTO submissions", {}, Exception("attempt conflict"))
+                raise IntegrityError(
+                    "INSERT INTO submissions", {}, Exception("attempt conflict")
+                )
             return None
 
         with patch.object(session, "flush", side_effect=always_conflict_flush):
@@ -666,5 +711,8 @@ def test_create_submission_returns_conflict_after_retry_limit_exhausted(tmp_path
         app.dependency_overrides.clear()
 
     assert response.status_code == 409
-    assert response.json()["detail"] == "Submission attempt conflicted with another request. Please retry."
+    assert (
+        response.json()["detail"]
+        == "Submission attempt conflicted with another request. Please retry."
+    )
     assert stored_submissions == []

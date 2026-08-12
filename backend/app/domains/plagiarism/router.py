@@ -4,13 +4,20 @@ from sqlmodel import Session
 from ...api.dependencies import require_capability
 from ...api.runtime import observability_service, plagiarism_service
 from ...core.db import get_session
-from ...models.schemas import Homework, PlagiarismPairRead, PlagiarismRunRead, User
-
+from ...models.schemas import (
+    Homework,
+    PlagiarismPairRead,
+    PlagiarismRunRead,
+    User,
+)
 
 router = APIRouter()
 
 
-@router.post("/admin/homeworks/{homework_num}/plagiarism/run", response_model=PlagiarismRunRead)
+@router.post(
+    "/admin/homeworks/{homework_num}/plagiarism/run",
+    response_model=PlagiarismRunRead,
+)
 def run_plagiarism_scan(
     homework_num: int,
     current_user: User = Depends(require_capability("plagiarism:operate")),
@@ -18,7 +25,9 @@ def run_plagiarism_scan(
 ):
     homework = session.get(Homework, homework_num)
     if homework is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Homework not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Homework not found"
+        )
     run = plagiarism_service.run_for_homework(
         session,
         homework_num=homework_num,
@@ -53,7 +62,9 @@ def list_plagiarism_pairs(
     return plagiarism_service.list_pairs(session, homework_num=homework_num)
 
 
-@router.get("/admin/plagiarism/pairs/{pair_id}", response_model=PlagiarismPairRead)
+@router.get(
+    "/admin/plagiarism/pairs/{pair_id}", response_model=PlagiarismPairRead
+)
 def get_plagiarism_pair(
     pair_id: int,
     _: User = Depends(require_capability("plagiarism:operate")),
@@ -61,5 +72,8 @@ def get_plagiarism_pair(
 ):
     pair = plagiarism_service.get_pair(session, pair_id)
     if pair is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Plagiarism pair not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Plagiarism pair not found",
+        )
     return pair

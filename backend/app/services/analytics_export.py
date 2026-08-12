@@ -8,7 +8,12 @@ from pathlib import Path
 from sqlmodel import Session, select
 
 from ..models.schemas import (
-    AnalyticsConsent, GradingRun, Submission, SubmissionCaseResult, SystemEventLog, User,
+    AnalyticsConsent,
+    GradingRun,
+    Submission,
+    SubmissionCaseResult,
+    SystemEventLog,
+    User,
 )
 from .artifact_store import LocalArtifactStore
 
@@ -20,7 +25,9 @@ class AnalyticsExportError(ValueError):
 class AnalyticsExportService:
     def __init__(self, secret: str, root: Path | None = None):
         if len(secret.encode()) < 32:
-            raise AnalyticsExportError("Analytics HMAC secret must be at least 32 bytes")
+            raise AnalyticsExportError(
+                "Analytics HMAC secret must be at least 32 bytes"
+            )
         self.secret = secret.encode()
         self.root = (root or LocalArtifactStore().root).resolve()
 
@@ -45,16 +52,23 @@ class AnalyticsExportService:
                     AnalyticsConsent.purpose == purpose,
                     AnalyticsConsent.policy_version == policy_version,
                 )
-                .order_by(AnalyticsConsent.created_at.desc(), AnalyticsConsent.id.desc())
+                .order_by(
+                    AnalyticsConsent.created_at.desc(),
+                    AnalyticsConsent.id.desc(),
+                )
             ).first()
             if latest is not None and latest.granted:
                 scopes = set(json.loads(latest.scope_json))
                 eligible_scopes[user.id] = scopes
                 if "submissions" in scopes:
                     eligible[user.id] = user
-        submissions = session.exec(
-            select(Submission).where(Submission.user_id.in_(list(eligible)))
-        ).all() if eligible else []
+        submissions = (
+            session.exec(
+                select(Submission).where(Submission.user_id.in_(list(eligible)))
+            ).all()
+            if eligible
+            else []
+        )
         submission_rows = [
             {
                 "submission_id": submission.id,
@@ -69,9 +83,15 @@ class AnalyticsExportService:
             for submission in submissions
         ]
         submission_ids = [row["submission_id"] for row in submission_rows]
-        runs = session.exec(
-            select(GradingRun).where(GradingRun.submission_id.in_(submission_ids))
-        ).all() if submission_ids else []
+        runs = (
+            session.exec(
+                select(GradingRun).where(
+                    GradingRun.submission_id.in_(submission_ids)
+                )
+            ).all()
+            if submission_ids
+            else []
+        )
         run_rows = [
             {
                 "grading_run_id": run.id,
@@ -85,11 +105,15 @@ class AnalyticsExportService:
             }
             for run in runs
         ]
-        case_results = session.exec(
-            select(SubmissionCaseResult).where(
-                SubmissionCaseResult.submission_id.in_(submission_ids)
-            )
-        ).all() if submission_ids else []
+        case_results = (
+            session.exec(
+                select(SubmissionCaseResult).where(
+                    SubmissionCaseResult.submission_id.in_(submission_ids)
+                )
+            ).all()
+            if submission_ids
+            else []
+        )
         case_rows = [
             {
                 "submission_id": result.submission_id,
@@ -101,12 +125,19 @@ class AnalyticsExportService:
             for result in case_results
         ]
         event_users = {
-            user.id: user for user in users
+            user.id: user
+            for user in users
             if "learning_events" in eligible_scopes.get(user.id, set())
         }
-        events = session.exec(
-            select(SystemEventLog).where(SystemEventLog.user_id.in_(list(event_users)))
-        ).all() if event_users else []
+        events = (
+            session.exec(
+                select(SystemEventLog).where(
+                    SystemEventLog.user_id.in_(list(event_users))
+                )
+            ).all()
+            if event_users
+            else []
+        )
         event_rows = [
             {
                 "event_id": event.id,
@@ -116,21 +147,27 @@ class AnalyticsExportService:
                 "submission_id": event.submission_id,
                 "created_at": event.created_at.isoformat(),
             }
-            for event in events if event.user_id in event_users
+            for event in events
+            if event.user_id in event_users
         ]
         self._write_jsonl(export_root / "submissions.jsonl", submission_rows)
         self._write_jsonl(export_root / "grading_runs.jsonl", run_rows)
         self._write_jsonl(export_root / "testcase_results.jsonl", case_rows)
         self._write_jsonl(export_root / "learning_events.jsonl", event_rows)
         return {
-            "submissions": len(submission_rows), "grading_runs": len(run_rows),
-            "testcase_results": len(case_rows), "learning_events": len(event_rows),
+            "submissions": len(submission_rows),
+            "grading_runs": len(run_rows),
+            "testcase_results": len(case_rows),
+            "learning_events": len(event_rows),
         }
 
     @staticmethod
     def _write_jsonl(path: Path, rows: list[dict]) -> None:
         path.write_text(
-            "".join(json.dumps(row, ensure_ascii=False, sort_keys=True) + "\n" for row in rows),
+            "".join(
+                json.dumps(row, ensure_ascii=False, sort_keys=True) + "\n"
+                for row in rows
+            ),
             encoding="utf-8",
         )
         path.chmod(0o600)

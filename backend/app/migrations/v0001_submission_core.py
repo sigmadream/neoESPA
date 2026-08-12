@@ -48,7 +48,9 @@ def _existing_columns(connection, table_name: str) -> set[str]:
     return {row[1] for row in rows}
 
 
-def _ensure_columns(connection, table_name: str, columns: dict[str, str]) -> None:
+def _ensure_columns(
+    connection, table_name: str, columns: dict[str, str]
+) -> None:
     if not _table_exists(connection, table_name):
         return
 
@@ -57,7 +59,9 @@ def _ensure_columns(connection, table_name: str, columns: dict[str, str]) -> Non
         if column_name in existing:
             continue
         connection.execute(
-            text(f"ALTER TABLE {table_name} ADD COLUMN {column_name} {definition}")
+            text(
+                f"ALTER TABLE {table_name} ADD COLUMN {column_name} {definition}"
+            )
         )
 
 

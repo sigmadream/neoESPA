@@ -16,12 +16,15 @@ class BootstrapError(ValueError):
 
 def issue_bootstrap_token(session: Session, *, ttl_minutes: int = 15) -> str:
     if session.exec(select(User.id)).first() is not None:
-        raise BootstrapError("Bootstrap token is unavailable after the first user exists")
+        raise BootstrapError(
+            "Bootstrap token is unavailable after the first user exists"
+        )
     raw = secrets.token_urlsafe(32)
     session.add(
         AdminBootstrapToken(
             token_hash=hashlib.sha256(raw.encode()).hexdigest(),
-            expires_at=datetime.now(UTC) + timedelta(minutes=max(ttl_minutes, 1)),
+            expires_at=datetime.now(UTC)
+            + timedelta(minutes=max(ttl_minutes, 1)),
         )
     )
     session.commit()
@@ -43,7 +46,9 @@ def consume_bootstrap_token(
         raise BootstrapError("Bootstrap is permanently closed")
     token_hash = hashlib.sha256(token.encode()).hexdigest()
     record = session.exec(
-        select(AdminBootstrapToken).where(AdminBootstrapToken.token_hash == token_hash)
+        select(AdminBootstrapToken).where(
+            AdminBootstrapToken.token_hash == token_hash
+        )
     ).first()
     now = datetime.now(UTC)
     if record is None or record.used_at is not None:

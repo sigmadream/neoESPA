@@ -20,7 +20,12 @@ from ..models.schemas import (
     SubmissionResult,
 )
 from ..core.compression import decompress_text
-from .code_runner import CodeRunner, CodeRunnerService, NsJailCodeRunner, RunnerExecutionResult
+from .code_runner import (
+    CodeRunner,
+    CodeRunnerService,
+    NsJailCodeRunner,
+    RunnerExecutionResult,
+)
 from .sandbox import NsJailLimits
 from .lint_pipeline import LintPipelineService
 from .artifact_store import LocalArtifactStore
@@ -66,14 +71,20 @@ class GradingService:
     ) -> SubmissionResult:
         source_text = decompress_text(submission.code_text or "")
         if not source_text.strip():
-            raise ValueError("Submission does not contain executable source code")
+            raise ValueError(
+                "Submission does not contain executable source code"
+            )
 
-        resolved_homework = homework or session.get(Homework, submission.homework_num)
+        resolved_homework = homework or session.get(
+            Homework, submission.homework_num
+        )
         if resolved_homework is None:
             raise ValueError("Homework not found for submission")
 
         result = session.exec(
-            select(SubmissionResult).where(SubmissionResult.submission_id == submission.id)
+            select(SubmissionResult).where(
+                SubmissionResult.submission_id == submission.id
+            )
         ).first()
         if result is None:
             result = SubmissionResult(submission_id=submission.id or 0)
@@ -84,12 +95,16 @@ class GradingService:
         result.adjusted_by = None
 
         test_cases = (
-            self._load_revision_test_cases(session, submission.problem_revision_id)
+            self._load_revision_test_cases(
+                session, submission.problem_revision_id
+            )
             if submission.problem_revision_id
             else []
         )
         if not test_cases:
-            test_cases = self._load_test_cases(session, resolved_homework.num or 0)
+            test_cases = self._load_test_cases(
+                session, resolved_homework.num or 0
+            )
         if not test_cases:
             raise ValueError(MISSING_TESTCASES_ERROR)
 
@@ -103,7 +118,9 @@ class GradingService:
             progress_callback=progress_callback,
         )
 
-        self._apply_lint_feedback(session, submission, result, resolved_homework)
+        self._apply_lint_feedback(
+            session, submission, result, resolved_homework
+        )
         session.add(submission)
         session.add(result)
         session.flush()
@@ -134,22 +151,36 @@ class GradingService:
         source_text = decompress_text(submission.code_text or "")
         revision = (
             session.get(ProblemRevision, submission.problem_revision_id)
-            if submission.problem_revision_id is not None else None
+            if submission.problem_revision_id is not None
+            else None
         )
         timeout_seconds = homework.sec or 10
         sandbox_limits: NsJailLimits | None = None
         if revision is not None:
-            if submission.language not in json.loads(revision.allowed_languages_json):
-                raise ValueError("Submission language is not allowed by problem revision")
-            if len(source_text.encode("utf-8")) > revision.source_limit_kb * 1024:
-                raise ValueError("Submission source exceeds problem revision limit")
+            if submission.language not in json.loads(
+                revision.allowed_languages_json
+            ):
+                raise ValueError(
+                    "Submission language is not allowed by problem revision"
+                )
+            if (
+                len(source_text.encode("utf-8"))
+                > revision.source_limit_kb * 1024
+            ):
+                raise ValueError(
+                    "Submission source exceeds problem revision limit"
+                )
             multipliers = json.loads(revision.language_multipliers_json)
             multiplier = float(multipliers.get(submission.language, 1.0))
-            timeout_seconds = max(1, math.ceil(revision.time_limit_ms / 1000 * multiplier))
+            timeout_seconds = max(
+                1, math.ceil(revision.time_limit_ms / 1000 * multiplier)
+            )
             sandbox_limits = NsJailLimits(
                 wall_seconds=timeout_seconds + 2,
                 cpu_seconds=timeout_seconds,
-                memory_mb=max(1, math.ceil(revision.memory_limit_mb * multiplier)),
+                memory_mb=max(
+                    1, math.ceil(revision.memory_limit_mb * multiplier)
+                ),
                 file_size_mb=max(1, math.ceil(revision.output_limit_kb / 1024)),
                 process_count=revision.process_limit,
                 output_bytes=revision.output_limit_kb * 1024,
@@ -160,14 +191,21 @@ class GradingService:
                 # is visible to another coordinator. Partial case rows are
                 # safe: every retry clears them before grading starts.
                 progress_callback(case_index, len(test_cases), timeout_seconds)
-            if sandbox_limits is not None and isinstance(self.runner, NsJailCodeRunner):
+            if sandbox_limits is not None and isinstance(
+                self.runner, NsJailCodeRunner
+            ):
                 execution = self.runner.run_code_with_limits(
-                    submission.language, source_text, input_data=test_case.input_data,
-                    source_name=submission.original_filename, limits=sandbox_limits,
+                    submission.language,
+                    source_text,
+                    input_data=test_case.input_data,
+                    source_name=submission.original_filename,
+                    limits=sandbox_limits,
                 )
             else:
                 execution = self.runner.run_code(
-                    submission.language, source_text, input_data=test_case.input_data,
+                    submission.language,
+                    source_text,
+                    input_data=test_case.input_data,
                     source_name=submission.original_filename,
                     timeout_seconds=timeout_seconds,
                 )
@@ -191,13 +229,21 @@ class GradingService:
                 raise ValueError("Runner returned no runtime result")
 
             runtime_ms_total += run_result.duration_ms
-            last_exit_code = run_result.exit_code if run_result.exit_code is not None else last_exit_code
+            last_exit_code = (
+                run_result.exit_code
+                if run_result.exit_code is not None
+                else last_exit_code
+            )
 
-            runtime_log = self._format_runtime_log(test_case.case_name, run_result.stdout, run_result.stderr)
+            runtime_log = self._format_runtime_log(
+                test_case.case_name, run_result.stdout, run_result.stderr
+            )
             if runtime_log:
                 runtime_logs.append(runtime_log)
 
-            case_passed, case_message = self._evaluate_case(homework, test_case, execution)
+            case_passed, case_message = self._evaluate_case(
+                homework, test_case, execution
+            )
             case_score = test_case.score if case_passed else 0.0
             if test_case.group_key:
                 group_case_scores.append(
@@ -233,7 +279,9 @@ class GradingService:
                 run_status = "output_limit"
             elif execution.status == "memory_limit":
                 run_status = "memory_limit"
-            elif execution.status == "runtime_error" and run_status != "timeout":
+            elif (
+                execution.status == "runtime_error" and run_status != "timeout"
+            ):
                 run_status = "failed"
 
         if group_case_scores:
@@ -270,7 +318,9 @@ class GradingService:
         result.compile_log = self._merge_logs(compile_result)
         result.runtime_log = self._merge_logs(run_result)
         result.graded_at = datetime.now(UTC)
-        result.runtime_ms = run_result.duration_ms if run_result is not None else None
+        result.runtime_ms = (
+            run_result.duration_ms if run_result is not None else None
+        )
         result.total_case_count = 0
         result.passed_case_count = 0
 
@@ -286,7 +336,9 @@ class GradingService:
             submission.status = "failed"
             result.status = "failed"
             result.run_status = "not_started"
-            result.exit_code = compile_result.exit_code if compile_result is not None else None
+            result.exit_code = (
+                compile_result.exit_code if compile_result is not None else None
+            )
             result.total_score = 0.0
             result.submission_score = 0.0
             result.quality_score = 0.0
@@ -297,7 +349,9 @@ class GradingService:
             submission.status = "failed"
             result.status = "failed"
             result.run_status = "timeout"
-            result.exit_code = run_result.exit_code if run_result is not None else None
+            result.exit_code = (
+                run_result.exit_code if run_result is not None else None
+            )
             result.total_score = 0.0
             result.submission_score = 0.0
             result.quality_score = 0.0
@@ -308,7 +362,9 @@ class GradingService:
             submission.status = "failed"
             result.status = "failed"
             result.run_status = "output_limit"
-            result.exit_code = run_result.exit_code if run_result is not None else None
+            result.exit_code = (
+                run_result.exit_code if run_result is not None else None
+            )
             result.total_score = 0.0
             result.submission_score = 0.0
             result.quality_score = 0.0
@@ -319,7 +375,9 @@ class GradingService:
             submission.status = "failed"
             result.status = "failed"
             result.run_status = "memory_limit"
-            result.exit_code = run_result.exit_code if run_result is not None else None
+            result.exit_code = (
+                run_result.exit_code if run_result is not None else None
+            )
             result.total_score = 0.0
             result.submission_score = 0.0
             result.quality_score = 0.0
@@ -330,7 +388,9 @@ class GradingService:
             submission.status = "failed"
             result.status = "failed"
             result.run_status = "failed"
-            result.exit_code = run_result.exit_code if run_result is not None else None
+            result.exit_code = (
+                run_result.exit_code if run_result is not None else None
+            )
             result.total_score = 0.0
             result.submission_score = 0.0
             result.quality_score = 0.0
@@ -372,10 +432,14 @@ class GradingService:
         functional_score = round(result.submission_score, 2)
         result.quality_score = round(lint_report.quality_score, 2)
         lint_applied_to_total = functional_score > LINT_APPLICATION_THRESHOLD
-        result.total_score = round(
-            functional_score + result.quality_score,
-            2,
-        ) if lint_applied_to_total else functional_score
+        result.total_score = (
+            round(
+                functional_score + result.quality_score,
+                2,
+            )
+            if lint_applied_to_total
+            else functional_score
+        )
 
         lint_summary_lines = []
         for issue in lint_report.enabled_issues[:5]:
@@ -452,10 +516,14 @@ class GradingService:
             if isinstance(item, dict) and "score" in item
         )
         missing_count = sum(
-            1 for item in raw_cases if not (isinstance(item, dict) and "score" in item)
+            1
+            for item in raw_cases
+            if not (isinstance(item, dict) and "score" in item)
         )
         default_score = (
-            max(0.0, 100.0 - explicit_total) / missing_count if missing_count else 0.0
+            max(0.0, 100.0 - explicit_total) / missing_count
+            if missing_count
+            else 0.0
         )
 
         for index, raw_case in enumerate(raw_cases, start=1):
@@ -495,20 +563,27 @@ class GradingService:
         try:
             checker_config = json.loads(revision.checker_config_json)
         except json.JSONDecodeError as error:
-            raise ValueError("Revision checker configuration is invalid") from error
+            raise ValueError(
+                "Revision checker configuration is invalid"
+            ) from error
         groups = {
-            group.id: group for group in session.exec(
-                select(TestCaseGroup).where(TestCaseGroup.revision_id == revision_id)
+            group.id: group
+            for group in session.exec(
+                select(TestCaseGroup).where(
+                    TestCaseGroup.revision_id == revision_id
+                )
             ).all()
         }
         store = LocalArtifactStore()
         special_checker_source = None
         if revision.checker_type == "special":
             checker_asset = session.exec(
-                select(ProblemAsset).where(
+                select(ProblemAsset)
+                .where(
                     ProblemAsset.revision_id == revision_id,
                     ProblemAsset.asset_kind == "checker",
-                ).order_by(ProblemAsset.id.desc())
+                )
+                .order_by(ProblemAsset.id.desc())
             ).first()
             if checker_asset is None:
                 raise CheckerError("Special judge checker asset is missing")
@@ -517,20 +592,30 @@ class GradingService:
                     checker_asset.storage_path, checker_asset.sha256
                 ).read_text(encoding="utf-8")
             except (OSError, UnicodeDecodeError, ValueError) as error:
-                raise CheckerError("Special judge checker asset is invalid") from error
+                raise CheckerError(
+                    "Special judge checker asset is invalid"
+                ) from error
         cases: list[HomeworkTestCase] = []
         for row in rows:
             input_asset = session.get(ProblemAsset, row.input_asset_id)
             output_asset = session.get(ProblemAsset, row.output_asset_id)
             if input_asset is None or output_asset is None:
-                raise ValueError("Revision testcase references a missing artifact")
-            input_path = store.resolve(input_asset.storage_path, input_asset.sha256)
-            output_path = store.resolve(output_asset.storage_path, output_asset.sha256)
+                raise ValueError(
+                    "Revision testcase references a missing artifact"
+                )
+            input_path = store.resolve(
+                input_asset.storage_path, input_asset.sha256
+            )
+            output_path = store.resolve(
+                output_asset.storage_path, output_asset.sha256
+            )
             try:
                 input_data = input_path.read_text(encoding="utf-8")
                 expected_output = output_path.read_text(encoding="utf-8")
             except UnicodeDecodeError as error:
-                raise ValueError("Revision testcase must be UTF-8 text") from error
+                raise ValueError(
+                    "Revision testcase must be UTF-8 text"
+                ) from error
             cases.append(
                 HomeworkTestCase(
                     case_index=row.position,
@@ -541,12 +626,20 @@ class GradingService:
                     score=row.score,
                     checker_type=revision.checker_type,
                     checker_config=checker_config,
-                    group_key=groups[row.group_id].group_key if row.group_id in groups else None,
+                    group_key=(
+                        groups[row.group_id].group_key
+                        if row.group_id in groups
+                        else None
+                    ),
                     group_policy=(
-                        groups[row.group_id].scoring_policy if row.group_id in groups else "sum"
+                        groups[row.group_id].scoring_policy
+                        if row.group_id in groups
+                        else "sum"
                     ),
                     dependency_group_key=(
-                        groups[groups[row.group_id].dependency_group_id].group_key
+                        groups[
+                            groups[row.group_id].dependency_group_id
+                        ].group_key
                         if row.group_id in groups
                         and groups[row.group_id].dependency_group_id in groups
                         else None
@@ -599,14 +692,23 @@ class GradingService:
         expected_output = test_case.expected_output
 
         if test_case.checker_type == "special":
-            if not isinstance(self.runner, NsJailCodeRunner) or not test_case.special_checker_source:
-                raise CheckerError("Special judge requires a separate NsJail checker sandbox")
+            if (
+                not isinstance(self.runner, NsJailCodeRunner)
+                or not test_case.special_checker_source
+            ):
+                raise CheckerError(
+                    "Special judge requires a separate NsJail checker sandbox"
+                )
             checked = SpecialJudgeChecker(
                 self.runner.sandbox, test_case.special_checker_source
             ).check(test_case.input_data, expected_output, actual_output)
             if checked.accepted:
                 return True, checked.message
-            return False, "Hidden case failed." if test_case.is_hidden else checked.message
+            return False, (
+                "Hidden case failed."
+                if test_case.is_hidden
+                else checked.message
+            )
 
         if test_case.checker_type:
             checked = get_checker(
@@ -635,7 +737,9 @@ class GradingService:
         actual_output: str,
         expected_output: str,
     ) -> bool:
-        return self._normalize_output(homework, actual_output) == self._normalize_output(
+        return self._normalize_output(
+            homework, actual_output
+        ) == self._normalize_output(
             homework,
             expected_output,
         )
@@ -649,7 +753,11 @@ class GradingService:
                     [line for line in normalized.splitlines() if line]
                 )
             return sorted(
-                [" ".join(line.split()) for line in normalized.splitlines() if line.strip()]
+                [
+                    " ".join(line.split())
+                    for line in normalized.splitlines()
+                    if line.strip()
+                ]
             )
 
         if homework.vitalSpace:
@@ -663,7 +771,9 @@ class GradingService:
             return compact
         return f"{compact[:limit]}..."
 
-    def _format_runtime_log(self, case_name: str, stdout: str, stderr: str) -> str | None:
+    def _format_runtime_log(
+        self, case_name: str, stdout: str, stderr: str
+    ) -> str | None:
         parts: list[str] = []
         if stdout:
             parts.append(f"[{case_name}] stdout:\n{stdout}")
@@ -687,7 +797,9 @@ class GradingService:
         if phase_result is None:
             return None
 
-        parts = [part for part in (phase_result.stdout, phase_result.stderr) if part]
+        parts = [
+            part for part in (phase_result.stdout, phase_result.stderr) if part
+        ]
         if not parts:
             return None
         return "\n".join(parts)

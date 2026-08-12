@@ -43,8 +43,12 @@ def test_api_markdown_documents_every_real_route_exactly():
     actual = _actual_routes()
     undocumented = sorted(actual - documented)
     stale = sorted(documented - actual)
-    assert not undocumented, f"API.md is missing registered routes: {undocumented}"
-    assert not stale, f"API.md documents routes that are not registered: {stale}"
+    assert (
+        not undocumented
+    ), f"API.md is missing registered routes: {undocumented}"
+    assert (
+        not stale
+    ), f"API.md documents routes that are not registered: {stale}"
 
 
 def test_openapi_contract_detects_removed_operation_and_schema():

@@ -1,6 +1,13 @@
 from datetime import UTC, datetime
 
-from fastapi import APIRouter, Depends, HTTPException, WebSocket, WebSocketDisconnect, status
+from fastapi import (
+    APIRouter,
+    Depends,
+    HTTPException,
+    WebSocket,
+    WebSocketDisconnect,
+    status,
+)
 from sqlmodel import Session, select
 
 from ...api.dependencies import get_current_active_user, require_capability
@@ -31,7 +38,6 @@ from ..collab.helpers import (
 )
 from ..users.serializers import is_staff
 
-
 router = APIRouter()
 ws_router = APIRouter()
 
@@ -42,7 +48,9 @@ def list_collab_sessions(
     session: Session = Depends(get_session),
 ):
     sessions = session.exec(
-        select(CollabSession).order_by(CollabSession.created_at.desc(), CollabSession.id.desc())
+        select(CollabSession).order_by(
+            CollabSession.created_at.desc(), CollabSession.id.desc()
+        )
     ).all()
     return [
         to_collab_session_read(session, collab_session)
@@ -57,8 +65,13 @@ def create_collab_session(
     current_user: User = Depends(require_capability("collaboration:manage")),
     session: Session = Depends(get_session),
 ):
-    if payload.homework_num is not None and session.get(Homework, payload.homework_num) is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Homework not found")
+    if (
+        payload.homework_num is not None
+        and session.get(Homework, payload.homework_num) is None
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Homework not found"
+        )
 
     collab_session = CollabSession(
         title=payload.title,
@@ -104,7 +117,9 @@ def create_collab_session(
     return to_collab_session_read(session, collab_session)
 
 
-@router.post("/collab/sessions/{session_id}/join", response_model=CollabSessionRead)
+@router.post(
+    "/collab/sessions/{session_id}/join", response_model=CollabSessionRead
+)
 def join_collab_session(
     session_id: int,
     current_user: User = Depends(get_current_active_user),
@@ -112,11 +127,17 @@ def join_collab_session(
 ):
     collab_session = session.get(CollabSession, session_id)
     if collab_session is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Session not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Session not found"
+        )
     if collab_session.status != "active":
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Session is closed")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Session is closed"
+        )
 
-    participant = active_collab_participant(session, session_id, current_user.id)
+    participant = active_collab_participant(
+        session, session_id, current_user.id
+    )
     if participant is None:
         participant = session.exec(
             select(CollabParticipant).where(
@@ -140,7 +161,9 @@ def join_collab_session(
     return to_collab_session_read(session, collab_session)
 
 
-@router.patch("/collab/sessions/{session_id}/code", response_model=CollabSessionRead)
+@router.patch(
+    "/collab/sessions/{session_id}/code", response_model=CollabSessionRead
+)
 def update_collab_code(
     session_id: int,
     payload: CollabCodeUpdate,
@@ -149,7 +172,9 @@ def update_collab_code(
 ):
     collab_session = session.get(CollabSession, session_id)
     if collab_session is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Session not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Session not found"
+        )
     participant = require_collab_member(session, session_id, current_user.id)
     if not participant.can_edit:
         raise HTTPException(
@@ -165,7 +190,9 @@ def update_collab_code(
     return to_collab_session_read(session, collab_session)
 
 
-@router.post("/collab/sessions/{session_id}/messages", response_model=CollabMessageRead)
+@router.post(
+    "/collab/sessions/{session_id}/messages", response_model=CollabMessageRead
+)
 def create_collab_message(
     session_id: int,
     payload: CollabChatWrite,
@@ -184,7 +211,9 @@ def create_collab_message(
     return to_collab_message_read(message)
 
 
-@router.post("/collab/sessions/{session_id}/close", response_model=CollabSessionRead)
+@router.post(
+    "/collab/sessions/{session_id}/close", response_model=CollabSessionRead
+)
 def close_collab_session(
     session_id: int,
     current_user: User = Depends(get_current_active_user),
@@ -192,8 +221,12 @@ def close_collab_session(
 ):
     collab_session = session.get(CollabSession, session_id)
     if collab_session is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Session not found")
-    if collab_session.mentor_id != current_user.id and not is_staff(current_user):
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Session not found"
+        )
+    if collab_session.mentor_id != current_user.id and not is_staff(
+        current_user
+    ):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Only the mentor or staff can close this session",
@@ -208,7 +241,9 @@ def close_collab_session(
     return to_collab_session_read(session, collab_session)
 
 
-@router.get("/collab/sessions/{session_id}/history", response_model=CollabHistoryRead)
+@router.get(
+    "/collab/sessions/{session_id}/history", response_model=CollabHistoryRead
+)
 def get_collab_session_history(
     session_id: int,
     current_user: User = Depends(get_current_active_user),
@@ -216,7 +251,9 @@ def get_collab_session_history(
 ):
     collab_session = session.get(CollabSession, session_id)
     if collab_session is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Session not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Session not found"
+        )
     require_collab_member(session, session_id, current_user.id)
 
     messages = session.exec(
@@ -227,12 +264,16 @@ def get_collab_session_history(
     snapshots = session.exec(
         select(CollabCodeSnapshot)
         .where(CollabCodeSnapshot.session_id == session_id)
-        .order_by(CollabCodeSnapshot.created_at.asc(), CollabCodeSnapshot.id.asc())
+        .order_by(
+            CollabCodeSnapshot.created_at.asc(), CollabCodeSnapshot.id.asc()
+        )
     ).all()
     return CollabHistoryRead(
         session=to_collab_session_read(session, collab_session),
         messages=[to_collab_message_read(message) for message in messages],
-        code_snapshots=[to_collab_snapshot_read(snapshot) for snapshot in snapshots],
+        code_snapshots=[
+            to_collab_snapshot_read(snapshot) for snapshot in snapshots
+        ],
     )
 
 
@@ -287,7 +328,9 @@ async def collab_session_websocket(
 
             if message_type == "code_update":
                 if not participant.can_edit:
-                    await websocket.send_json({"type": "error", "detail": "Editing is not allowed."})
+                    await websocket.send_json(
+                        {"type": "error", "detail": "Editing is not allowed."}
+                    )
                     continue
                 collab_session.current_code = str(message.get("code", ""))
                 session.add(collab_session)

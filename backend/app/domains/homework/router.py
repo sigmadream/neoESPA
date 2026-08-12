@@ -44,7 +44,6 @@ from ..homework.zip_parser import (
 )
 from ..shared.schedules import compute_schedule_window, parse_datetime
 
-
 _FILENAME_SANITIZE_PATTERN = re.compile(r"[^\w.\-]+")
 _ALLOWED_PROBLEM_FILE_EXTENSIONS = {".pdf", ".md", ".txt"}
 
@@ -60,7 +59,9 @@ def _safe_upload_name(original_name: str | None, *, fallback: str) -> str:
     return safe_name or fallback
 
 
-def _sanitize_uploaded_filename(original_name: str | None, *, fallback: str) -> str:
+def _sanitize_uploaded_filename(
+    original_name: str | None, *, fallback: str
+) -> str:
     safe_name = _safe_upload_name(original_name, fallback=fallback)
     suffix = Path(safe_name).suffix
     stem = Path(safe_name).stem or Path(fallback).stem or fallback
@@ -72,14 +73,19 @@ def _sanitize_uploaded_filename(original_name: str | None, *, fallback: str) -> 
 
 
 def _validate_problem_file_extension(problem_filename: str) -> None:
-    if Path(problem_filename).suffix.lower() not in _ALLOWED_PROBLEM_FILE_EXTENSIONS:
+    if (
+        Path(problem_filename).suffix.lower()
+        not in _ALLOWED_PROBLEM_FILE_EXTENSIONS
+    ):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Problem file extension must be one of: .pdf, .md, .txt",
         )
 
 
-def _validate_schedule_order(starttime: str | None, deadline: str | None) -> None:
+def _validate_schedule_order(
+    starttime: str | None, deadline: str | None
+) -> None:
     start_at = parse_datetime(starttime)
     if starttime and start_at is None:
         raise HTTPException(
@@ -92,7 +98,11 @@ def _validate_schedule_order(starttime: str | None, deadline: str | None) -> Non
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="deadline must be a valid ISO-8601 datetime",
         )
-    if start_at is not None and deadline_at is not None and deadline_at <= start_at:
+    if (
+        start_at is not None
+        and deadline_at is not None
+        and deadline_at <= start_at
+    ):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="deadline must be later than starttime",
@@ -171,10 +181,9 @@ def get_homeworks(
     limit: int = Query(default=100, ge=1, le=1000),
     offset: int = Query(default=0, ge=0),
 ):
-    homeworks = (
-        session.exec(select(Homework).order_by(Homework.num).limit(limit).offset(offset))
-        .all()
-    )
+    homeworks = session.exec(
+        select(Homework).order_by(Homework.num).limit(limit).offset(offset)
+    ).all()
     admin_reads = to_homework_admin_read_batch(session, homeworks)
 
     is_staff_user = current_user and current_user.user_group in ADMIN_ROLES
@@ -214,7 +223,9 @@ def get_homework_detail(
             status_code=status.HTTP_404_NOT_FOUND, detail="Homework not found"
         )
 
-    schedule_status, _ = compute_schedule_window(homework.starttime, homework.deadline)
+    schedule_status, _ = compute_schedule_window(
+        homework.starttime, homework.deadline
+    )
     is_staff_user = current_user and current_user.user_group in ADMIN_ROLES
 
     if schedule_status == "upcoming" and not is_staff_user:
@@ -232,12 +243,10 @@ async def list_admin_homeworks(
     limit: int = Query(default=100, ge=1, le=1000),
     offset: int = Query(default=0, ge=0),
 ):
-    homeworks = (
-        session.exec(select(Homework).order_by(Homework.num).limit(limit).offset(offset))
-        .all()
-    )
+    homeworks = session.exec(
+        select(Homework).order_by(Homework.num).limit(limit).offset(offset)
+    ).all()
     return to_homework_admin_read_batch(session, homeworks)
-
 
 
 @router.get("/admin/homeworks/{homework_num}", response_model=HomeworkAdminRead)
@@ -317,7 +326,9 @@ async def import_homework(
     )
 
     try:
-        parsed_allowed_languages = _parse_allowed_languages_form(allowed_languages)
+        parsed_allowed_languages = _parse_allowed_languages_form(
+            allowed_languages
+        )
 
         # Parse testcases from streams to avoid loading whole Zips into memory
         parsed_testcases = parse_homework_testcase_archives(
@@ -481,7 +492,9 @@ async def import_homework(
             try:
                 shutil.rmtree(homework_root, ignore_errors=True)
             except Exception as rmtree_error:
-                logger.warning(f"Failed to cleanup homework artifacts at {homework_root}: {rmtree_error}")
+                logger.warning(
+                    f"Failed to cleanup homework artifacts at {homework_root}: {rmtree_error}"
+                )
         raise
     except Exception as error:
         logger.exception(f"Unexpected error during homework import: {error}")
@@ -490,11 +503,15 @@ async def import_homework(
             try:
                 shutil.rmtree(homework_root, ignore_errors=True)
             except Exception as rmtree_error:
-                logger.warning(f"Failed to cleanup homework artifacts at {homework_root}: {rmtree_error}")
+                logger.warning(
+                    f"Failed to cleanup homework artifacts at {homework_root}: {rmtree_error}"
+                )
         raise
 
 
-@router.patch("/admin/homeworks/{homework_num}", response_model=HomeworkAdminRead)
+@router.patch(
+    "/admin/homeworks/{homework_num}", response_model=HomeworkAdminRead
+)
 async def update_homework(
     homework_num: int,
     payload: HomeworkAdminWrite,
@@ -563,7 +580,11 @@ async def delete_homework(
     homework_artifact_root = _get_homework_artifact_root() / str(homework_num)
 
     try:
-        artifact_rule_names = ["problem_file_meta", "input_zip_meta", "output_zip_meta"]
+        artifact_rule_names = [
+            "problem_file_meta",
+            "input_zip_meta",
+            "output_zip_meta",
+        ]
         grading_rules = session.exec(
             select(GradingRule).where(GradingRule.homework_num == homework_num)
         ).all()
@@ -580,13 +601,17 @@ async def delete_homework(
         # code_snapshots and collab_sessions also reference homework.num; with
         # foreign keys enforced, leaving them behind fails the delete.
         code_snapshots = session.exec(
-            select(CodeSnapshot).where(CodeSnapshot.homework_num == homework_num)
+            select(CodeSnapshot).where(
+                CodeSnapshot.homework_num == homework_num
+            )
         ).all()
         for code_snapshot in code_snapshots:
             session.delete(code_snapshot)
 
         collab_sessions = session.exec(
-            select(CollabSession).where(CollabSession.homework_num == homework_num)
+            select(CollabSession).where(
+                CollabSession.homework_num == homework_num
+            )
         ).all()
         for collab_session in collab_sessions:
             collab_session.homework_num = None

@@ -25,9 +25,7 @@ def upgrade(engine) -> None:
     # Existing Homework rows become published revision 1 records. INSERT OR
     # IGNORE plus stable homework-{num} codes makes this safe to resume.
     with engine.begin() as connection:
-        connection.execute(
-            text(
-                """
+        connection.execute(text("""
                 INSERT OR IGNORE INTO problems
                     (code, title, owner_id, is_active, created_at, updated_at)
                 SELECT
@@ -38,12 +36,8 @@ def upgrade(engine) -> None:
                     COALESCE(created_at, CURRENT_TIMESTAMP),
                     COALESCE(updated_at, CURRENT_TIMESTAMP)
                 FROM homework
-                """
-            )
-        )
-        connection.execute(
-            text(
-                """
+                """))
+        connection.execute(text("""
                 INSERT OR IGNORE INTO problem_revisions
                     (problem_id, revision_no, statement, input_description,
                      output_description, time_limit_ms, memory_limit_mb,
@@ -74,12 +68,8 @@ def upgrade(engine) -> None:
                     COALESCE(h.updated_at, CURRENT_TIMESTAMP)
                 FROM homework h
                 JOIN problems p ON p.code = 'homework-' || h.num
-                """
-            )
-        )
-        connection.execute(
-            text(
-                """
+                """))
+        connection.execute(text("""
                 INSERT OR IGNORE INTO assignment_problems
                     (homework_num, revision_id, position, created_at)
                 SELECT h.num, pr.id, 1, CURRENT_TIMESTAMP
@@ -87,12 +77,8 @@ def upgrade(engine) -> None:
                 JOIN problems p ON p.code = 'homework-' || h.num
                 JOIN problem_revisions pr
                   ON pr.problem_id = p.id AND pr.revision_no = 1
-                """
-            )
-        )
-        connection.execute(
-            text(
-                """
+                """))
+        connection.execute(text("""
                 UPDATE submissions
                 SET problem_revision_id = (
                     SELECT ap.revision_id
@@ -106,6 +92,4 @@ def upgrade(engine) -> None:
                     WHERE ap.homework_num = submissions.homework_num
                       AND ap.position = 1
                   )
-                """
-            )
-        )
+                """))

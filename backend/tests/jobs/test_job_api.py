@@ -25,6 +25,8 @@ def test_problem_validation_job_api(
     assert created.json()["status"] == "queued"
     job_id = created.json()["id"]
     fetched = client.get(f"/api/admin/problem-jobs/{job_id}", headers=headers)
-    events = client.get(f"/api/admin/problem-jobs/{job_id}/events", headers=headers)
+    events = client.get(
+        f"/api/admin/problem-jobs/{job_id}/events", headers=headers
+    )
     assert fetched.status_code == 200
     assert events.json()[0]["event_type"] == "queued"

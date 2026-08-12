@@ -9,7 +9,6 @@ from app.main import app
 from app.models.schemas import Notice, User
 from app.services.auth_service import AuthService
 
-
 engine = create_engine(
     "sqlite://", connect_args={"check_same_thread": False}, poolclass=StaticPool
 )
@@ -23,7 +22,9 @@ def teardown_function():
     SQLModel.metadata.drop_all(engine)
 
 
-def _create_user(session: Session, user_id: str, sid: int, password: str, role: str) -> None:
+def _create_user(
+    session: Session, user_id: str, sid: int, password: str, role: str
+) -> None:
     session.add(
         User(
             id=user_id,
@@ -39,7 +40,9 @@ def _create_user(session: Session, user_id: str, sid: int, password: str, role: 
 
 
 def _login(client: TestClient, user_id: str, password: str) -> str:
-    response = client.post("/api/auth/login", json={"id": user_id, "ps": password})
+    response = client.post(
+        "/api/auth/login", json={"id": user_id, "ps": password}
+    )
     assert response.status_code == 200
     return response.json()["access_token"]
 
@@ -119,7 +122,9 @@ def test_notice_detail_returns_content():
 
 
 def test_scheduled_notice_is_hidden_from_student_but_visible_to_admin():
-    future_date = (datetime.now(UTC) + timedelta(days=2)).strftime("%Y-%m-%d %H:%M:%S")
+    future_date = (datetime.now(UTC) + timedelta(days=2)).strftime(
+        "%Y-%m-%d %H:%M:%S"
+    )
 
     with Session(engine) as session:
         session.add(
@@ -164,7 +169,9 @@ def test_scheduled_notice_is_hidden_from_student_but_visible_to_admin():
 
 
 def test_inactive_staff_token_is_treated_as_anonymous_for_optional_notice_routes():
-    future_date = (datetime.now(UTC) + timedelta(days=2)).strftime("%Y-%m-%d %H:%M:%S")
+    future_date = (datetime.now(UTC) + timedelta(days=2)).strftime(
+        "%Y-%m-%d %H:%M:%S"
+    )
 
     with Session(engine) as session:
         session.add(

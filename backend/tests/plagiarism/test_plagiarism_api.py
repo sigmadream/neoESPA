@@ -9,14 +9,15 @@ from app.main import app
 from app.models.schemas import Homework, Submission, SubmissionResult, User
 from app.services.auth_service import AuthService
 
-
 engine = create_engine(
     "sqlite://", connect_args={"check_same_thread": False}, poolclass=StaticPool
 )
 
 
 def _dt_string(offset_days: int) -> str:
-    return (datetime.now(UTC) + timedelta(days=offset_days)).strftime("%Y-%m-%d %H:%M:%S")
+    return (datetime.now(UTC) + timedelta(days=offset_days)).strftime(
+        "%Y-%m-%d %H:%M:%S"
+    )
 
 
 def _create_user(session: Session, user_id: str, sid: int, role: str) -> None:
@@ -34,7 +35,9 @@ def _create_user(session: Session, user_id: str, sid: int, role: str) -> None:
     session.commit()
 
 
-def _create_submission(session: Session, homework_num: int, user_id: str, code_text: str) -> None:
+def _create_submission(
+    session: Session, homework_num: int, user_id: str, code_text: str
+) -> None:
     submission = Submission(
         homework_num=homework_num,
         user_id=user_id,
@@ -47,12 +50,16 @@ def _create_submission(session: Session, homework_num: int, user_id: str, code_t
     )
     session.add(submission)
     session.flush()
-    session.add(SubmissionResult(submission_id=submission.id or 0, status="graded"))
+    session.add(
+        SubmissionResult(submission_id=submission.id or 0, status="graded")
+    )
     session.commit()
 
 
 def _login(client: TestClient, user_id: str) -> str:
-    response = client.post("/api/auth/login", json={"id": user_id, "ps": "password"})
+    response = client.post(
+        "/api/auth/login", json={"id": user_id, "ps": "password"}
+    )
     assert response.status_code == 200
     return response.json()["access_token"]
 

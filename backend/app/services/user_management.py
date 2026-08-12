@@ -8,8 +8,15 @@ from .auth_service import AuthService
 
 VALID_EMAIL_PATTERN = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 ADMIN_ROLES = {
-    "super_admin", "admin", "instructor", "ta", "problem_setter", "reviewer",
-    "judge_operator", "support", "viewer",
+    "super_admin",
+    "admin",
+    "instructor",
+    "ta",
+    "problem_setter",
+    "reviewer",
+    "judge_operator",
+    "support",
+    "viewer",
 }
 MANAGEABLE_USER_ROLES = ADMIN_ROLES | {"student"}
 
@@ -20,7 +27,9 @@ class UserManagementError(ValueError):
 
 def validate_email_policy(email: str) -> None:
     if not VALID_EMAIL_PATTERN.match(email):
-        raise UserManagementError("Email does not satisfy the registration policy")
+        raise UserManagementError(
+            "Email does not satisfy the registration policy"
+        )
 
 
 def ensure_unique_sid(session: Session, sid: int) -> None:

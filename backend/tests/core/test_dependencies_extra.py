@@ -6,6 +6,7 @@ from app.api.dependencies import (
 from app.models.schemas import User
 from fastapi import HTTPException
 
+
 @pytest.mark.asyncio
 async def test_require_roles_unauthorized():
     user = User(
@@ -21,6 +22,7 @@ async def test_require_roles_unauthorized():
     with pytest.raises(HTTPException) as exc_info:
         await checker(current_user=user)
     assert exc_info.value.status_code == 403
+
 
 @pytest.mark.asyncio
 async def test_get_current_active_user_inactive():

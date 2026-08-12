@@ -7,7 +7,6 @@ from sqlmodel import Session, create_engine
 
 from app.models.schemas import User
 
-
 BACKEND_DIR = Path(__file__).resolve().parents[2]
 
 
@@ -93,4 +92,6 @@ def test_create_admin_cli_rejects_duplicate_user(tmp_path: Path):
 
     assert first_response.returncode == 0
     assert second_response.returncode == 1
-    assert "Error: User already exists: duplicate-admin" in second_response.stderr
+    assert (
+        "Error: User already exists: duplicate-admin" in second_response.stderr
+    )

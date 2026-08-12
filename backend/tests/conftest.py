@@ -26,7 +26,9 @@ def isolated_test_environment(monkeypatch):
 def engine_fixture():
     engine = configure_sqlite_foreign_keys(
         create_engine(
-            "sqlite://", connect_args={"check_same_thread": False}, poolclass=StaticPool
+            "sqlite://",
+            connect_args={"check_same_thread": False},
+            poolclass=StaticPool,
         )
     )
     SQLModel.metadata.create_all(engine)
@@ -105,7 +107,9 @@ def create_submission_result(session):
 @pytest.fixture
 def login_user(client):
     def _login(user_id: str, password: str = "password"):
-        response = client.post("/api/auth/login", json={"id": user_id, "ps": password})
+        response = client.post(
+            "/api/auth/login", json={"id": user_id, "ps": password}
+        )
         if response.status_code == 200:
             return response.json()["access_token"]
         return None

@@ -10,7 +10,6 @@ from app.main import app
 from app.models.schemas import GradingRule, Homework, SubmissionResult, User
 from app.services.auth_service import AuthService
 
-
 engine = create_engine(
     "sqlite://", connect_args={"check_same_thread": False}, poolclass=StaticPool
 )
@@ -43,7 +42,9 @@ def _create_user(
     session.commit()
 
 
-def _create_homework(session: Session, num: int, title: str, sec: int = 2) -> None:
+def _create_homework(
+    session: Session, num: int, title: str, sec: int = 2
+) -> None:
     session.add(
         Homework(
             num=num,
@@ -89,7 +90,9 @@ def _create_testcase_rule(
 
 
 def _login(client: TestClient, user_id: str, password: str) -> str:
-    response = client.post("/api/auth/login", json={"id": user_id, "ps": password})
+    response = client.post(
+        "/api/auth/login", json={"id": user_id, "ps": password}
+    )
     assert response.status_code == 200
     return response.json()["access_token"]
 
@@ -110,7 +113,9 @@ def test_compile_error_is_persisted_in_submission_result():
     with Session(engine) as session:
         _create_homework(session, 1, "Compile Error Homework")
         _create_testcase_rule(session, 1, expected_output="hello grading\n")
-        _create_user(session, "student-compile", 20243001, "student-pass", "student")
+        _create_user(
+            session, "student-compile", 20243001, "student-pass", "student"
+        )
         _create_user(session, "admin-compile", 10003001, "admin-pass", "admin")
 
         def get_session_override():
@@ -138,7 +143,9 @@ def test_compile_error_is_persisted_in_submission_result():
             headers=_auth_headers(admin_token),
         )
         stored_result = session.exec(
-            select(SubmissionResult).where(SubmissionResult.submission_id == submission_id)
+            select(SubmissionResult).where(
+                SubmissionResult.submission_id == submission_id
+            )
         ).first()
 
         app.dependency_overrides.clear()
@@ -158,7 +165,9 @@ def test_runtime_output_and_score_are_saved():
     with Session(engine) as session:
         _create_homework(session, 2, "Runtime Homework")
         _create_testcase_rule(session, 2, expected_output="hello grading\n")
-        _create_user(session, "student-runtime", 20243002, "student-pass", "student")
+        _create_user(
+            session, "student-runtime", 20243002, "student-pass", "student"
+        )
         _create_user(session, "admin-runtime", 10003002, "admin-pass", "admin")
 
         def get_session_override():
@@ -186,7 +195,9 @@ def test_runtime_output_and_score_are_saved():
             headers=_auth_headers(admin_token),
         )
         stored_result = session.exec(
-            select(SubmissionResult).where(SubmissionResult.submission_id == submission_id)
+            select(SubmissionResult).where(
+                SubmissionResult.submission_id == submission_id
+            )
         ).first()
 
         app.dependency_overrides.clear()

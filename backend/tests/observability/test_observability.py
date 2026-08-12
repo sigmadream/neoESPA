@@ -9,17 +9,20 @@ from app.main import app
 from app.models.schemas import Homework, Submission, SystemEventLog, User
 from app.services.auth_service import AuthService
 
-
 engine = create_engine(
     "sqlite://", connect_args={"check_same_thread": False}, poolclass=StaticPool
 )
 
 
 def _dt_string(offset_days: int) -> str:
-    return (datetime.now(UTC) + timedelta(days=offset_days)).strftime("%Y-%m-%d %H:%M:%S")
+    return (datetime.now(UTC) + timedelta(days=offset_days)).strftime(
+        "%Y-%m-%d %H:%M:%S"
+    )
 
 
-def _create_user(session: Session, user_id: str, sid: int, password: str, role: str) -> None:
+def _create_user(
+    session: Session, user_id: str, sid: int, password: str, role: str
+) -> None:
     session.add(
         User(
             id=user_id,
@@ -35,7 +38,9 @@ def _create_user(session: Session, user_id: str, sid: int, password: str, role: 
 
 
 def _login(client: TestClient, user_id: str, password: str) -> str:
-    response = client.post("/api/auth/login", json={"id": user_id, "ps": password})
+    response = client.post(
+        "/api/auth/login", json={"id": user_id, "ps": password}
+    )
     assert response.status_code == 200
     return response.json()["access_token"]
 
@@ -51,7 +56,9 @@ def teardown_function():
 def test_grading_failure_is_logged_with_submission_id():
     with Session(engine) as session:
         _create_user(session, "observer-admin", 10049001, "admin-pass", "admin")
-        _create_user(session, "observer-student", 20249001, "student-pass", "student")
+        _create_user(
+            session, "observer-student", 20249001, "student-pass", "student"
+        )
         session.add(
             Homework(
                 num=1,
@@ -89,7 +96,9 @@ def test_grading_failure_is_logged_with_submission_id():
             headers={"Authorization": f"Bearer {admin_token}"},
         )
         logged_event = session.exec(
-            select(SystemEventLog).where(SystemEventLog.submission_id == submission.id)
+            select(SystemEventLog).where(
+                SystemEventLog.submission_id == submission.id
+            )
         ).first()
 
         app.dependency_overrides.clear()

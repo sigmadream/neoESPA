@@ -9,7 +9,6 @@ from app.models.schemas import CollabCodeSnapshot, CollabParticipant, User
 from app.services.auth_service import AuthService
 from app.core.compression import decompress_text
 
-
 engine = create_engine(
     "sqlite://", connect_args={"check_same_thread": False}, poolclass=StaticPool
 )
@@ -31,7 +30,9 @@ def _create_user(session: Session, user_id: str, sid: int, role: str) -> None:
 
 
 def _login(client: TestClient, user_id: str) -> str:
-    response = client.post("/api/auth/login", json={"id": user_id, "ps": "password"})
+    response = client.post(
+        "/api/auth/login", json={"id": user_id, "ps": "password"}
+    )
     assert response.status_code == 200
     return response.json()["access_token"]
 
@@ -60,7 +61,10 @@ def test_user_can_join_live_session():
 
         create_response = client.post(
             "/api/collab/sessions",
-            json={"title": "Mentoring Room", "initial_code": "print('hello')\n"},
+            json={
+                "title": "Mentoring Room",
+                "initial_code": "print('hello')\n",
+            },
             headers={"Authorization": f"Bearer {mentor_token}"},
         )
         session_id = create_response.json()["id"]
@@ -114,7 +118,10 @@ def test_non_member_cannot_edit_session():
 
     assert create_response.status_code == 200
     assert update_response.status_code == 403
-    assert update_response.json()["detail"] == "User is not a member of this session"
+    assert (
+        update_response.json()["detail"]
+        == "User is not a member of this session"
+    )
 
 
 def test_session_history_is_persisted_after_close():
@@ -162,7 +169,9 @@ def test_session_history_is_persisted_after_close():
         stored_snapshots = session.exec(
             select(CollabCodeSnapshot)
             .where(CollabCodeSnapshot.session_id == session_id)
-            .order_by(CollabCodeSnapshot.created_at.asc(), CollabCodeSnapshot.id.asc())
+            .order_by(
+                CollabCodeSnapshot.created_at.asc(), CollabCodeSnapshot.id.asc()
+            )
         ).all()
 
         app.dependency_overrides.clear()
@@ -173,10 +182,19 @@ def test_session_history_is_persisted_after_close():
     assert close_response.status_code == 200
     assert close_response.json()["status"] == "closed"
     assert history_response.status_code == 200
-    assert history_response.json()["messages"][0]["content"] == "Need help with loops"
-    assert history_response.json()["code_snapshots"][-1]["code_text"] == "print('history')\n"
+    assert (
+        history_response.json()["messages"][0]["content"]
+        == "Need help with loops"
+    )
+    assert (
+        history_response.json()["code_snapshots"][-1]["code_text"]
+        == "print('history')\n"
+    )
     assert stored_snapshots[-1].code_text != "print('history')\n"
-    assert decompress_text(stored_snapshots[-1].code_text) == "print('history')\n"
+    assert (
+        decompress_text(stored_snapshots[-1].code_text) == "print('history')\n"
+    )
+
 
 def test_closed_session_is_hidden_from_students_but_visible_to_staff():
     with Session(engine) as session:
@@ -293,7 +311,10 @@ def test_staff_can_close_other_mentor_session():
         staff_token = _login(client, "staff-closer")
         create_response = client.post(
             "/api/collab/sessions",
-            json={"title": "Staff Close Session", "initial_code": "print('seed')\n"},
+            json={
+                "title": "Staff Close Session",
+                "initial_code": "print('seed')\n",
+            },
             headers={"Authorization": f"Bearer {mentor_token}"},
         )
         close_response = client.post(
@@ -352,4 +373,7 @@ def test_participant_without_edit_permission_cannot_edit_session():
 
     assert create_response.status_code == 200
     assert update_response.status_code == 403
-    assert update_response.json()["detail"] == "Participant cannot edit this session"
+    assert (
+        update_response.json()["detail"]
+        == "Participant cannot edit this session"
+    )

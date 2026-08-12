@@ -54,15 +54,24 @@ class JudgeJobService:
         parent_job_id: int | None = None,
         priority: int = 100,
     ) -> JudgeJob:
-        canonical = json.dumps(payload, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+        canonical = json.dumps(
+            payload, ensure_ascii=False, sort_keys=True, separators=(",", ":")
+        )
         payload_hash = hashlib.sha256(canonical.encode()).hexdigest()
         if idempotency_key:
             existing = session.exec(
-                select(JudgeJob).where(JudgeJob.idempotency_key == idempotency_key)
+                select(JudgeJob).where(
+                    JudgeJob.idempotency_key == idempotency_key
+                )
             ).first()
             if existing is not None:
-                if existing.payload_hash != payload_hash or existing.job_type != job_type:
-                    raise JobConflictError("Idempotency key was used with another payload")
+                if (
+                    existing.payload_hash != payload_hash
+                    or existing.job_type != job_type
+                ):
+                    raise JobConflictError(
+                        "Idempotency key was used with another payload"
+                    )
                 return existing
         job = JudgeJob(
             job_type=job_type,
@@ -80,7 +89,9 @@ class JudgeJobService:
         self._event(session, job, "queued", "Job queued")
         return job
 
-    def reclaim_expired(self, session: Session, now: datetime | None = None) -> int:
+    def reclaim_expired(
+        self, session: Session, now: datetime | None = None
+    ) -> int:
         timestamp = now or datetime.now(UTC)
         expired = session.exec(
             select(JudgeJob).where(
@@ -92,7 +103,12 @@ class JudgeJobService:
             if job.attempt_count >= job.max_attempts:
                 job.status = "dead_letter"
                 job.finished_at = timestamp
-                self._event(session, job, "dead_letter", "Lease expired after maximum attempts")
+                self._event(
+                    session,
+                    job,
+                    "dead_letter",
+                    "Lease expired after maximum attempts",
+                )
             else:
                 job.status = "queued"
                 job.lease_owner = None
@@ -122,7 +138,8 @@ class JudgeJobService:
                 worker_id=worker_id,
                 status="online",
                 capabilities_json=json.dumps(
-                    worker_capabilities or {"job_types": job_types or []}, sort_keys=True
+                    worker_capabilities or {"job_types": job_types or []},
+                    sort_keys=True,
                 ),
                 heartbeat_at=now,
             )
@@ -134,14 +151,18 @@ class JudgeJobService:
         worker.status = "online"
         worker.heartbeat_at = now
         if worker_capabilities is not None:
-            worker.capabilities_json = json.dumps(worker_capabilities, sort_keys=True)
+            worker.capabilities_json = json.dumps(
+                worker_capabilities, sort_keys=True
+            )
         session.add(worker)
         self.reclaim_expired(session, now)
         statement = select(JudgeJob.id).where(JudgeJob.status == "queued")
         if job_types:
             statement = statement.where(JudgeJob.job_type.in_(job_types))
         candidate_id = session.exec(
-            statement.order_by(JudgeJob.priority, JudgeJob.created_at, JudgeJob.id).limit(1)
+            statement.order_by(
+                JudgeJob.priority, JudgeJob.created_at, JudgeJob.id
+            ).limit(1)
         ).first()
         if candidate_id is None:
             session.commit()
@@ -173,7 +194,9 @@ class JudgeJobService:
         session.refresh(job)
         return job
 
-    def start(self, session: Session, job: JudgeJob, worker_id: str, generation: int) -> None:
+    def start(
+        self, session: Session, job: JudgeJob, worker_id: str, generation: int
+    ) -> None:
         self._assert_lease(job, worker_id, generation)
         if job.status != "leased":
             raise JobConflictError("Only leased jobs can start")
@@ -183,8 +206,14 @@ class JudgeJobService:
         session.commit()
 
     def heartbeat(
-        self, session: Session, job_id: int, worker_id: str, generation: int,
-        *, lease_seconds: int = 30, progress: float | None = None,
+        self,
+        session: Session,
+        job_id: int,
+        worker_id: str,
+        generation: int,
+        *,
+        lease_seconds: int = 30,
+        progress: float | None = None,
     ) -> JudgeJob:
         job = session.get(JudgeJob, job_id)
         if job is None:
@@ -222,7 +251,9 @@ class JudgeJobService:
             raise JobConflictError("Job is not running")
         job.status = "succeeded"
         job.progress = 100
-        job.result_json = json.dumps(result_payload, ensure_ascii=False, sort_keys=True)
+        job.result_json = json.dumps(
+            result_payload, ensure_ascii=False, sort_keys=True
+        )
         job.finished_at = datetime.now(UTC)
         self._event(session, job, "succeeded", "Job completed")
         session.add(job)
@@ -247,7 +278,9 @@ class JudgeJobService:
         if job is None:
             raise JobConflictError("Job not found")
         self._assert_lease(job, worker_id, generation)
-        job.status = "dead_letter" if job.attempt_count >= job.max_attempts else "failed"
+        job.status = (
+            "dead_letter" if job.attempt_count >= job.max_attempts else "failed"
+        )
         job.error_message = message[:4000]
         job.finished_at = datetime.now(UTC)
         self._event(session, job, job.status, message[:500])
@@ -264,7 +297,9 @@ class JudgeJobService:
 
     def cancel(self, session: Session, job: JudgeJob) -> JudgeJob:
         if job.status not in {"queued", "leased"}:
-            raise JobConflictError("Only queued or leased jobs can be cancelled")
+            raise JobConflictError(
+                "Only queued or leased jobs can be cancelled"
+            )
         job.status = "cancelled"
         job.finished_at = datetime.now(UTC)
         self._event(session, job, "cancelled", "Job cancelled")
@@ -273,9 +308,13 @@ class JudgeJobService:
         session.refresh(job)
         return job
 
-    def retry(self, session: Session, job: JudgeJob, *, commit: bool = True) -> JudgeJob:
+    def retry(
+        self, session: Session, job: JudgeJob, *, commit: bool = True
+    ) -> JudgeJob:
         if job.status not in {"failed", "dead_letter"}:
-            raise JobConflictError("Only failed or dead-letter jobs can be retried")
+            raise JobConflictError(
+                "Only failed or dead-letter jobs can be retried"
+            )
         previous_status = job.status
         job.status = "queued"
         job.progress = 0
@@ -288,28 +327,43 @@ class JudgeJobService:
         job.result_json = None
         if previous_status == "dead_letter":
             job.attempt_count = 0
-        self._event(session, job, "retried", f"Admin retried {previous_status} job")
+        self._event(
+            session, job, "retried", f"Admin retried {previous_status} job"
+        )
         session.add(job)
         if commit:
             session.commit()
             session.refresh(job)
         return job
 
-    def process_validation_job(self, session: Session, job: JudgeJob, worker_id: str) -> JudgeJob:
+    def process_validation_job(
+        self, session: Session, job: JudgeJob, worker_id: str
+    ) -> JudgeJob:
         generation = job.lease_generation
         self.start(session, job, worker_id, generation)
         revision = session.get(ProblemRevision, job.revision_id)
         if revision is None:
-            return self.fail(session, job.id or 0, worker_id, generation, "Revision not found")
+            return self.fail(
+                session,
+                job.id or 0,
+                worker_id,
+                generation,
+                "Revision not found",
+            )
         testcases = session.exec(
-            select(ProblemTestCase).where(ProblemTestCase.revision_id == revision.id)
+            select(ProblemTestCase).where(
+                ProblemTestCase.revision_id == revision.id
+            )
         ).all()
         errors: list[str] = []
         if not revision.statement.strip():
             errors.append("statement is required")
         if not testcases:
             errors.append("at least one testcase is required")
-        if testcases and abs(sum(case.score for case in testcases) - 100.0) > 0.01:
+        if (
+            testcases
+            and abs(sum(case.score for case in testcases) - 100.0) > 0.01
+        ):
             errors.append("testcase scores must sum to 100")
         pair_hashes: set[tuple[str | None, str | None]] = set()
         total_size = 0
@@ -318,23 +372,36 @@ class JudgeJobService:
             input_asset = session.get(ProblemAsset, testcase.input_asset_id)
             output_asset = session.get(ProblemAsset, testcase.output_asset_id)
             if input_asset is None or output_asset is None:
-                errors.append(f"testcase {testcase.case_name} has an unmatched pair")
+                errors.append(
+                    f"testcase {testcase.case_name} has an unmatched pair"
+                )
                 continue
             total_size += input_asset.size_bytes + output_asset.size_bytes
             if input_asset.size_bytes == 0 or output_asset.size_bytes == 0:
-                errors.append(f"testcase {testcase.case_name} contains an empty file")
+                errors.append(
+                    f"testcase {testcase.case_name} contains an empty file"
+                )
             pair = (input_asset.sha256, output_asset.sha256)
             if all(pair) and pair in pair_hashes:
-                errors.append(f"testcase {testcase.case_name} duplicates another pair")
+                errors.append(
+                    f"testcase {testcase.case_name} duplicates another pair"
+                )
             pair_hashes.add(pair)
-            if input_asset.is_hidden == testcase.is_sample or output_asset.is_hidden == testcase.is_sample:
-                errors.append(f"testcase {testcase.case_name} sample visibility is inconsistent")
+            if (
+                input_asset.is_hidden == testcase.is_sample
+                or output_asset.is_hidden == testcase.is_sample
+            ):
+                errors.append(
+                    f"testcase {testcase.case_name} sample visibility is inconsistent"
+                )
             for asset in (input_asset, output_asset):
                 if asset.sha256:
                     try:
                         store.resolve(asset.storage_path, asset.sha256)
                     except (FileNotFoundError, ValueError) as error:
-                        errors.append(f"artifact {asset.display_name} failed checksum validation: {error}")
+                        errors.append(
+                            f"artifact {asset.display_name} failed checksum validation: {error}"
+                        )
         if total_size > 200 * 1024 * 1024:
             errors.append("testcase data exceeds total size limit")
         if revision.checker_type == "special":
@@ -348,16 +415,24 @@ class JudgeJobService:
                 errors.append("special judge checker asset is required")
             else:
                 try:
-                    LocalArtifactStore().resolve(checker_asset.storage_path, checker_asset.sha256)
+                    LocalArtifactStore().resolve(
+                        checker_asset.storage_path, checker_asset.sha256
+                    )
                 except (FileNotFoundError, ValueError) as error:
-                    errors.append(f"special judge checker failed checksum validation: {error}")
+                    errors.append(
+                        f"special judge checker failed checksum validation: {error}"
+                    )
         groups = session.exec(
-            select(TestCaseGroup).where(TestCaseGroup.revision_id == revision.id)
+            select(TestCaseGroup).where(
+                TestCaseGroup.revision_id == revision.id
+            )
         ).all()
         group_by_id = {group.id: group for group in groups}
         for group in groups:
             if group.scoring_policy not in {"sum", "all_or_nothing"}:
-                errors.append(f"unsupported scoring policy for group {group.group_key}")
+                errors.append(
+                    f"unsupported scoring policy for group {group.group_key}"
+                )
             seen: set[int] = set()
             current = group
             while current.dependency_group_id is not None:
@@ -367,27 +442,45 @@ class JudgeJobService:
                 seen.add(current.id or 0)
                 dependency = group_by_id.get(current.dependency_group_id)
                 if dependency is None:
-                    errors.append(f"group {current.group_key} has an invalid dependency")
+                    errors.append(
+                        f"group {current.group_key} has an invalid dependency"
+                    )
                     break
                 current = dependency
         report = {"errors": errors, "testcase_count": len(testcases)}
-        revision.validation_report = json.dumps(report, ensure_ascii=False, sort_keys=True)
+        revision.validation_report = json.dumps(
+            report, ensure_ascii=False, sort_keys=True
+        )
         revision.status = "draft" if errors else "ready"
         session.add(revision)
         if errors:
             session.commit()
-            return self.fail(session, job.id or 0, worker_id, generation, "; ".join(errors))
+            return self.fail(
+                session, job.id or 0, worker_id, generation, "; ".join(errors)
+            )
         session.commit()
-        return self.complete(session, job.id or 0, worker_id, generation, report)
+        return self.complete(
+            session, job.id or 0, worker_id, generation, report
+        )
 
-    def process_grading_job(self, session: Session, job: JudgeJob, worker_id: str) -> JudgeJob:
+    def process_grading_job(
+        self, session: Session, job: JudgeJob, worker_id: str
+    ) -> JudgeJob:
         generation = job.lease_generation
         self.start(session, job, worker_id, generation)
         submission = session.get(Submission, job.submission_id)
         if submission is None:
-            return self.fail(session, job.id or 0, worker_id, generation, "Submission not found")
+            return self.fail(
+                session,
+                job.id or 0,
+                worker_id,
+                generation,
+                "Submission not found",
+            )
         payload = json.loads(job.payload_json)
-        target_revision_id = payload.get("target_revision_id") or submission.problem_revision_id
+        target_revision_id = (
+            payload.get("target_revision_id") or submission.problem_revision_id
+        )
         if target_revision_id is not None:
             submission.problem_revision_id = int(target_revision_id)
         homework = session.get(Homework, submission.homework_num)
@@ -396,10 +489,19 @@ class JudgeJobService:
                 session, submission, "Auto-grading failed: Homework not found"
             )
             session.commit()
-            return self.fail(session, job.id or 0, worker_id, generation, "Homework not found")
+            return self.fail(
+                session,
+                job.id or 0,
+                worker_id,
+                generation,
+                "Homework not found",
+            )
         try:
             if isinstance(self.grading_service, GradingService):
-                def heartbeat_progress(completed: int, total: int, case_timeout: int) -> None:
+
+                def heartbeat_progress(
+                    completed: int, total: int, case_timeout: int
+                ) -> None:
                     self.heartbeat(
                         session,
                         job.id or 0,
@@ -418,19 +520,27 @@ class JudgeJobService:
             else:
                 # Lightweight test/custom graders keep the historical
                 # three-argument protocol.
-                result = self.grading_service.grade_submission(session, submission, homework)
+                result = self.grading_service.grade_submission(
+                    session, submission, homework
+                )
         except CheckerError as error:
             session.rollback()
             submission = session.get(Submission, job.submission_id)
             if submission is not None:
                 run = self._record_internal_error_run(
-                    session, submission, job, generation, f"Checker error: {error}"
+                    session,
+                    submission,
+                    job,
+                    generation,
+                    f"Checker error: {error}",
                 )
                 session.commit()
                 submission.selected_grading_run_id = run.id
                 session.add(submission)
                 session.commit()
-            return self.fail(session, job.id or 0, worker_id, generation, str(error))
+            return self.fail(
+                session, job.id or 0, worker_id, generation, str(error)
+            )
         except Exception as error:
             session.rollback()
             submission = session.get(Submission, job.submission_id)
@@ -439,7 +549,9 @@ class JudgeJobService:
                     session, submission, f"Auto-grading failed: {error}"
                 )
                 session.commit()
-            return self.fail(session, job.id or 0, worker_id, generation, str(error))
+            return self.fail(
+                session, job.id or 0, worker_id, generation, str(error)
+            )
         verdict = self._verdict_for(result)
         run = GradingRun(
             submission_id=submission.id or 0,
@@ -449,7 +561,9 @@ class JudgeJobService:
             verdict=verdict,
             score=result.total_score,
             runtime_version=settings.JUDGE_RUNTIME_VERSION,
-            checker_version=self._checker_version(session, submission.problem_revision_id),
+            checker_version=self._checker_version(
+                session, submission.problem_revision_id
+            ),
             result_json=json.dumps(
                 {
                     "compile_status": result.compile_status,
@@ -471,41 +585,71 @@ class JudgeJobService:
             job.id or 0,
             worker_id,
             generation,
-            {"grading_run_id": run.id, "verdict": verdict, "score": result.total_score},
+            {
+                "grading_run_id": run.id,
+                "verdict": verdict,
+                "score": result.total_score,
+            },
         )
 
-    def process_dry_run_job(self, session: Session, job: JudgeJob, worker_id: str) -> JudgeJob:
+    def process_dry_run_job(
+        self, session: Session, job: JudgeJob, worker_id: str
+    ) -> JudgeJob:
         generation = job.lease_generation
         self.start(session, job, worker_id, generation)
         revision = session.get(ProblemRevision, job.revision_id)
         if revision is None:
-            return self.fail(session, job.id or 0, worker_id, generation, "Revision not found")
+            return self.fail(
+                session,
+                job.id or 0,
+                worker_id,
+                generation,
+                "Revision not found",
+            )
         payload = json.loads(job.payload_json)
         asset = session.get(ProblemAsset, payload.get("asset_id"))
         if asset is None or asset.revision_id != revision.id:
-            return self.fail(session, job.id or 0, worker_id, generation, "Reference asset not found")
+            return self.fail(
+                session,
+                job.id or 0,
+                worker_id,
+                generation,
+                "Reference asset not found",
+            )
         store = LocalArtifactStore()
         try:
-            source = store.resolve(asset.storage_path, asset.sha256).read_text(encoding="utf-8")
+            source = store.resolve(asset.storage_path, asset.sha256).read_text(
+                encoding="utf-8"
+            )
             if revision.checker_type == "special":
-                if not isinstance(self.grading_service.runner, NsJailCodeRunner):
+                if not isinstance(
+                    self.grading_service.runner, NsJailCodeRunner
+                ):
                     raise CheckerError("Special judge requires NsJail")
-                checker_asset = session.exec(select(ProblemAsset).where(
-                    ProblemAsset.revision_id == revision.id,
-                    ProblemAsset.asset_kind == "checker",
-                ).order_by(ProblemAsset.id.desc())).first()
+                checker_asset = session.exec(
+                    select(ProblemAsset)
+                    .where(
+                        ProblemAsset.revision_id == revision.id,
+                        ProblemAsset.asset_kind == "checker",
+                    )
+                    .order_by(ProblemAsset.id.desc())
+                ).first()
                 if checker_asset is None:
                     raise CheckerError("Special judge checker asset is missing")
                 checker_source = store.resolve(
                     checker_asset.storage_path, checker_asset.sha256
                 ).read_text(encoding="utf-8")
-                checker = SpecialJudgeChecker(self.grading_service.runner.sandbox, checker_source)
+                checker = SpecialJudgeChecker(
+                    self.grading_service.runner.sandbox, checker_source
+                )
             else:
                 checker = get_checker(
-                    revision.checker_type, json.loads(revision.checker_config_json)
+                    revision.checker_type,
+                    json.loads(revision.checker_config_json),
                 )
             cases = session.exec(
-                select(ProblemTestCase).where(ProblemTestCase.revision_id == revision.id)
+                select(ProblemTestCase)
+                .where(ProblemTestCase.revision_id == revision.id)
                 .order_by(ProblemTestCase.position)
             ).all()
             if not cases:
@@ -514,7 +658,10 @@ class JudgeJobService:
             all_passed = True
             for case in cases:
                 self.heartbeat(
-                    session, job.id or 0, worker_id, generation,
+                    session,
+                    job.id or 0,
+                    worker_id,
+                    generation,
                     lease_seconds=max(30, revision.time_limit_ms // 1000 + 10),
                     progress=len(case_results) * 95 / len(cases),
                 )
@@ -522,48 +669,91 @@ class JudgeJobService:
                 output_asset = session.get(ProblemAsset, case.output_asset_id)
                 if input_asset is None or output_asset is None:
                     raise ValueError("Testcase artifact is missing")
-                input_data = store.resolve(input_asset.storage_path, input_asset.sha256).read_text("utf-8")
-                expected = store.resolve(output_asset.storage_path, output_asset.sha256).read_text("utf-8")
+                input_data = store.resolve(
+                    input_asset.storage_path, input_asset.sha256
+                ).read_text("utf-8")
+                expected = store.resolve(
+                    output_asset.storage_path, output_asset.sha256
+                ).read_text("utf-8")
                 timeout = max(1, revision.time_limit_ms // 1000)
                 if isinstance(self.grading_service.runner, NsJailCodeRunner):
-                    execution = self.grading_service.runner.run_code_with_limits(
-                        payload["language"], source, input_data=input_data,
-                        source_name=None,
-                        limits=NsJailLimits(
-                            wall_seconds=timeout + 2, cpu_seconds=timeout,
-                            memory_mb=revision.memory_limit_mb,
-                            file_size_mb=max(1, revision.output_limit_kb // 1024),
-                            process_count=revision.process_limit,
-                            output_bytes=revision.output_limit_kb * 1024,
-                        ),
+                    execution = (
+                        self.grading_service.runner.run_code_with_limits(
+                            payload["language"],
+                            source,
+                            input_data=input_data,
+                            source_name=None,
+                            limits=NsJailLimits(
+                                wall_seconds=timeout + 2,
+                                cpu_seconds=timeout,
+                                memory_mb=revision.memory_limit_mb,
+                                file_size_mb=max(
+                                    1, revision.output_limit_kb // 1024
+                                ),
+                                process_count=revision.process_limit,
+                                output_bytes=revision.output_limit_kb * 1024,
+                            ),
+                        )
                     )
                 else:
                     execution = self.grading_service.runner.run_code(
-                        payload["language"], source, input_data=input_data,
-                        source_name=None, timeout_seconds=timeout,
+                        payload["language"],
+                        source,
+                        input_data=input_data,
+                        source_name=None,
+                        timeout_seconds=timeout,
                     )
-                actual = execution.run_result.stdout if execution.run_result else ""
+                actual = (
+                    execution.run_result.stdout if execution.run_result else ""
+                )
                 checked = (
                     checker.check(input_data, expected, actual)
-                    if execution.status == "passed" and revision.checker_type == "special"
-                    else checker.check(expected, actual)
                     if execution.status == "passed"
-                    else None
+                    and revision.checker_type == "special"
+                    else (
+                        checker.check(expected, actual)
+                        if execution.status == "passed"
+                        else None
+                    )
                 )
                 passed = bool(checked and checked.accepted)
                 all_passed = all_passed and passed
-                case_results.append({
-                    "case_id": case.id, "case_name": case.case_name,
-                    "status": execution.status,
-                    "verdict": "AC" if passed else "WA" if execution.status == "passed" else execution.status,
-                    "runtime_ms": execution.run_result.duration_ms if execution.run_result else None,
-                })
+                case_results.append(
+                    {
+                        "case_id": case.id,
+                        "case_name": case.case_name,
+                        "status": execution.status,
+                        "verdict": (
+                            "AC"
+                            if passed
+                            else (
+                                "WA"
+                                if execution.status == "passed"
+                                else execution.status
+                            )
+                        ),
+                        "runtime_ms": (
+                            execution.run_result.duration_ms
+                            if execution.run_result
+                            else None
+                        ),
+                    }
+                )
         except Exception as error:
             session.rollback()
-            return self.fail(session, job.id or 0, worker_id, generation, str(error))
+            return self.fail(
+                session, job.id or 0, worker_id, generation, str(error)
+            )
         return self.complete(
-            session, job.id or 0, worker_id, generation,
-            {"accepted": all_passed, "testcase_count": len(case_results), "cases": case_results},
+            session,
+            job.id or 0,
+            worker_id,
+            generation,
+            {
+                "accepted": all_passed,
+                "testcase_count": len(case_results),
+                "cases": case_results,
+            },
         )
 
     def process_artifact_reconciliation_job(
@@ -574,19 +764,28 @@ class JudgeJobService:
         try:
             report = CourseBundleService().reconcile(session)
             payload = {
-                "referenced": report.referenced, "present": report.present,
-                "missing": report.missing, "checksum_mismatch": report.checksum_mismatch,
+                "referenced": report.referenced,
+                "present": report.present,
+                "missing": report.missing,
+                "checksum_mismatch": report.checksum_mismatch,
                 "orphan": report.orphan,
             }
         except Exception as error:
             session.rollback()
-            return self.fail(session, job.id or 0, worker_id, generation, str(error))
+            return self.fail(
+                session, job.id or 0, worker_id, generation, str(error)
+            )
         if not report.valid:
             return self.fail(
-                session, job.id or 0, worker_id, generation,
+                session,
+                job.id or 0,
+                worker_id,
+                generation,
                 json.dumps(payload, ensure_ascii=False, sort_keys=True),
             )
-        return self.complete(session, job.id or 0, worker_id, generation, payload)
+        return self.complete(
+            session, job.id or 0, worker_id, generation, payload
+        )
 
     @staticmethod
     def _verdict_for(result: SubmissionResult) -> str:
@@ -600,7 +799,10 @@ class JudgeJobService:
             return "MLE"
         if result.run_status == "failed":
             return "RE"
-        if result.total_case_count > 0 and result.passed_case_count == result.total_case_count:
+        if (
+            result.total_case_count > 0
+            and result.passed_case_count == result.total_case_count
+        ):
             return "AC"
         return "WA"
 
@@ -610,7 +812,9 @@ class JudgeJobService:
     ) -> None:
         submission.status = "retryable"
         result = session.exec(
-            select(SubmissionResult).where(SubmissionResult.submission_id == submission.id)
+            select(SubmissionResult).where(
+                SubmissionResult.submission_id == submission.id
+            )
         ).first()
         if result is None:
             result = SubmissionResult(submission_id=submission.id or 0)
@@ -634,12 +838,18 @@ class JudgeJobService:
             return "checker-error"
 
     def _record_internal_error_run(
-        self, session: Session, submission: Submission, job: JudgeJob,
-        generation: int, message: str,
+        self,
+        session: Session,
+        submission: Submission,
+        job: JudgeJob,
+        generation: int,
+        message: str,
     ) -> GradingRun:
         submission.status = "judge_error"
         result = session.exec(
-            select(SubmissionResult).where(SubmissionResult.submission_id == submission.id)
+            select(SubmissionResult).where(
+                SubmissionResult.submission_id == submission.id
+            )
         ).first()
         if result is None:
             result = SubmissionResult(submission_id=submission.id or 0)
@@ -647,9 +857,12 @@ class JudgeJobService:
         result.run_status = "judge_error"
         result.grader_summary = message
         run = GradingRun(
-            submission_id=submission.id or 0, job_id=job.id,
+            submission_id=submission.id or 0,
+            job_id=job.id,
             problem_revision_id=submission.problem_revision_id,
-            lease_generation=generation, verdict="IE", score=0,
+            lease_generation=generation,
+            verdict="IE",
+            score=0,
             runtime_version=settings.JUDGE_RUNTIME_VERSION,
             checker_version="checker-error",
             result_json=json.dumps({"error": message}, sort_keys=True),
@@ -665,7 +878,9 @@ class JudgeJobService:
             raise JobConflictError("Unknown job status")
         return JudgeJobRead.model_validate(job)
 
-    def _assert_lease(self, job: JudgeJob, worker_id: str, generation: int) -> None:
+    def _assert_lease(
+        self, job: JudgeJob, worker_id: str, generation: int
+    ) -> None:
         if job.lease_owner != worker_id or job.lease_generation != generation:
             raise JobConflictError("Stale or foreign job lease")
 

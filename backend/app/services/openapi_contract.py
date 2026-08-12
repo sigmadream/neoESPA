@@ -4,15 +4,18 @@ import json
 from pathlib import Path
 from typing import Any
 
-
 HTTP_METHODS = {"get", "post", "put", "patch", "delete", "options", "head"}
 
 
 def canonical_openapi(schema: dict[str, Any]) -> str:
-    return json.dumps(schema, ensure_ascii=False, indent=2, sort_keys=True) + "\n"
+    return (
+        json.dumps(schema, ensure_ascii=False, indent=2, sort_keys=True) + "\n"
+    )
 
 
-def breaking_changes(baseline: dict[str, Any], current: dict[str, Any]) -> list[str]:
+def breaking_changes(
+    baseline: dict[str, Any], current: dict[str, Any]
+) -> list[str]:
     errors: list[str] = []
     current_paths = current.get("paths", {})
     for path, baseline_path in baseline.get("paths", {}).items():
@@ -64,6 +67,10 @@ def load_schema(path: Path) -> dict[str, Any]:
         value = json.loads(path.read_text(encoding="utf-8"))
     except (OSError, ValueError) as error:
         raise ValueError(f"Cannot read OpenAPI schema: {path}") from error
-    if not isinstance(value, dict) or "openapi" not in value or "paths" not in value:
+    if (
+        not isinstance(value, dict)
+        or "openapi" not in value
+        or "paths" not in value
+    ):
         raise ValueError(f"Not an OpenAPI schema: {path}")
     return value

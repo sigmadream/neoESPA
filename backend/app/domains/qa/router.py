@@ -5,7 +5,10 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import Column, Text
 from sqlmodel import Field, Session, SQLModel, select
 
-from ...api.dependencies import get_current_active_user, get_optional_current_user
+from ...api.dependencies import (
+    get_current_active_user,
+    get_optional_current_user,
+)
 from ...core.db import get_session
 from ...models.schemas import User
 from ..users.serializers import is_staff
@@ -70,7 +73,9 @@ router = APIRouter()
 def _to_post_read(post: QAPost, session: Session) -> QAPostRead:
     author = session.get(User, post.author_id)
     answers_db = session.exec(
-        select(QAAnswer).where(QAAnswer.post_id == post.id).order_by(QAAnswer.created_at.asc())
+        select(QAAnswer)
+        .where(QAAnswer.post_id == post.id)
+        .order_by(QAAnswer.created_at.asc())
     ).all()
     answers_read = []
     for ans in answers_db:
@@ -115,7 +120,9 @@ def list_qa_posts(
     return visible
 
 
-@router.post("/qa", response_model=QAPostRead, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/qa", response_model=QAPostRead, status_code=status.HTTP_201_CREATED
+)
 def create_qa_post(
     payload: QAPostCreate,
     current_user: User = Depends(get_current_active_user),
@@ -143,10 +150,18 @@ def get_qa_post(
 ):
     post = session.get(QAPost, post_id)
     if post is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Question post not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Question post not found",
+        )
     if post.is_private:
-        if current_user is None or (post.author_id != current_user.id and not is_staff(current_user)):
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Question post not found")
+        if current_user is None or (
+            post.author_id != current_user.id and not is_staff(current_user)
+        ):
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Question post not found",
+            )
     return _to_post_read(post, session)
 
 
@@ -159,9 +174,17 @@ def add_qa_answer(
 ):
     post = session.get(QAPost, post_id)
     if post is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Question post not found")
-    if post.is_private and (post.author_id != current_user.id and not is_staff(current_user)):
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Question post not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Question post not found",
+        )
+    if post.is_private and (
+        post.author_id != current_user.id and not is_staff(current_user)
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Question post not found",
+        )
 
     answer = QAAnswer(
         post_id=post_id,

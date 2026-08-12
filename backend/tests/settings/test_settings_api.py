@@ -10,8 +10,6 @@ from app.main import app
 from app.models.schemas import GradingRule, Homework, SystemSetting, User
 from app.services.auth_service import AuthService
 
-
-
 engine = create_engine(
     "sqlite://", connect_args={"check_same_thread": False}, poolclass=StaticPool
 )
@@ -83,7 +81,9 @@ def _create_homework(session: Session, homework_num: int) -> None:
 
 
 def _login(client: TestClient, user_id: str, password: str) -> str:
-    response = client.post("/api/auth/login", json={"id": user_id, "ps": password})
+    response = client.post(
+        "/api/auth/login", json={"id": user_id, "ps": password}
+    )
     assert response.status_code == 200
     return response.json()["access_token"]
 
@@ -104,7 +104,9 @@ def test_admin_can_update_lint_settings():
     with Session(engine) as session:
         _create_homework(session, 1)
         _create_user(session, "settings-admin", 10010001, "admin-pass", "admin")
-        _create_user(session, "settings-student", 20250001, "student-pass", "student")
+        _create_user(
+            session, "settings-student", 20250001, "student-pass", "student"
+        )
 
         def get_session_override():
             return session
@@ -116,7 +118,9 @@ def test_admin_can_update_lint_settings():
         student_token = _login(client, "settings-student", "student-pass")
         headers = _auth_headers(admin_token)
 
-        default_response = client.get("/api/admin/settings?prefix=lint_", headers=headers)
+        default_response = client.get(
+            "/api/admin/settings?prefix=lint_", headers=headers
+        )
         update_response = client.patch(
             "/api/admin/settings",
             json={
@@ -129,7 +133,9 @@ def test_admin_can_update_lint_settings():
             },
             headers=headers,
         )
-        updated_settings = client.get("/api/admin/settings?prefix=lint_", headers=headers)
+        updated_settings = client.get(
+            "/api/admin/settings?prefix=lint_", headers=headers
+        )
         create_response = client.post(
             "/api/submissions",
             json={
@@ -152,14 +158,18 @@ def test_admin_can_update_lint_settings():
     assert len(default_response.json()) == 7
 
     assert update_response.status_code == 200
-    update_payload = {item["key"]: item["value"] for item in update_response.json()}
+    update_payload = {
+        item["key"]: item["value"] for item in update_response.json()
+    }
     assert update_payload["lint_calc_weight"] == "20"
     assert update_payload["lint_calc_panalty"] == "5"
     assert update_payload["lint_err_performance"] == "2"
     assert update_payload["lint_set_default"] == "true"
 
     assert updated_settings.status_code == 200
-    settings_payload = {item["key"]: item["value"] for item in updated_settings.json()}
+    settings_payload = {
+        item["key"]: item["value"] for item in updated_settings.json()
+    }
     assert settings_payload["lint_set_default"] == "true"
 
     assert create_response.status_code == 201
@@ -167,11 +177,16 @@ def test_admin_can_update_lint_settings():
     assert grade_response.json()["total_score"] == 110.0
     assert grade_response.json()["submission_score"] == 100.0
     assert grade_response.json()["quality_score"] == 10.0
-    assert "Lint score 10.0/20" in (grade_response.json()["grader_summary"] or "")
+    assert "Lint score 10.0/20" in (
+        grade_response.json()["grader_summary"] or ""
+    )
+
 
 def test_admin_settings_reject_empty_payload_and_unknown_key():
     with Session(engine) as session:
-        _create_user(session, "settings-guard-admin", 10010002, "admin-pass", "admin")
+        _create_user(
+            session, "settings-guard-admin", 10010002, "admin-pass", "admin"
+        )
 
         def get_session_override():
             return session
@@ -195,14 +210,22 @@ def test_admin_settings_reject_empty_payload_and_unknown_key():
         app.dependency_overrides.clear()
 
     assert empty_response.status_code == 400
-    assert empty_response.json()["detail"] == "Settings update must include at least one item"
+    assert (
+        empty_response.json()["detail"]
+        == "Settings update must include at least one item"
+    )
     assert unknown_key_response.status_code == 400
-    assert unknown_key_response.json()["detail"] == "Unsupported setting key: unknown_key"
+    assert (
+        unknown_key_response.json()["detail"]
+        == "Unsupported setting key: unknown_key"
+    )
 
 
 def test_admin_settings_reject_invalid_values_and_update_timestamp():
     with Session(engine) as session:
-        _create_user(session, "settings-value-admin", 10010003, "admin-pass", "admin")
+        _create_user(
+            session, "settings-value-admin", 10010003, "admin-pass", "admin"
+        )
         existing_setting = SystemSetting(
             key="lint_calc_weight",
             value="50",
@@ -251,4 +274,6 @@ def test_admin_settings_reject_invalid_values_and_update_timestamp():
     assert updated_response.status_code == 200
     assert stored_setting is not None
     assert stored_setting.value == "75"
-    assert stored_setting.updated_at.replace(tzinfo=UTC) > datetime(2024, 1, 1, tzinfo=UTC)
+    assert stored_setting.updated_at.replace(tzinfo=UTC) > datetime(
+        2024, 1, 1, tzinfo=UTC
+    )

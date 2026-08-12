@@ -7,7 +7,6 @@ from ..services.notification_service import NotificationService
 from ..services.observability_service import ObservabilityService
 from ..services.plagiarism_service import PlagiarismService
 
-
 grading_service = GradingService()
 judge_job_service = JudgeJobService(grading_service)
 export_service = ExportService()

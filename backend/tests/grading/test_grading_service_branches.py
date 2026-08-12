@@ -21,7 +21,6 @@ from app.services.code_runner import (
 )
 from app.services.grading_service import GradingService
 
-
 engine = create_engine(
     "sqlite://", connect_args={"check_same_thread": False}, poolclass=StaticPool
 )
@@ -70,7 +69,12 @@ class PassingRunner(CodeRunner):
 
 
 class FakeLintPipeline:
-    def __init__(self, quality_score: float, issues: list | None = None, lint_weight: float = 10.0):
+    def __init__(
+        self,
+        quality_score: float,
+        issues: list | None = None,
+        lint_weight: float = 10.0,
+    ):
         self.quality_score = quality_score
         self.issues = issues or []
         self.lint_weight = lint_weight
@@ -111,7 +115,9 @@ def _execution(
 
 
 def _dt_string(offset_days: int) -> str:
-    return (datetime.now(UTC) + timedelta(days=offset_days)).strftime("%Y-%m-%d %H:%M:%S")
+    return (datetime.now(UTC) + timedelta(days=offset_days)).strftime(
+        "%Y-%m-%d %H:%M:%S"
+    )
 
 
 def setup_function():
@@ -172,7 +178,11 @@ def _create_fixtures(
     session.add(SubmissionResult(submission_id=submission.id or 0))
 
     if raw_rule_value is not None or cases is not None:
-        rule_value = raw_rule_value if raw_rule_value is not None else json.dumps({"cases": cases})
+        rule_value = (
+            raw_rule_value
+            if raw_rule_value is not None
+            else json.dumps({"cases": cases})
+        )
         session.add(
             GradingRule(
                 scope="homework",
@@ -187,18 +197,32 @@ def _create_fixtures(
 
 
 DEFAULT_CASES = [
-    {"name": "case-1", "input": "1\n", "expected_output": "1\n", "score": 100, "is_hidden": False}
+    {
+        "name": "case-1",
+        "input": "1\n",
+        "expected_output": "1\n",
+        "score": 100,
+        "is_hidden": False,
+    }
 ]
 
 
 def test_compile_failure_marks_submission_failed():
     with Session(engine) as session:
-        homework, submission = _create_fixtures(session, 11, cases=DEFAULT_CASES)
+        homework, submission = _create_fixtures(
+            session, 11, cases=DEFAULT_CASES
+        )
         runner = ScriptedRunner(
-            _execution(status="compile_error", compile_exit=1, compile_stderr="SyntaxError: bad")
+            _execution(
+                status="compile_error",
+                compile_exit=1,
+                compile_stderr="SyntaxError: bad",
+            )
         )
 
-        result = GradingService(runner=runner).grade_submission(session, submission, homework)
+        result = GradingService(runner=runner).grade_submission(
+            session, submission, homework
+        )
 
     assert submission.status == "failed"
     assert result.status == "failed"
@@ -211,12 +235,18 @@ def test_compile_failure_marks_submission_failed():
 
 def test_compile_timeout_sets_timeout_compile_status():
     with Session(engine) as session:
-        homework, submission = _create_fixtures(session, 12, cases=DEFAULT_CASES)
+        homework, submission = _create_fixtures(
+            session, 12, cases=DEFAULT_CASES
+        )
         runner = ScriptedRunner(
-            _execution(status="timeout", compile_exit=None, compile_timed_out=True)
+            _execution(
+                status="timeout", compile_exit=None, compile_timed_out=True
+            )
         )
 
-        result = GradingService(runner=runner).grade_submission(session, submission, homework)
+        result = GradingService(runner=runner).grade_submission(
+            session, submission, homework
+        )
 
     assert result.compile_status == "timeout"
     assert result.run_status == "timeout"
@@ -229,8 +259,20 @@ def test_runtime_timeout_case_message_and_status():
             session,
             13,
             cases=[
-                {"name": "public-1", "input": "1\n", "expected_output": "1\n", "score": 50, "is_hidden": False},
-                {"name": "hidden-1", "input": "2\n", "expected_output": "2\n", "score": 50, "is_hidden": True},
+                {
+                    "name": "public-1",
+                    "input": "1\n",
+                    "expected_output": "1\n",
+                    "score": 50,
+                    "is_hidden": False,
+                },
+                {
+                    "name": "hidden-1",
+                    "input": "2\n",
+                    "expected_output": "2\n",
+                    "score": 50,
+                    "is_hidden": True,
+                },
             ],
         )
         runner = ScriptedRunner(
@@ -248,7 +290,9 @@ def test_runtime_timeout_case_message_and_status():
             )
         )
 
-        result = GradingService(runner=runner).grade_submission(session, submission, homework)
+        result = GradingService(runner=runner).grade_submission(
+            session, submission, homework
+        )
         case_results = session.exec(
             select(SubmissionCaseResult)
             .where(SubmissionCaseResult.submission_id == submission.id)
@@ -267,8 +311,20 @@ def test_runtime_error_case_message_and_status():
             session,
             14,
             cases=[
-                {"name": "public-1", "input": "1\n", "expected_output": "1\n", "score": 50, "is_hidden": False},
-                {"name": "hidden-1", "input": "2\n", "expected_output": "2\n", "score": 50, "is_hidden": True},
+                {
+                    "name": "public-1",
+                    "input": "1\n",
+                    "expected_output": "1\n",
+                    "score": 50,
+                    "is_hidden": False,
+                },
+                {
+                    "name": "hidden-1",
+                    "input": "2\n",
+                    "expected_output": "2\n",
+                    "score": 50,
+                    "is_hidden": True,
+                },
             ],
         )
         runner = ScriptedRunner(
@@ -285,7 +341,9 @@ def test_runtime_error_case_message_and_status():
             )
         )
 
-        result = GradingService(runner=runner).grade_submission(session, submission, homework)
+        result = GradingService(runner=runner).grade_submission(
+            session, submission, homework
+        )
         case_results = session.exec(
             select(SubmissionCaseResult)
             .where(SubmissionCaseResult.submission_id == submission.id)
@@ -309,7 +367,11 @@ def test_apply_execution_result_runtime_error_and_success_fallback():
         code_text="print(1)",
     )
     run_result = PhaseExecutionResult(
-        command=["python3", "main.py"], stdout="", stderr="boom", exit_code=1, duration_ms=1
+        command=["python3", "main.py"],
+        stdout="",
+        stderr="boom",
+        exit_code=1,
+        duration_ms=1,
     )
 
     failed_result = SubmissionResult(submission_id=1)
@@ -329,7 +391,11 @@ def test_apply_execution_result_runtime_error_and_success_fallback():
         _execution(
             status="passed",
             run_result=PhaseExecutionResult(
-                command=["python3", "main.py"], stdout="ok", stderr="", exit_code=0, duration_ms=1
+                command=["python3", "main.py"],
+                stdout="ok",
+                stderr="",
+                exit_code=0,
+                duration_ms=1,
             ),
         ),
     )
@@ -353,7 +419,9 @@ def test_invalid_testcase_configurations_raise():
             )
             try:
                 service.grade_submission(session, submission, homework)
-                raise AssertionError("Expected invalid testcase configuration to fail")
+                raise AssertionError(
+                    "Expected invalid testcase configuration to fail"
+                )
             except ValueError as error:
                 assert "Invalid testcase configuration" in str(error)
         SQLModel.metadata.drop_all(engine)
@@ -366,14 +434,29 @@ def test_cases_without_scores_share_remaining_budget():
             session,
             25,
             cases=[
-                {"name": "scored", "input": "1\n", "expected_output": "1\n", "score": 40},
-                {"name": "unscored-1", "input": "2\n", "expected_output": "2\n"},
-                {"name": "unscored-2", "input": "3\n", "expected_output": "3\n"},
+                {
+                    "name": "scored",
+                    "input": "1\n",
+                    "expected_output": "1\n",
+                    "score": 40,
+                },
+                {
+                    "name": "unscored-1",
+                    "input": "2\n",
+                    "expected_output": "2\n",
+                },
+                {
+                    "name": "unscored-2",
+                    "input": "3\n",
+                    "expected_output": "3\n",
+                },
             ],
         )
         runner = PassingRunner({"1\n": "1\n", "2\n": "2\n", "3\n": "3\n"})
 
-        result = GradingService(runner=runner).grade_submission(session, submission, homework)
+        result = GradingService(runner=runner).grade_submission(
+            session, submission, homework
+        )
 
     assert result.total_score == 100.0
     assert result.passed_case_count == 3
@@ -381,7 +464,11 @@ def test_cases_without_scores_share_remaining_budget():
 
 def test_lint_feedback_applied_above_threshold():
     issues = [
-        SimpleNamespace(rule="C0114", message_kor="모듈 docstring 없음", message_eng="Missing docstring")
+        SimpleNamespace(
+            rule="C0114",
+            message_kor="모듈 docstring 없음",
+            message_eng="Missing docstring",
+        )
     ]
     lint_pipeline = FakeLintPipeline(quality_score=7.5, issues=issues)
 
@@ -401,9 +488,9 @@ def test_lint_feedback_applied_above_threshold():
         session.commit()
 
         runner = PassingRunner({"1\n": "1\n"})
-        result = GradingService(runner=runner, lint_pipeline=lint_pipeline).grade_submission(
-            session, submission, homework
-        )
+        result = GradingService(
+            runner=runner, lint_pipeline=lint_pipeline
+        ).grade_submission(session, submission, homework)
 
     assert lint_pipeline.requested_week == "week-03"
     assert result.quality_score == 7.5
@@ -422,15 +509,25 @@ def test_lint_feedback_not_applied_at_or_below_threshold():
             32,
             is_lint=True,
             cases=[
-                {"name": "pass", "input": "1\n", "expected_output": "1\n", "score": 80},
-                {"name": "fail", "input": "2\n", "expected_output": "2\n", "score": 20},
+                {
+                    "name": "pass",
+                    "input": "1\n",
+                    "expected_output": "1\n",
+                    "score": 80,
+                },
+                {
+                    "name": "fail",
+                    "input": "2\n",
+                    "expected_output": "2\n",
+                    "score": 20,
+                },
             ],
         )
         runner = PassingRunner({"1\n": "1\n", "2\n": "wrong\n"})
 
-        result = GradingService(runner=runner, lint_pipeline=lint_pipeline).grade_submission(
-            session, submission, homework
-        )
+        result = GradingService(
+            runner=runner, lint_pipeline=lint_pipeline
+        ).grade_submission(session, submission, homework)
 
     assert result.submission_score == 80.0
     assert result.quality_score == 5.0
@@ -447,9 +544,9 @@ def test_lint_feedback_skipped_for_non_python_language():
         )
         runner = PassingRunner({"1\n": "1\n"})
 
-        result = GradingService(runner=runner, lint_pipeline=lint_pipeline).grade_submission(
-            session, submission, homework
-        )
+        result = GradingService(
+            runner=runner, lint_pipeline=lint_pipeline
+        ).grade_submission(session, submission, homework)
 
     assert lint_pipeline.requested_week is None
     assert result.quality_score == 0.0
@@ -481,14 +578,23 @@ def test_normalize_output_disordered_and_vital_space_combinations():
 
     base.disorderedOutput = True
     base.vitalSpace = True
-    assert service._normalize_output(base, "b line\r\na line\n\n") == ["a line", "b line"]
+    assert service._normalize_output(base, "b line\r\na line\n\n") == [
+        "a line",
+        "b line",
+    ]
 
     base.vitalSpace = False
-    assert service._normalize_output(base, "b   line\na  line\n") == ["a line", "b line"]
+    assert service._normalize_output(base, "b   line\na  line\n") == [
+        "a line",
+        "b line",
+    ]
 
     base.disorderedOutput = False
     base.vitalSpace = True
-    assert service._normalize_output(base, " keep  spacing \r\n") == "keep  spacing"
+    assert (
+        service._normalize_output(base, " keep  spacing \r\n")
+        == "keep  spacing"
+    )
 
     base.vitalSpace = False
     assert service._normalize_output(base, "1  2\n3\n") == ["1", "2", "3"]
@@ -509,7 +615,9 @@ def test_format_runtime_log_and_merge_logs_empty_paths():
     assert service._merge_logs(None) is None
     assert (
         service._merge_logs(
-            PhaseExecutionResult(command=["true"], stdout="", stderr="", exit_code=0)
+            PhaseExecutionResult(
+                command=["true"], stdout="", stderr="", exit_code=0
+            )
         )
         is None
     )

@@ -6,7 +6,14 @@ from difflib import SequenceMatcher
 from sqlmodel import Session, select
 
 from ..core.compression import decompress_text
-from ..models.schemas import PlagiarismPair, PlagiarismPairRead, PlagiarismRun, PlagiarismRunRead, Submission, SubmissionResult
+from ..models.schemas import (
+    PlagiarismPair,
+    PlagiarismPairRead,
+    PlagiarismRun,
+    PlagiarismRunRead,
+    Submission,
+    SubmissionResult,
+)
 
 
 @dataclass
@@ -40,7 +47,9 @@ class PlagiarismService:
 
         candidate_pairs = self._candidate_pairs(latest_submissions)
         flagged_pairs = [
-            pair for pair in candidate_pairs if pair.similarity_score >= self.threshold
+            pair
+            for pair in candidate_pairs
+            if pair.similarity_score >= self.threshold
         ]
 
         for candidate in flagged_pairs:
@@ -79,13 +88,19 @@ class PlagiarismService:
     ) -> list[PlagiarismPairRead]:
         statement = select(PlagiarismPair)
         if homework_num is not None:
-            statement = statement.where(PlagiarismPair.homework_num == homework_num)
+            statement = statement.where(
+                PlagiarismPair.homework_num == homework_num
+            )
         pairs = session.exec(
-            statement.order_by(PlagiarismPair.similarity_score.desc(), PlagiarismPair.id.desc())
+            statement.order_by(
+                PlagiarismPair.similarity_score.desc(), PlagiarismPair.id.desc()
+            )
         ).all()
         return [self.to_pair_read(session, pair) for pair in pairs]
 
-    def get_pair(self, session: Session, pair_id: int) -> PlagiarismPairRead | None:
+    def get_pair(
+        self, session: Session, pair_id: int
+    ) -> PlagiarismPairRead | None:
         pair = session.get(PlagiarismPair, pair_id)
         if pair is None:
             return None
@@ -93,7 +108,9 @@ class PlagiarismService:
 
     def list_runs(self, session: Session) -> list[PlagiarismRunRead]:
         runs = session.exec(
-            select(PlagiarismRun).order_by(PlagiarismRun.created_at.desc(), PlagiarismRun.id.desc())
+            select(PlagiarismRun).order_by(
+                PlagiarismRun.created_at.desc(), PlagiarismRun.id.desc()
+            )
         ).all()
         return [self.to_run_read(run) for run in runs]
 
@@ -140,23 +157,33 @@ class PlagiarismService:
             created_at=pair.created_at,
         )
 
-    def _mark_submission_result(self, session: Session, submission_id: int) -> None:
+    def _mark_submission_result(
+        self, session: Session, submission_id: int
+    ) -> None:
         result = session.exec(
-            select(SubmissionResult).where(SubmissionResult.submission_id == submission_id)
+            select(SubmissionResult).where(
+                SubmissionResult.submission_id == submission_id
+            )
         ).first()
         if result is None:
             result = SubmissionResult(submission_id=submission_id)
         result.plagiarism_flag = True
         session.add(result)
 
-    def _latest_submissions(self, session: Session, homework_num: int) -> list[Submission]:
+    def _latest_submissions(
+        self, session: Session, homework_num: int
+    ) -> list[Submission]:
         submissions = session.exec(
             select(Submission)
             .where(
                 Submission.homework_num == homework_num,
                 Submission.submission_mode == "official",
             )
-            .order_by(Submission.user_id, Submission.submitted_at.desc(), Submission.id.desc())
+            .order_by(
+                Submission.user_id,
+                Submission.submitted_at.desc(),
+                Submission.id.desc(),
+            )
         ).all()
 
         latest_by_user: dict[str, Submission] = {}
@@ -166,15 +193,23 @@ class PlagiarismService:
             latest_by_user.setdefault(submission.user_id, submission)
         return list(latest_by_user.values())
 
-    def _candidate_pairs(self, submissions: list[Submission]) -> list[CandidatePair]:
+    def _candidate_pairs(
+        self, submissions: list[Submission]
+    ) -> list[CandidatePair]:
         pairs: list[CandidatePair] = []
         for index, left_submission in enumerate(submissions):
             for right_submission in submissions[index + 1 :]:
-                left_code = self._normalize_source(decompress_text(left_submission.code_text or ""))
-                right_code = self._normalize_source(decompress_text(right_submission.code_text or ""))
+                left_code = self._normalize_source(
+                    decompress_text(left_submission.code_text or "")
+                )
+                right_code = self._normalize_source(
+                    decompress_text(right_submission.code_text or "")
+                )
                 if not left_code or not right_code:
                     continue
-                similarity = SequenceMatcher(None, left_code, right_code).ratio()
+                similarity = SequenceMatcher(
+                    None, left_code, right_code
+                ).ratio()
                 pairs.append(
                     CandidatePair(
                         left=left_submission,

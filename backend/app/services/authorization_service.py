@@ -4,7 +4,6 @@ from sqlmodel import Session, select
 
 from ..models.schemas import Problem, ProblemCollaborator, RoleCapability, User
 
-
 DEFAULT_ROLE_CAPABILITIES: dict[str, set[str]] = {
     "admin": {"*"},
     "super_admin": {"*"},
@@ -16,17 +15,32 @@ DEFAULT_ROLE_CAPABILITIES: dict[str, set[str]] = {
         "problem:data.read",
         "submission:rejudge",
         "judge:operate",
-        "homework:manage", "grading:manual", "content:manage", "exam:manage",
-        "plagiarism:operate", "observability:read", "collaboration:manage",
+        "homework:manage",
+        "grading:manual",
+        "content:manage",
+        "exam:manage",
+        "plagiarism:operate",
+        "observability:read",
+        "collaboration:manage",
     },
     "ta": {
-        "problem:edit", "problem:data.read", "submission:rejudge",
-        "homework:manage", "grading:manual", "content:manage",
-        "plagiarism:operate", "observability:read", "collaboration:manage",
+        "problem:edit",
+        "problem:data.read",
+        "submission:rejudge",
+        "homework:manage",
+        "grading:manual",
+        "content:manage",
+        "plagiarism:operate",
+        "observability:read",
+        "collaboration:manage",
     },
     "problem_setter": {"problem:create", "problem:edit", "problem:data.read"},
     "reviewer": {"problem:review", "problem:publish", "problem:data.read"},
-    "judge_operator": {"submission:rejudge", "judge:operate", "problem:data.read"},
+    "judge_operator": {
+        "submission:rejudge",
+        "judge:operate",
+        "problem:data.read",
+    },
     "support": {"problem:data.read", "audit:read", "observability:read"},
     "viewer": set(),
     "student": set(),
@@ -47,7 +61,9 @@ class AuthorizationService:
             return configured - {"__none__"}
         return DEFAULT_ROLE_CAPABILITIES.get(user.user_group, set())
 
-    def has_capability(self, session: Session, user: User, capability: str) -> bool:
+    def has_capability(
+        self, session: Session, user: User, capability: str
+    ) -> bool:
         capabilities = self.capabilities_for(session, user)
         return "*" in capabilities or capability in capabilities
 

@@ -31,7 +31,10 @@ def test_audit_context_and_filters(
 
     response = client.get(
         "/api/admin/audit-logs",
-        params={"action_type": "publish_problem_revision", "request_id": "request-12"},
+        params={
+            "action_type": "publish_problem_revision",
+            "request_id": "request-12",
+        },
         headers=headers,
     )
 
@@ -50,7 +53,10 @@ def test_request_id_is_automatically_attached_to_audit(
     headers["X-Request-ID"] = "audit-correlation-1"
     response = client.post(
         "/api/auth/change-password",
-        json={"current_password": "old-password", "new_password": "new-password"},
+        json={
+            "current_password": "old-password",
+            "new_password": "new-password",
+        },
         headers=headers,
     )
     audit = session.exec(

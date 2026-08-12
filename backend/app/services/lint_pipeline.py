@@ -125,17 +125,25 @@ class LintPipelineService:
         )
         self.message_catalog = {
             "pylint": json.loads(
-                (self.support_dir / "pylint_message.json").read_text(encoding="utf-8")
+                (self.support_dir / "pylint_message.json").read_text(
+                    encoding="utf-8"
+                )
             ),
             "cppcheck": json.loads(
-                (self.support_dir / "cppcheck_message.json").read_text(encoding="utf-8")
+                (self.support_dir / "cppcheck_message.json").read_text(
+                    encoding="utf-8"
+                )
             ),
             "pmd": json.loads(
-                (self.support_dir / "pmd_message.json").read_text(encoding="utf-8")
+                (self.support_dir / "pmd_message.json").read_text(
+                    encoding="utf-8"
+                )
             ),
         }
         self.lint_manual = json.loads(
-            (self.support_dir / "lint_rule_manual.json").read_text(encoding="utf-8")
+            (self.support_dir / "lint_rule_manual.json").read_text(
+                encoding="utf-8"
+            )
         )
         pylint_manual = self.lint_manual["pylint"]
         self.max_line_length = int(pylint_manual["max-line-length"]["default"])
@@ -158,8 +166,12 @@ class LintPipelineService:
         session: Session | None = None,
     ) -> LintAnalysisResult:
         raw_issues = self._collect_python_issues(code_text)
-        issues = self.normalize_python_issues(raw_issues, week=week, session=session)
-        lint_weight, penalty_total, quality_score = self._score_issues(session, issues)
+        issues = self.normalize_python_issues(
+            raw_issues, week=week, session=session
+        )
+        lint_weight, penalty_total, quality_score = self._score_issues(
+            session, issues
+        )
         return LintAnalysisResult(
             tool="pylint",
             week=str(week) if week is not None else None,
@@ -177,7 +189,9 @@ class LintPipelineService:
         session: Session | None = None,
     ) -> list[NormalizedLintIssue]:
         return [
-            self._normalize_issue("pylint", raw_issue, week=week, session=session)
+            self._normalize_issue(
+                "pylint", raw_issue, week=week, session=session
+            )
             for raw_issue in raw_issues
         ]
 
@@ -278,7 +292,9 @@ class LintPipelineService:
         raw_message = str(raw_issue.get("message", "")).strip()
         message_eng, message_kor = self._render_message(tool, rule, raw_message)
         neo_severity = PYLINT_SEVERITY_MAP.get(severity, "issue")
-        enabled_for_week = self._rule_enabled_for_week(tool, rule, week, session=session)
+        enabled_for_week = self._rule_enabled_for_week(
+            tool, rule, week, session=session
+        )
 
         return NormalizedLintIssue(
             tool=tool,
@@ -293,7 +309,9 @@ class LintPipelineService:
             external_url=self._build_external_url(tool, severity, rule),
         )
 
-    def _render_message(self, tool: str, rule: str, raw_message: str) -> tuple[str, str]:
+    def _render_message(
+        self, tool: str, rule: str, raw_message: str
+    ) -> tuple[str, str]:
         rule_entry = self.message_catalog.get(tool, {}).get(rule)
         if rule_entry is None:
             return raw_message, ""
@@ -353,7 +371,9 @@ class LintPipelineService:
         except ValueError:
             return False
 
-    def _build_external_url(self, tool: str, severity: str, rule: str) -> str | None:
+    def _build_external_url(
+        self, tool: str, severity: str, rule: str
+    ) -> str | None:
         if tool != "pylint":
             return None
         return (
@@ -379,7 +399,9 @@ class LintPipelineService:
         for issue in issues:
             if not issue.enabled_for_week:
                 continue
-            penalty_total += penalty_unit * severity_weights.get(issue.neo_severity, 1.0)
+            penalty_total += penalty_unit * severity_weights.get(
+                issue.neo_severity, 1.0
+            )
 
         quality_score = max(lint_weight - penalty_total, 0.0)
         return lint_weight, round(penalty_total, 2), round(quality_score, 2)

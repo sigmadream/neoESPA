@@ -21,10 +21,7 @@ from ..domains.problems.router import router as problems_router
 from ..domains.settings.router import router as settings_router
 from ..domains.submissions.router import router as submissions_router
 from ..domains.users.router import router as users_router
-
-
 from ..domains.qa.router import router as qa_router
-
 
 router = APIRouter()
 

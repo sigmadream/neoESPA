@@ -25,12 +25,13 @@ from ...services.user_management import (
 )
 from ..users.serializers import to_user_read, user_management_bad_request
 
-
 router = APIRouter()
 
 
 @router.post("/auth/register", response_model=UserRead)
-async def register(user_in: UserCreate, session: Session = Depends(get_session)):
+async def register(
+    user_in: UserCreate, session: Session = Depends(get_session)
+):
     existing_user = session.get(User, user_in.id)
     if existing_user:
         raise HTTPException(status_code=400, detail="User already exists")
@@ -142,7 +143,9 @@ async def step_up_authentication(
     session: Session = Depends(get_session),
 ):
     if not AuthService.verify_password(payload.password, current_user.ps):
-        raise HTTPException(status_code=401, detail="Password verification failed")
+        raise HTTPException(
+            status_code=401, detail="Password verification failed"
+        )
     assurance = session.get(AdminAuthAssurance, current_user.id)
     if assurance is not None and assurance.mfa_required:
         detail = (
@@ -171,7 +174,9 @@ async def change_password(
     current_user: User = Depends(get_current_active_user),
     session: Session = Depends(get_session),
 ):
-    if not AuthService.verify_password(payload.current_password, current_user.ps):
+    if not AuthService.verify_password(
+        payload.current_password, current_user.ps
+    ):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Current password is incorrect",

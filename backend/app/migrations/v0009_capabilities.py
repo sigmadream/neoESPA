@@ -12,11 +12,9 @@ def upgrade(engine) -> None:
         for role_name, capabilities in DEFAULT_ROLE_CAPABILITIES.items():
             for capability in capabilities:
                 connection.execute(
-                    text(
-                        """
+                    text("""
                         INSERT OR IGNORE INTO role_capabilities (role_name, capability)
                         VALUES (:role_name, :capability)
-                        """
-                    ),
+                        """),
                     {"role_name": role_name, "capability": capability},
                 )

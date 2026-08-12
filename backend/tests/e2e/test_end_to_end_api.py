@@ -11,7 +11,6 @@ from app.main import app
 from app.models.schemas import User
 from app.services.auth_service import AuthService
 
-
 engine = create_engine(
     "sqlite://", connect_args={"check_same_thread": False}, poolclass=StaticPool
 )
@@ -39,14 +38,20 @@ def _create_user(session: Session, user_id: str, sid: int, role: str) -> None:
 
 
 def _login(client: TestClient, user_id: str) -> str:
-    response = client.post("/api/auth/login", json={"id": user_id, "ps": "password"})
+    response = client.post(
+        "/api/auth/login", json={"id": user_id, "ps": "password"}
+    )
     assert response.status_code == 200
     return response.json()["access_token"]
 
 
 def _read_homework_import_fixture(name: str) -> bytes:
     with open(
-        Path(__file__).resolve().parents[1] / "fixtures" / "homework_import" / name, "rb"
+        Path(__file__).resolve().parents[1]
+        / "fixtures"
+        / "homework_import"
+        / name,
+        "rb",
     ) as fixture:
         return fixture.read()
 
@@ -270,4 +275,7 @@ def test_imported_homework_submission_happy_path(tmp_path, monkeypatch):
     assert admin_detail.json()["input_zip_name"] == "inputs.zip"
     assert admin_detail.json()["output_zip_name"] == "outputs.zip"
     assert delete_response.status_code == 400
-    assert delete_response.json()["detail"] == "Cannot delete homework with submissions"
+    assert (
+        delete_response.json()["detail"]
+        == "Cannot delete homework with submissions"
+    )

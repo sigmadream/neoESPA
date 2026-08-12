@@ -9,14 +9,15 @@ from app.main import app
 from app.models.schemas import User
 from app.services.auth_service import AuthService
 
-
 engine = create_engine(
     "sqlite://", connect_args={"check_same_thread": False}, poolclass=StaticPool
 )
 
 
 def _dt_string(offset_days: int) -> str:
-    return (datetime.now(UTC) + timedelta(days=offset_days)).strftime("%Y-%m-%d %H:%M:%S")
+    return (datetime.now(UTC) + timedelta(days=offset_days)).strftime(
+        "%Y-%m-%d %H:%M:%S"
+    )
 
 
 def _create_user(session: Session, user_id: str, sid: int, role: str) -> None:
@@ -35,7 +36,9 @@ def _create_user(session: Session, user_id: str, sid: int, role: str) -> None:
 
 
 def _login(client: TestClient, user_id: str) -> str:
-    response = client.post("/api/auth/login", json={"id": user_id, "ps": "password"})
+    response = client.post(
+        "/api/auth/login", json={"id": user_id, "ps": "password"}
+    )
     assert response.status_code == 200
     return response.json()["access_token"]
 
@@ -129,7 +132,10 @@ def test_exam_submission_is_locked_after_deadline():
 
     assert create_response.status_code == 200
     assert submit_response.status_code == 400
-    assert submit_response.json()["detail"] == "Exam submission deadline has passed"
+    assert (
+        submit_response.json()["detail"]
+        == "Exam submission deadline has passed"
+    )
 
 
 def test_get_exam_and_submissions():
@@ -159,7 +165,10 @@ def test_get_exam_and_submissions():
         )
         exam_id = create_response.json()["id"]
 
-        get_resp = client.get(f"/api/exams/{exam_id}", headers={"Authorization": f"Bearer {student_token}"})
+        get_resp = client.get(
+            f"/api/exams/{exam_id}",
+            headers={"Authorization": f"Bearer {student_token}"},
+        )
         assert get_resp.status_code == 200
         assert get_resp.json()["title"] == "Detail Exam"
 
@@ -173,7 +182,10 @@ def test_get_exam_and_submissions():
             headers={"Authorization": f"Bearer {student_token}"},
         )
 
-        subs_resp = client.get(f"/api/exams/{exam_id}/submissions", headers={"Authorization": f"Bearer {student_token}"})
+        subs_resp = client.get(
+            f"/api/exams/{exam_id}/submissions",
+            headers={"Authorization": f"Bearer {student_token}"},
+        )
         assert subs_resp.status_code == 200
         assert len(subs_resp.json()) == 1
 

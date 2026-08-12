@@ -34,7 +34,9 @@ class UserProfile(SQLModel):
     phone: str = Field(max_length=50)
     email: str = Field(max_length=255)
     user_group: str = Field(default="student", max_length=20)
-    organization_id: Optional[str] = Field(default=None, max_length=80, index=True)
+    organization_id: Optional[str] = Field(
+        default=None, max_length=80, index=True
+    )
 
 
 class User(UserProfile, table=True):
@@ -113,7 +115,9 @@ class RoleCapabilitiesRead(SQLModel):
 class ProblemCollaborator(SQLModel, table=True):
     __tablename__ = "problem_collaborators"
     __table_args__ = (
-        UniqueConstraint("problem_id", "user_id", name="uq_problem_collaborator"),
+        UniqueConstraint(
+            "problem_id", "user_id", name="uq_problem_collaborator"
+        ),
         Index("ix_problem_collaborators_user", "user_id"),
     )
 
@@ -137,14 +141,18 @@ class ProblemCollaboratorRead(ProblemCollaboratorCreate):
 
 class AnalyticsConsent(SQLModel, table=True):
     __tablename__ = "analytics_consents"
-    __table_args__ = (Index("ix_analytics_consent_user_created", "user_id", "created_at"),)
+    __table_args__ = (
+        Index("ix_analytics_consent_user_created", "user_id", "created_at"),
+    )
 
     id: Optional[int] = Field(default=None, primary_key=True)
     user_id: str = Field(foreign_key="users.id", nullable=False)
     granted: bool
     purpose: str = Field(max_length=120)
     policy_version: str = Field(max_length=40)
-    scope_json: str = Field(default="[]", sa_column=Column(Text, nullable=False))
+    scope_json: str = Field(
+        default="[]", sa_column=Column(Text, nullable=False)
+    )
     created_at: datetime = Field(default_factory=utc_now)
 
 
@@ -357,7 +365,13 @@ class HomeworkAdminRead(HomeworkRead):
     parsed_testcase_count: int = 0
 
 
-PROBLEM_REVISION_STATUSES = ("draft", "validating", "ready", "published", "archived")
+PROBLEM_REVISION_STATUSES = (
+    "draft",
+    "validating",
+    "ready",
+    "published",
+    "archived",
+)
 
 
 class Problem(SQLModel, table=True):
@@ -366,7 +380,9 @@ class Problem(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     code: str = Field(unique=True, max_length=80, index=True)
     title: str = Field(max_length=200)
-    owner_id: Optional[str] = Field(default=None, foreign_key="users.id", index=True)
+    owner_id: Optional[str] = Field(
+        default=None, foreign_key="users.id", index=True
+    )
     is_active: bool = Field(default=True, index=True)
     created_at: datetime = Field(default_factory=utc_now)
     updated_at: datetime = Field(default_factory=utc_now)
@@ -375,7 +391,9 @@ class Problem(SQLModel, table=True):
 class ProblemRevision(SQLModel, table=True):
     __tablename__ = "problem_revisions"
     __table_args__ = (
-        UniqueConstraint("problem_id", "revision_no", name="uq_problem_revision_no"),
+        UniqueConstraint(
+            "problem_id", "revision_no", name="uq_problem_revision_no"
+        ),
         Index("ix_problem_revisions_problem_status", "problem_id", "status"),
     )
 
@@ -383,8 +401,12 @@ class ProblemRevision(SQLModel, table=True):
     problem_id: int = Field(foreign_key="problems.id", nullable=False)
     revision_no: int = Field(ge=1)
     statement: str = Field(default="", sa_column=Column(Text, nullable=False))
-    input_description: str = Field(default="", sa_column=Column(Text, nullable=False))
-    output_description: str = Field(default="", sa_column=Column(Text, nullable=False))
+    input_description: str = Field(
+        default="", sa_column=Column(Text, nullable=False)
+    )
+    output_description: str = Field(
+        default="", sa_column=Column(Text, nullable=False)
+    )
     time_limit_ms: int = Field(default=1000, ge=1)
     memory_limit_mb: int = Field(default=256, ge=1)
     output_limit_kb: int = Field(default=1024, ge=1)
@@ -392,14 +414,20 @@ class ProblemRevision(SQLModel, table=True):
     source_limit_kb: int = Field(default=1024, ge=1)
     checker_type: str = Field(default="token", max_length=40)
     problem_mode: str = Field(default="standard", max_length=20)
-    checker_config_json: str = Field(default="{}", sa_column=Column(Text, nullable=False))
-    language_multipliers_json: str = Field(default="{}", sa_column=Column(Text, nullable=False))
+    checker_config_json: str = Field(
+        default="{}", sa_column=Column(Text, nullable=False)
+    )
+    language_multipliers_json: str = Field(
+        default="{}", sa_column=Column(Text, nullable=False)
+    )
     allowed_languages_json: str = Field(
         default='["c", "cpp", "python", "java"]',
         sa_column=Column(Text, nullable=False),
     )
     status: str = Field(default="draft", max_length=20, index=True)
-    validation_report: Optional[str] = Field(default=None, sa_column=Column(Text, nullable=True))
+    validation_report: Optional[str] = Field(
+        default=None, sa_column=Column(Text, nullable=True)
+    )
     created_by: Optional[str] = Field(default=None, foreign_key="users.id")
     created_at: datetime = Field(default_factory=utc_now)
     published_at: Optional[datetime] = None
@@ -408,14 +436,20 @@ class ProblemRevision(SQLModel, table=True):
 class ProblemRevisionApproval(SQLModel, table=True):
     __tablename__ = "problem_revision_approvals"
     __table_args__ = (
-        UniqueConstraint("revision_id", "reviewer_id", name="uq_revision_reviewer_approval"),
+        UniqueConstraint(
+            "revision_id", "reviewer_id", name="uq_revision_reviewer_approval"
+        ),
     )
 
     id: Optional[int] = Field(default=None, primary_key=True)
-    revision_id: int = Field(foreign_key="problem_revisions.id", nullable=False, index=True)
+    revision_id: int = Field(
+        foreign_key="problem_revisions.id", nullable=False, index=True
+    )
     reviewer_id: str = Field(foreign_key="users.id", nullable=False)
     decision: str = Field(default="approved", max_length=20)
-    note: Optional[str] = Field(default=None, sa_column=Column(Text, nullable=True))
+    note: Optional[str] = Field(
+        default=None, sa_column=Column(Text, nullable=True)
+    )
     created_at: datetime = Field(default_factory=utc_now)
 
 
@@ -434,7 +468,12 @@ class ProblemRevisionApprovalRead(ProblemRevisionApprovalCreate):
 class ProblemAsset(SQLModel, table=True):
     __tablename__ = "problem_assets"
     __table_args__ = (
-        UniqueConstraint("revision_id", "asset_kind", "display_name", name="uq_problem_asset_name"),
+        UniqueConstraint(
+            "revision_id",
+            "asset_kind",
+            "display_name",
+            name="uq_problem_asset_name",
+        ),
         Index("ix_problem_assets_revision_kind", "revision_id", "asset_kind"),
     )
 
@@ -453,7 +492,9 @@ class ProblemAsset(SQLModel, table=True):
 class TestCaseGroup(SQLModel, table=True):
     __tablename__ = "testcase_groups"
     __table_args__ = (
-        UniqueConstraint("revision_id", "group_key", name="uq_testcase_group_key"),
+        UniqueConstraint(
+            "revision_id", "group_key", name="uq_testcase_group_key"
+        ),
         Index("ix_testcase_groups_revision_order", "revision_id", "position"),
     )
 
@@ -463,25 +504,35 @@ class TestCaseGroup(SQLModel, table=True):
     position: int = Field(default=1, ge=1)
     score: float = Field(default=100.0, ge=0)
     scoring_policy: str = Field(default="sum", max_length=30)
-    dependency_group_id: Optional[int] = Field(default=None, foreign_key="testcase_groups.id")
+    dependency_group_id: Optional[int] = Field(
+        default=None, foreign_key="testcase_groups.id"
+    )
     created_at: datetime = Field(default_factory=utc_now)
 
 
 class ProblemTestCase(SQLModel, table=True):
     __tablename__ = "problem_testcases"
     __table_args__ = (
-        UniqueConstraint("revision_id", "case_name", name="uq_problem_testcase_name"),
-        UniqueConstraint("revision_id", "position", name="uq_problem_testcase_position"),
+        UniqueConstraint(
+            "revision_id", "case_name", name="uq_problem_testcase_name"
+        ),
+        UniqueConstraint(
+            "revision_id", "position", name="uq_problem_testcase_position"
+        ),
         Index("ix_problem_testcases_revision_group", "revision_id", "group_id"),
     )
 
     id: Optional[int] = Field(default=None, primary_key=True)
     revision_id: int = Field(foreign_key="problem_revisions.id", nullable=False)
-    group_id: Optional[int] = Field(default=None, foreign_key="testcase_groups.id")
+    group_id: Optional[int] = Field(
+        default=None, foreign_key="testcase_groups.id"
+    )
     case_name: str = Field(max_length=120)
     position: int = Field(ge=1)
     input_asset_id: int = Field(foreign_key="problem_assets.id", nullable=False)
-    output_asset_id: int = Field(foreign_key="problem_assets.id", nullable=False)
+    output_asset_id: int = Field(
+        foreign_key="problem_assets.id", nullable=False
+    )
     score: float = Field(default=0.0, ge=0)
     is_sample: bool = Field(default=False)
     created_at: datetime = Field(default_factory=utc_now)
@@ -537,13 +588,21 @@ class TestCaseGroupRead(TestCaseGroupCreate):
 class AssignmentProblem(SQLModel, table=True):
     __tablename__ = "assignment_problems"
     __table_args__ = (
-        UniqueConstraint("homework_num", "position", name="uq_assignment_problem_position"),
-        UniqueConstraint("homework_num", "revision_id", name="uq_assignment_problem_revision"),
+        UniqueConstraint(
+            "homework_num", "position", name="uq_assignment_problem_position"
+        ),
+        UniqueConstraint(
+            "homework_num", "revision_id", name="uq_assignment_problem_revision"
+        ),
     )
 
     id: Optional[int] = Field(default=None, primary_key=True)
-    homework_num: int = Field(foreign_key="homework.num", nullable=False, index=True)
-    revision_id: int = Field(foreign_key="problem_revisions.id", nullable=False, index=True)
+    homework_num: int = Field(
+        foreign_key="homework.num", nullable=False, index=True
+    )
+    revision_id: int = Field(
+        foreign_key="problem_revisions.id", nullable=False, index=True
+    )
     position: int = Field(default=1, ge=1)
     created_at: datetime = Field(default_factory=utc_now)
 
@@ -651,7 +710,9 @@ JUDGE_JOB_STATUSES = (
 class JudgeJob(SQLModel, table=True):
     __tablename__ = "judge_jobs"
     __table_args__ = (
-        UniqueConstraint("idempotency_key", name="uq_judge_job_idempotency_key"),
+        UniqueConstraint(
+            "idempotency_key", name="uq_judge_job_idempotency_key"
+        ),
         Index("ix_judge_jobs_claim", "status", "priority", "created_at"),
         Index("ix_judge_jobs_lease", "status", "lease_expires_at"),
     )
@@ -659,13 +720,21 @@ class JudgeJob(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     job_type: str = Field(max_length=40)
     status: str = Field(default="queued", max_length=20)
-    payload_json: str = Field(default="{}", sa_column=Column(Text, nullable=False))
+    payload_json: str = Field(
+        default="{}", sa_column=Column(Text, nullable=False)
+    )
     payload_hash: str = Field(max_length=64)
     idempotency_key: Optional[str] = Field(default=None, max_length=120)
-    parent_job_id: Optional[int] = Field(default=None, foreign_key="judge_jobs.id")
+    parent_job_id: Optional[int] = Field(
+        default=None, foreign_key="judge_jobs.id"
+    )
     problem_id: Optional[int] = Field(default=None, foreign_key="problems.id")
-    revision_id: Optional[int] = Field(default=None, foreign_key="problem_revisions.id")
-    submission_id: Optional[int] = Field(default=None, foreign_key="submissions.id")
+    revision_id: Optional[int] = Field(
+        default=None, foreign_key="problem_revisions.id"
+    )
+    submission_id: Optional[int] = Field(
+        default=None, foreign_key="submissions.id"
+    )
     priority: int = Field(default=100)
     progress: float = Field(default=0.0, ge=0, le=100)
     lease_owner: Optional[str] = Field(default=None, max_length=120)
@@ -674,8 +743,12 @@ class JudgeJob(SQLModel, table=True):
     lease_generation: int = Field(default=0, ge=0)
     attempt_count: int = Field(default=0, ge=0)
     max_attempts: int = Field(default=3, ge=1)
-    error_message: Optional[str] = Field(default=None, sa_column=Column(Text, nullable=True))
-    result_json: Optional[str] = Field(default=None, sa_column=Column(Text, nullable=True))
+    error_message: Optional[str] = Field(
+        default=None, sa_column=Column(Text, nullable=True)
+    )
+    result_json: Optional[str] = Field(
+        default=None, sa_column=Column(Text, nullable=True)
+    )
     created_at: datetime = Field(default_factory=utc_now)
     started_at: Optional[datetime] = None
     finished_at: Optional[datetime] = None
@@ -684,7 +757,9 @@ class JudgeJob(SQLModel, table=True):
 class JudgeJobEvent(SQLModel, table=True):
     __tablename__ = "judge_job_events"
     __table_args__ = (
-        UniqueConstraint("job_id", "sequence_no", name="uq_judge_job_event_sequence"),
+        UniqueConstraint(
+            "job_id", "sequence_no", name="uq_judge_job_event_sequence"
+        ),
         Index("ix_judge_job_events_job_sequence", "job_id", "sequence_no"),
     )
 
@@ -693,7 +768,9 @@ class JudgeJobEvent(SQLModel, table=True):
     sequence_no: int = Field(ge=1)
     event_type: str = Field(max_length=40)
     message: str = Field(sa_column=Column(Text, nullable=False))
-    payload_json: Optional[str] = Field(default=None, sa_column=Column(Text, nullable=True))
+    payload_json: Optional[str] = Field(
+        default=None, sa_column=Column(Text, nullable=True)
+    )
     created_at: datetime = Field(default_factory=utc_now)
 
 
@@ -702,11 +779,17 @@ class JudgeWorker(SQLModel, table=True):
 
     worker_id: str = Field(primary_key=True, max_length=120)
     status: str = Field(default="online", max_length=20, index=True)
-    capabilities_json: str = Field(default="{}", sa_column=Column(Text, nullable=False))
+    capabilities_json: str = Field(
+        default="{}", sa_column=Column(Text, nullable=False)
+    )
     concurrency: int = Field(default=1, ge=1)
-    current_job_id: Optional[int] = Field(default=None, foreign_key="judge_jobs.id")
+    current_job_id: Optional[int] = Field(
+        default=None, foreign_key="judge_jobs.id"
+    )
     heartbeat_at: datetime = Field(default_factory=utc_now, index=True)
-    last_error: Optional[str] = Field(default=None, sa_column=Column(Text, nullable=True))
+    last_error: Optional[str] = Field(
+        default=None, sa_column=Column(Text, nullable=True)
+    )
 
 
 class JudgeWorkerRead(SQLModel):
@@ -735,19 +818,25 @@ class GradingMetricsRead(SQLModel):
 class GradingRun(SQLModel, table=True):
     __tablename__ = "grading_runs"
     __table_args__ = (
-        Index("ix_grading_runs_submission_created", "submission_id", "created_at"),
+        Index(
+            "ix_grading_runs_submission_created", "submission_id", "created_at"
+        ),
     )
 
     id: Optional[int] = Field(default=None, primary_key=True)
     submission_id: int = Field(foreign_key="submissions.id", nullable=False)
     job_id: Optional[int] = Field(default=None, foreign_key="judge_jobs.id")
-    problem_revision_id: Optional[int] = Field(default=None, foreign_key="problem_revisions.id")
+    problem_revision_id: Optional[int] = Field(
+        default=None, foreign_key="problem_revisions.id"
+    )
     lease_generation: int = Field(default=0)
     verdict: str = Field(default="JG", max_length=10)
     score: float = Field(default=0.0)
     runtime_version: str = Field(default="legacy", max_length=120)
     checker_version: str = Field(default="standard-v1", max_length=120)
-    result_json: str = Field(default="{}", sa_column=Column(Text, nullable=False))
+    result_json: str = Field(
+        default="{}", sa_column=Column(Text, nullable=False)
+    )
     created_at: datetime = Field(default_factory=utc_now)
 
 
@@ -833,12 +922,18 @@ class Contest(SQLModel, table=True):
 class ContestProblem(SQLModel, table=True):
     __tablename__ = "contest_problems"
     __table_args__ = (
-        UniqueConstraint("contest_id", "position", name="uq_contest_problem_position"),
-        UniqueConstraint("contest_id", "revision_id", name="uq_contest_problem_revision"),
+        UniqueConstraint(
+            "contest_id", "position", name="uq_contest_problem_position"
+        ),
+        UniqueConstraint(
+            "contest_id", "revision_id", name="uq_contest_problem_revision"
+        ),
     )
 
     id: Optional[int] = Field(default=None, primary_key=True)
-    contest_id: int = Field(foreign_key="contests.id", nullable=False, index=True)
+    contest_id: int = Field(
+        foreign_key="contests.id", nullable=False, index=True
+    )
     revision_id: int = Field(foreign_key="problem_revisions.id", nullable=False)
     label: str = Field(max_length=20)
     position: int = Field(ge=1)
@@ -848,7 +943,12 @@ class ContestProblem(SQLModel, table=True):
 class ContestParticipation(SQLModel, table=True):
     __tablename__ = "contest_participations"
     __table_args__ = (
-        UniqueConstraint("contest_id", "user_id", "participation_type", name="uq_contest_participation"),
+        UniqueConstraint(
+            "contest_id",
+            "user_id",
+            "participation_type",
+            name="uq_contest_participation",
+        ),
     )
 
     id: Optional[int] = Field(default=None, primary_key=True)
@@ -863,11 +963,15 @@ class Clarification(SQLModel, table=True):
     __tablename__ = "contest_clarifications"
 
     id: Optional[int] = Field(default=None, primary_key=True)
-    contest_id: int = Field(foreign_key="contests.id", nullable=False, index=True)
+    contest_id: int = Field(
+        foreign_key="contests.id", nullable=False, index=True
+    )
     user_id: str = Field(foreign_key="users.id", nullable=False)
     problem_id: Optional[int] = Field(default=None, foreign_key="problems.id")
     question: str = Field(sa_column=Column(Text, nullable=False))
-    answer: Optional[str] = Field(default=None, sa_column=Column(Text, nullable=True))
+    answer: Optional[str] = Field(
+        default=None, sa_column=Column(Text, nullable=True)
+    )
     status: str = Field(default="open", max_length=20)
     created_at: datetime = Field(default_factory=utc_now)
     answered_at: Optional[datetime] = None
@@ -877,7 +981,9 @@ class ContestAnnouncement(SQLModel, table=True):
     __tablename__ = "contest_announcements"
 
     id: Optional[int] = Field(default=None, primary_key=True)
-    contest_id: int = Field(foreign_key="contests.id", nullable=False, index=True)
+    contest_id: int = Field(
+        foreign_key="contests.id", nullable=False, index=True
+    )
     title: str = Field(max_length=200)
     message: str = Field(sa_column=Column(Text, nullable=False))
     created_by: str = Field(foreign_key="users.id", nullable=False)
@@ -888,16 +994,24 @@ class ContestResultEvent(SQLModel, table=True):
     __tablename__ = "contest_result_events"
     __table_args__ = (
         Index("ix_contest_result_events_replay", "contest_id", "sequence_no"),
-        UniqueConstraint("contest_id", "sequence_no", name="uq_contest_result_sequence"),
+        UniqueConstraint(
+            "contest_id", "sequence_no", name="uq_contest_result_sequence"
+        ),
     )
 
     id: Optional[int] = Field(default=None, primary_key=True)
     contest_id: int = Field(foreign_key="contests.id", nullable=False)
     sequence_no: int = Field(ge=1)
-    participation_id: int = Field(foreign_key="contest_participations.id", nullable=False)
-    contest_problem_id: int = Field(foreign_key="contest_problems.id", nullable=False)
+    participation_id: int = Field(
+        foreign_key="contest_participations.id", nullable=False
+    )
+    contest_problem_id: int = Field(
+        foreign_key="contest_problems.id", nullable=False
+    )
     submission_id: int = Field(foreign_key="submissions.id", nullable=False)
-    grading_run_id: Optional[int] = Field(default=None, foreign_key="grading_runs.id")
+    grading_run_id: Optional[int] = Field(
+        default=None, foreign_key="grading_runs.id"
+    )
     verdict: str = Field(max_length=10)
     score: float = Field(default=0.0)
     result_phase: str = Field(default="live", max_length=20, index=True)
@@ -908,11 +1022,15 @@ class ContestOperationApproval(SQLModel, table=True):
     __tablename__ = "contest_operation_approvals"
 
     id: Optional[int] = Field(default=None, primary_key=True)
-    contest_id: int = Field(foreign_key="contests.id", nullable=False, index=True)
+    contest_id: int = Field(
+        foreign_key="contests.id", nullable=False, index=True
+    )
     operation: str = Field(max_length=40)
     reason: str = Field(sa_column=Column(Text, nullable=False))
     approved_by: str = Field(foreign_key="users.id", nullable=False)
-    used_by_job_id: Optional[int] = Field(default=None, foreign_key="judge_jobs.id")
+    used_by_job_id: Optional[int] = Field(
+        default=None, foreign_key="judge_jobs.id"
+    )
     used_at: Optional[datetime] = None
     created_at: datetime = Field(default_factory=utc_now)
 
@@ -1186,7 +1304,12 @@ class SubmissionScoreAdjustRequest(SQLModel):
 class CodeSnapshot(SQLModel, table=True):
     __tablename__ = "code_snapshots"
     __table_args__ = (
-        Index("ix_code_snapshots_homework_user_created", "homework_num", "user_id", "created_at"),
+        Index(
+            "ix_code_snapshots_homework_user_created",
+            "homework_num",
+            "user_id",
+            "created_at",
+        ),
     )
 
     id: Optional[int] = Field(default=None, primary_key=True)
@@ -1218,7 +1341,11 @@ class CodeSnapshotRead(SQLModel):
 class SubmissionFile(SQLModel, table=True):
     __tablename__ = "submission_files"
     __table_args__ = (
-        Index("ix_submission_files_submission_kind", "submission_id", "artifact_kind"),
+        Index(
+            "ix_submission_files_submission_kind",
+            "submission_id",
+            "artifact_kind",
+        ),
     )
 
     id: Optional[int] = Field(default=None, primary_key=True)
@@ -1240,7 +1367,9 @@ class SubmissionFile(SQLModel, table=True):
 class SubmissionResult(SQLModel, table=True):
     __tablename__ = "submission_results"
     __table_args__ = (
-        UniqueConstraint("submission_id", name="uq_submission_result_submission"),
+        UniqueConstraint(
+            "submission_id", name="uq_submission_result_submission"
+        ),
     )
 
     id: Optional[int] = Field(default=None, primary_key=True)
@@ -1293,21 +1422,28 @@ class SubmissionCaseResult(SQLModel, table=True):
     score_awarded: float = Field(default=0.0)
     runtime_ms: Optional[int] = None
     memory_kb: Optional[int] = None
-    message: Optional[str] = Field(default=None, sa_column=Column(Text, nullable=True))
+    message: Optional[str] = Field(
+        default=None, sa_column=Column(Text, nullable=True)
+    )
 
 
 class GradingRule(SQLModel, table=True):
     __tablename__ = "grading_rules"
     __table_args__ = (
         UniqueConstraint(
-            "scope", "homework_num", "rule_name", name="uq_grading_rule_scope_name"
+            "scope",
+            "homework_num",
+            "rule_name",
+            name="uq_grading_rule_scope_name",
         ),
         Index("ix_grading_rules_scope_homework", "scope", "homework_num"),
     )
 
     id: Optional[int] = Field(default=None, primary_key=True)
     scope: str = Field(default="system", max_length=20)
-    homework_num: Optional[int] = Field(default=None, foreign_key="homework.num")
+    homework_num: Optional[int] = Field(
+        default=None, foreign_key="homework.num"
+    )
     rule_name: str = Field(max_length=100)
     rule_value: str = Field(sa_column=Column(Text, nullable=False))
     is_active: bool = Field(default=True)
@@ -1332,11 +1468,15 @@ class SystemSetting(SQLModel, table=True):
 
 class SystemSettingHistory(SQLModel, table=True):
     __tablename__ = "system_setting_history"
-    __table_args__ = (Index("ix_system_setting_history_key_id", "setting_key", "id"),)
+    __table_args__ = (
+        Index("ix_system_setting_history_key_id", "setting_key", "id"),
+    )
 
     id: Optional[int] = Field(default=None, primary_key=True)
     setting_key: str = Field(max_length=100, index=True)
-    previous_value: Optional[str] = Field(default=None, sa_column=Column(Text, nullable=True))
+    previous_value: Optional[str] = Field(
+        default=None, sa_column=Column(Text, nullable=True)
+    )
     new_value: str = Field(sa_column=Column(Text, nullable=False))
     changed_by: str = Field(foreign_key="users.id", nullable=False)
     rolled_back_at: Optional[datetime] = None
@@ -1359,7 +1499,9 @@ class SystemEventLogRead(SQLModel):
 class SystemEventLog(SQLModel, table=True):
     __tablename__ = "system_event_logs"
     __table_args__ = (
-        Index("ix_system_event_logs_category_created", "category", "created_at"),
+        Index(
+            "ix_system_event_logs_category_created", "category", "created_at"
+        ),
     )
 
     id: Optional[int] = Field(default=None, primary_key=True)
@@ -1367,7 +1509,9 @@ class SystemEventLog(SQLModel, table=True):
     level: str = Field(default="info", max_length=20)
     event_type: str = Field(max_length=80)
     message: str = Field(sa_column=Column(Text, nullable=False))
-    submission_id: Optional[int] = Field(default=None, foreign_key="submissions.id")
+    submission_id: Optional[int] = Field(
+        default=None, foreign_key="submissions.id"
+    )
     user_id: Optional[str] = Field(default=None, foreign_key="users.id")
     request_path: Optional[str] = Field(default=None, max_length=255)
     context_json: Optional[str] = Field(
@@ -1407,9 +1551,15 @@ class AuditLog(SQLModel, table=True):
     )
     result: str = Field(default="success", max_length=20, index=True)
     request_id: Optional[str] = Field(default=None, max_length=80, index=True)
-    job_id: Optional[int] = Field(default=None, foreign_key="judge_jobs.id", index=True)
-    before_json: Optional[str] = Field(default=None, sa_column=Column(Text, nullable=True))
-    after_json: Optional[str] = Field(default=None, sa_column=Column(Text, nullable=True))
+    job_id: Optional[int] = Field(
+        default=None, foreign_key="judge_jobs.id", index=True
+    )
+    before_json: Optional[str] = Field(
+        default=None, sa_column=Column(Text, nullable=True)
+    )
+    after_json: Optional[str] = Field(
+        default=None, sa_column=Column(Text, nullable=True)
+    )
     created_at: datetime = Field(default_factory=utc_now)
 
 
@@ -1430,7 +1580,9 @@ class NotificationMarkReadRequest(SQLModel):
 
 class Notification(SQLModel, table=True):
     __tablename__ = "notifications"
-    __table_args__ = (Index("ix_notifications_user_created", "user_id", "created_at"),)
+    __table_args__ = (
+        Index("ix_notifications_user_created", "user_id", "created_at"),
+    )
 
     id: Optional[int] = Field(default=None, primary_key=True)
     user_id: str = Field(foreign_key="users.id", nullable=False)
@@ -1447,7 +1599,9 @@ class LectureMaterialBase(SQLModel):
     title: str = Field(max_length=200)
     description: str = Field(sa_column=Column(Text, nullable=False))
     url: str = Field(default="", max_length=500)
-    content: Optional[str] = Field(default=None, sa_column=Column(Text, nullable=True))
+    content: Optional[str] = Field(
+        default=None, sa_column=Column(Text, nullable=True)
+    )
     attachment_name: Optional[str] = Field(default=None, max_length=255)
     attachment_relpath: Optional[str] = Field(default=None, max_length=500)
     is_published: bool = True
@@ -1577,7 +1731,9 @@ class PlagiarismPairRead(SQLModel):
 class PlagiarismRun(SQLModel, table=True):
     __tablename__ = "plagiarism_runs"
     __table_args__ = (
-        Index("ix_plagiarism_runs_homework_created", "homework_num", "created_at"),
+        Index(
+            "ix_plagiarism_runs_homework_created", "homework_num", "created_at"
+        ),
     )
 
     id: Optional[int] = Field(default=None, primary_key=True)
@@ -1586,26 +1742,36 @@ class PlagiarismRun(SQLModel, table=True):
     status: str = Field(default="completed", max_length=30)
     compared_submission_count: int = Field(default=0)
     flagged_pair_count: int = Field(default=0)
-    summary: Optional[str] = Field(default=None, sa_column=Column(Text, nullable=True))
+    summary: Optional[str] = Field(
+        default=None, sa_column=Column(Text, nullable=True)
+    )
     created_at: datetime = Field(default_factory=utc_now)
 
 
 class PlagiarismPair(SQLModel, table=True):
     __tablename__ = "plagiarism_pairs"
     __table_args__ = (
-        Index("ix_plagiarism_pairs_run_similarity", "run_id", "similarity_score"),
+        Index(
+            "ix_plagiarism_pairs_run_similarity", "run_id", "similarity_score"
+        ),
     )
 
     id: Optional[int] = Field(default=None, primary_key=True)
     run_id: int = Field(foreign_key="plagiarism_runs.id", nullable=False)
     homework_num: int = Field(foreign_key="homework.num", nullable=False)
-    left_submission_id: int = Field(foreign_key="submissions.id", nullable=False)
-    right_submission_id: int = Field(foreign_key="submissions.id", nullable=False)
+    left_submission_id: int = Field(
+        foreign_key="submissions.id", nullable=False
+    )
+    right_submission_id: int = Field(
+        foreign_key="submissions.id", nullable=False
+    )
     left_user_id: str = Field(foreign_key="users.id", nullable=False)
     right_user_id: str = Field(foreign_key="users.id", nullable=False)
     similarity_score: float = Field(default=0.0)
     status: str = Field(default="flagged", max_length=30)
-    summary: Optional[str] = Field(default=None, sa_column=Column(Text, nullable=True))
+    summary: Optional[str] = Field(
+        default=None, sa_column=Column(Text, nullable=True)
+    )
     created_at: datetime = Field(default_factory=utc_now)
 
 
@@ -1671,10 +1837,14 @@ class CollabSession(SQLModel, table=True):
 
     id: Optional[int] = Field(default=None, primary_key=True)
     title: str = Field(max_length=200)
-    homework_num: Optional[int] = Field(default=None, foreign_key="homework.num")
+    homework_num: Optional[int] = Field(
+        default=None, foreign_key="homework.num"
+    )
     mentor_id: str = Field(foreign_key="users.id", nullable=False)
     status: str = Field(default="active", max_length=30)
-    current_code: str = Field(default="", sa_column=Column(Text, nullable=False))
+    current_code: str = Field(
+        default="", sa_column=Column(Text, nullable=False)
+    )
     created_at: datetime = Field(default_factory=utc_now)
     closed_at: Optional[datetime] = Field(default=None)
 
@@ -1682,7 +1852,9 @@ class CollabSession(SQLModel, table=True):
 class CollabParticipant(SQLModel, table=True):
     __tablename__ = "collab_participants"
     __table_args__ = (
-        UniqueConstraint("session_id", "user_id", name="uq_collab_session_user"),
+        UniqueConstraint(
+            "session_id", "user_id", name="uq_collab_session_user"
+        ),
     )
 
     id: Optional[int] = Field(default=None, primary_key=True)
@@ -1710,7 +1882,11 @@ class CollabMessage(SQLModel, table=True):
 class CollabCodeSnapshot(SQLModel, table=True):
     __tablename__ = "collab_code_snapshots"
     __table_args__ = (
-        Index("ix_collab_code_snapshots_session_created", "session_id", "created_at"),
+        Index(
+            "ix_collab_code_snapshots_session_created",
+            "session_id",
+            "created_at",
+        ),
     )
 
     id: Optional[int] = Field(default=None, primary_key=True)
@@ -1767,7 +1943,9 @@ class ExamSubmissionRead(SQLModel):
 
 class ExamSubmission(SQLModel, table=True):
     __tablename__ = "exam_submissions"
-    __table_args__ = (Index("ix_exam_submissions_exam_user", "exam_id", "user_id"),)
+    __table_args__ = (
+        Index("ix_exam_submissions_exam_user", "exam_id", "user_id"),
+    )
 
     id: Optional[int] = Field(default=None, primary_key=True)
     exam_id: int = Field(foreign_key="exams.id", nullable=False)
@@ -1782,10 +1960,14 @@ class ExamSubmission(SQLModel, table=True):
 class ExamResult(SQLModel, table=True):
     __tablename__ = "exam_results"
     __table_args__ = (
-        UniqueConstraint("exam_submission_id", name="uq_exam_result_submission"),
+        UniqueConstraint(
+            "exam_submission_id", name="uq_exam_result_submission"
+        ),
     )
 
     id: Optional[int] = Field(default=None, primary_key=True)
-    exam_submission_id: int = Field(foreign_key="exam_submissions.id", nullable=False)
+    exam_submission_id: int = Field(
+        foreign_key="exam_submissions.id", nullable=False
+    )
     total_score: float = Field(default=0.0)
     graded_at: Optional[datetime] = Field(default=None)

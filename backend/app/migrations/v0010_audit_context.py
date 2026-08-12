@@ -15,11 +15,15 @@ COLUMNS = {
 def upgrade(engine) -> None:
     inspector = inspect(engine)
     if inspector.has_table("audit_logs"):
-        existing = {column["name"] for column in inspector.get_columns("audit_logs")}
+        existing = {
+            column["name"] for column in inspector.get_columns("audit_logs")
+        }
         with engine.begin() as connection:
             for name, definition in COLUMNS.items():
                 if name not in existing:
                     connection.execute(
-                        text(f"ALTER TABLE audit_logs ADD COLUMN {name} {definition}")
+                        text(
+                            f"ALTER TABLE audit_logs ADD COLUMN {name} {definition}"
+                        )
                     )
     SQLModel.metadata.create_all(engine)

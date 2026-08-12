@@ -7,9 +7,13 @@ from ...api.dependencies import get_optional_current_user, require_capability
 from ...api.runtime import notification_service, observability_service
 from ...core.db import get_session
 from ...models.schemas import Notice, NoticeAdminWrite, NoticeRead, User
-from ..notices.helpers import notice_is_publicly_visible, notice_sort_key, normalize_notice_date, to_notice_read
+from ..notices.helpers import (
+    notice_is_publicly_visible,
+    notice_sort_key,
+    normalize_notice_date,
+    to_notice_read,
+)
 from ..users.serializers import is_staff
-
 
 router = APIRouter()
 
@@ -20,9 +24,13 @@ def get_notices(
     current_user: User | None = Depends(get_optional_current_user),
 ):
     notices = session.exec(select(Notice)).all()
-    visible_notices = notices if is_staff(current_user) else [
-        notice for notice in notices if notice_is_publicly_visible(notice)
-    ]
+    visible_notices = (
+        notices
+        if is_staff(current_user)
+        else [
+            notice for notice in notices if notice_is_publicly_visible(notice)
+        ]
+    )
     visible_notices.sort(key=notice_sort_key, reverse=True)
     return [to_notice_read(notice) for notice in visible_notices]
 
@@ -35,10 +43,14 @@ def get_notice_detail(
 ):
     notice = session.get(Notice, notice_num)
     if notice is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Notice not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Notice not found"
+        )
 
     if not is_staff(current_user) and not notice_is_publicly_visible(notice):
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Notice not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Notice not found"
+        )
     return to_notice_read(notice)
 
 
@@ -97,7 +109,9 @@ def update_notice(
 ):
     notice = session.get(Notice, notice_num)
     if notice is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Notice not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Notice not found"
+        )
 
     was_public = notice_is_publicly_visible(notice)
     notice.title = payload.title
@@ -131,7 +145,9 @@ def delete_notice(
 ):
     notice = session.get(Notice, notice_num)
     if notice is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Notice not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Notice not found"
+        )
 
     observability_service.record_audit(
         session,

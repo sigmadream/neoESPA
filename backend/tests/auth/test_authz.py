@@ -37,7 +37,9 @@ def _create_user(
 
 
 def _login(client: TestClient, user_id: str, password: str) -> str:
-    response = client.post("/api/auth/login", json={"id": user_id, "ps": password})
+    response = client.post(
+        "/api/auth/login", json={"id": user_id, "ps": password}
+    )
     assert response.status_code == 200
     return response.json()["access_token"]
 
@@ -92,7 +94,9 @@ def test_student_cannot_access_admin_routes():
 def test_staff_roles_can_manage_homeworks():
     with Session(engine) as session:
         for idx, role in enumerate(["admin", "instructor", "ta"], start=1):
-            _create_user(session, f"staff-{role}", 10000010 + idx, "staff-pass", role)
+            _create_user(
+                session, f"staff-{role}", 10000010 + idx, "staff-pass", role
+            )
 
         def get_session_override():
             return session
@@ -103,7 +107,9 @@ def test_staff_roles_can_manage_homeworks():
         responses = []
         for role in ["admin", "instructor", "ta"]:
             token = _login(client, f"staff-{role}", "staff-pass")
-            responses.append((role, _create_admin_homework_response(client, token)))
+            responses.append(
+                (role, _create_admin_homework_response(client, token))
+            )
 
         app.dependency_overrides.clear()
 
@@ -138,4 +144,6 @@ def test_inactive_staff_user_cannot_access_admin_routes_with_valid_token():
         app.dependency_overrides.clear()
 
     assert response.status_code == 403
-    assert response.json()["detail"] == "Inactive user cannot access this resource"
+    assert (
+        response.json()["detail"] == "Inactive user cannot access this resource"
+    )

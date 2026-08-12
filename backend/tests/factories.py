@@ -123,7 +123,9 @@ def create_submission_result(
         compile_status=compile_status,
         run_status=run_status,
         total_score=total_score,
-        submission_score=total_score if submission_score is None else submission_score,
+        submission_score=(
+            total_score if submission_score is None else submission_score
+        ),
         quality_score=quality_score,
         passed_case_count=passed_case_count,
         total_case_count=total_case_count,

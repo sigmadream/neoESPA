@@ -2,7 +2,14 @@ from __future__ import annotations
 
 from sqlmodel import Session, select
 
-from ..models.schemas import Notice, Notification, NotificationRead, Submission, SubmissionResult, User
+from ..models.schemas import (
+    Notice,
+    Notification,
+    NotificationRead,
+    Submission,
+    SubmissionResult,
+    User,
+)
 
 
 class NotificationService:
@@ -39,7 +46,9 @@ class NotificationService:
         reference_id: str | None = None,
     ) -> list[Notification]:
         students = session.exec(
-            select(User).where(User.user_group == "student", User.is_active.is_(True))
+            select(User).where(
+                User.user_group == "student", User.is_active.is_(True)
+            )
         ).all()
         return [
             self.notify_user(
@@ -54,7 +63,9 @@ class NotificationService:
             for student in students
         ]
 
-    def notify_notice_publication(self, session: Session, notice: Notice) -> list[Notification]:
+    def notify_notice_publication(
+        self, session: Session, notice: Notice
+    ) -> list[Notification]:
         return self.notify_all_students(
             session,
             kind="notice",
@@ -88,7 +99,9 @@ class NotificationService:
             reference_id=str(submission.id or 0),
         )
 
-    def list_for_user(self, session: Session, user_id: str, *, limit: int = 20) -> list[NotificationRead]:
+    def list_for_user(
+        self, session: Session, user_id: str, *, limit: int = 20
+    ) -> list[NotificationRead]:
         notifications = session.exec(
             select(Notification)
             .where(Notification.user_id == user_id)
@@ -97,7 +110,9 @@ class NotificationService:
         ).all()
         return [self.to_read(notification) for notification in notifications]
 
-    def mark_read(self, session: Session, user_id: str, notification_ids: list[int]) -> list[NotificationRead]:
+    def mark_read(
+        self, session: Session, user_id: str, notification_ids: list[int]
+    ) -> list[NotificationRead]:
         notifications = session.exec(
             select(Notification).where(
                 Notification.user_id == user_id,

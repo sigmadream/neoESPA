@@ -13,22 +13,31 @@ from ...models.schemas import (
     Submission,
     User,
 )
-from ..submissions.helpers import build_submission_result_map, effective_total_score
+from ..submissions.helpers import (
+    build_submission_result_map,
+    effective_total_score,
+)
 
 
 def build_admin_dashboard(session: Session) -> AdminDashboardRead:
     students = session.exec(
-        select(User).where(User.user_group == "student", User.is_active.is_(True))
+        select(User).where(
+            User.user_group == "student", User.is_active.is_(True)
+        )
     ).all()
     homeworks = session.exec(select(Homework).order_by(Homework.num)).all()
     submissions = session.exec(
-        select(Submission).order_by(Submission.submitted_at.desc(), Submission.id.desc())
+        select(Submission).order_by(
+            Submission.submitted_at.desc(), Submission.id.desc()
+        )
     ).all()
     result_by_submission_id = build_submission_result_map(session, submissions)
     latest_by_homework_user: dict[tuple[int, str], Submission] = {}
 
     for submission in submissions:
-        latest_by_homework_user.setdefault((submission.homework_num, submission.user_id), submission)
+        latest_by_homework_user.setdefault(
+            (submission.homework_num, submission.user_id), submission
+        )
 
     homework_metrics: list[AdminDashboardHomeworkMetric] = []
     for homework in homeworks:
@@ -43,10 +52,15 @@ def build_admin_dashboard(session: Session) -> AdminDashboardRead:
         ]
         latest_scores = [
             effective_total_score(result)
-            for submission, result in zip(latest_submissions, latest_results, strict=False)
-            if result is not None and submission.status not in {"pending", "queued", "grading"}
+            for submission, result in zip(
+                latest_submissions, latest_results, strict=False
+            )
+            if result is not None
+            and submission.status not in {"pending", "queued", "grading"}
         ]
-        submitted_students = len({submission.user_id for submission in latest_submissions})
+        submitted_students = len(
+            {submission.user_id for submission in latest_submissions}
+        )
         homework_metrics.append(
             AdminDashboardHomeworkMetric(
                 homework_num=homework.num or 0,
@@ -89,16 +103,22 @@ def build_admin_dashboard(session: Session) -> AdminDashboardRead:
         elif result is not None and result.run_status == "failed":
             failure_type = "runtime_failed"
         if failure_type:
-            failure_counts[failure_type] = failure_counts.get(failure_type, 0) + 1
+            failure_counts[failure_type] = (
+                failure_counts.get(failure_type, 0) + 1
+            )
 
     queued_jobs = session.exec(
-        select(JudgeJob).where(
+        select(JudgeJob)
+        .where(
             JudgeJob.job_type == "grade_submission",
             JudgeJob.status.in_(["queued", "leased", "running"]),
-        ).order_by(JudgeJob.priority, JudgeJob.created_at)
+        )
+        .order_by(JudgeJob.priority, JudgeJob.created_at)
     ).all()
     queued_submission_ids = [
-        job.submission_id for job in queued_jobs if job.submission_id is not None
+        job.submission_id
+        for job in queued_jobs
+        if job.submission_id is not None
     ]
     return AdminDashboardRead(
         generated_at=datetime.now(UTC),

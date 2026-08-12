@@ -21,7 +21,9 @@ def test_problem_setter_can_only_see_owned_problem(
 
     own_list = client.get("/api/admin/problems", headers=headers_a)
     other_list = client.get("/api/admin/problems", headers=headers_b)
-    other_detail = client.get(f"/api/admin/problems/{problem_id}", headers=headers_b)
+    other_detail = client.get(
+        f"/api/admin/problems/{problem_id}", headers=headers_b
+    )
 
     assert [problem["id"] for problem in own_list.json()] == [problem_id]
     assert other_list.json() == []
@@ -36,7 +38,11 @@ def test_problem_setter_cannot_validate_or_publish(
     headers = auth_headers(login_user("setter-c"))
     problem = client.post(
         "/api/admin/problems",
-        json={"code": "no-publish", "title": "No Publish", "statement": "Statement"},
+        json={
+            "code": "no-publish",
+            "title": "No Publish",
+            "statement": "Statement",
+        },
         headers=headers,
     ).json()
     revision = client.get(

@@ -65,7 +65,6 @@ def assert_all_migrations_applied(engine) -> None:
     assert applied_versions == {version for version, _ in MIGRATIONS}
 
 
-
 def test_upgrade_creates_expected_tables(tmp_path: Path):
     database_path = tmp_path / "migration-test.sqlite"
     engine = create_engine(f"sqlite:///{database_path}")
@@ -78,14 +77,19 @@ def test_upgrade_creates_expected_tables(tmp_path: Path):
 
 
 def test_production_upgrade_creates_consistent_pre_migration_snapshot(
-    tmp_path: Path, monkeypatch,
+    tmp_path: Path,
+    monkeypatch,
 ):
     database_path = tmp_path / "production.sqlite3"
     bundle_path = tmp_path / "course-bundle"
     engine = create_engine(f"sqlite:///{database_path}")
     with engine.begin() as connection:
-        connection.execute(text("CREATE TABLE legacy_marker (value TEXT NOT NULL)"))
-        connection.execute(text("INSERT INTO legacy_marker VALUES ('before-migration')"))
+        connection.execute(
+            text("CREATE TABLE legacy_marker (value TEXT NOT NULL)")
+        )
+        connection.execute(
+            text("INSERT INTO legacy_marker VALUES ('before-migration')")
+        )
 
     monkeypatch.setenv("APP_ENV", "production")
     monkeypatch.setenv("COURSE_BUNDLE_ROOT", str(bundle_path))
@@ -94,19 +98,20 @@ def test_production_upgrade_creates_consistent_pre_migration_snapshot(
 
     apply_migrations(engine)
 
-    manifest = json.loads((bundle_path / "manifests" / "course.json").read_text("utf-8"))
+    manifest = json.loads(
+        (bundle_path / "manifests" / "course.json").read_text("utf-8")
+    )
     assert manifest["course_id"] == "course-2026"
     assert manifest["term"] == "fall"
     assert manifest["schema_version"] == "legacy-unversioned"
     snapshot = bundle_path / manifest["database_snapshot"]
     with sqlite3.connect(snapshot) as connection:
-        assert connection.execute("SELECT value FROM legacy_marker").fetchone() == (
-            "before-migration",
-        )
+        assert connection.execute(
+            "SELECT value FROM legacy_marker"
+        ).fetchone() == ("before-migration",)
         assert connection.execute(
             "SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name='users'"
         ).fetchone() == (0,)
-
 
 
 def test_upgrade_backfills_missing_user_timestamps(tmp_path: Path):
@@ -114,9 +119,7 @@ def test_upgrade_backfills_missing_user_timestamps(tmp_path: Path):
     engine = create_engine(f"sqlite:///{database_path}")
 
     with engine.begin() as connection:
-        connection.execute(
-            text(
-                """
+        connection.execute(text("""
                 CREATE TABLE users (
                     id TEXT PRIMARY KEY,
                     sid INTEGER UNIQUE,
@@ -129,12 +132,8 @@ def test_upgrade_backfills_missing_user_timestamps(tmp_path: Path):
                     created_at TEXT,
                     updated_at TEXT
                 )
-                """
-            )
-        )
-        connection.execute(
-            text(
-                """
+                """))
+        connection.execute(text("""
                 INSERT INTO users (
                     id, sid, name, phone, email, user_group, ps, is_active, created_at, updated_at
                 ) VALUES (
@@ -149,27 +148,20 @@ def test_upgrade_backfills_missing_user_timestamps(tmp_path: Path):
                     NULL,
                     NULL
                 )
-                """
-            )
-        )
+                """))
 
     apply_migrations(engine)
 
     with engine.connect() as connection:
-        row = connection.execute(
-            text(
-                """
+        row = connection.execute(text("""
                 SELECT created_at, updated_at
                 FROM users
                 WHERE id = 'legacy-user'
-                """
-            )
-        ).one()
+                """)).one()
 
     assert row[0] is not None
     assert row[1] is not None
     assert "0004_user_timestamp_backfill" in get_applied_versions(engine)
-
 
 
 def test_upgrade_is_idempotent(tmp_path: Path):
@@ -189,9 +181,10 @@ def test_upgrade_is_idempotent(tmp_path: Path):
 
     assert first_versions == second_versions
     assert len(migration_rows) == len(MIGRATIONS)
-    assert {row[0] for row in migration_rows} == {version for version, _ in MIGRATIONS}
+    assert {row[0] for row in migration_rows} == {
+        version for version, _ in MIGRATIONS
+    }
     assert_all_migrations_applied(engine)
-
 
 
 def test_upgrade_adds_board_columns_to_legacy_lecture_materials(tmp_path: Path):
@@ -199,9 +192,7 @@ def test_upgrade_adds_board_columns_to_legacy_lecture_materials(tmp_path: Path):
     engine = create_engine(f"sqlite:///{database_path}")
 
     with engine.begin() as connection:
-        connection.execute(
-            text(
-                """
+        connection.execute(text("""
                 CREATE TABLE lecture_materials (
                     id INTEGER PRIMARY KEY,
                     title VARCHAR(200) NOT NULL,
@@ -212,9 +203,7 @@ def test_upgrade_adds_board_columns_to_legacy_lecture_materials(tmp_path: Path):
                     created_at TEXT,
                     updated_at TEXT
                 )
-                """
-            )
-        )
+                """))
 
     apply_migrations(engine)
 
@@ -224,7 +213,9 @@ def test_upgrade_adds_board_columns_to_legacy_lecture_materials(tmp_path: Path):
     }
     table_names = set(inspector.get_table_names())
 
-    assert {"content", "attachment_name", "attachment_relpath"}.issubset(material_columns)
+    assert {"content", "attachment_name", "attachment_relpath"}.issubset(
+        material_columns
+    )
     assert {"material_comments", "qa_posts", "qa_answers"}.issubset(table_names)
     assert "0005_materials_board_and_qa" in get_applied_versions(engine)
 
@@ -235,38 +226,26 @@ def test_problem_migration_backfills_homework_and_submissions(tmp_path: Path):
     apply_migrations(engine)
 
     with engine.begin() as connection:
-        connection.execute(
-            text(
-                """
+        connection.execute(text("""
                 INSERT INTO users (id, sid, name, phone, email, user_group, ps, is_active,
                                    created_at, updated_at)
                 VALUES ('student', 20259901, 'Student', '010', 's@example.com', 'student',
                         'hash', 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-                """
-            )
-        )
-        connection.execute(
-            text(
-                """
+                """))
+        connection.execute(text("""
                 INSERT INTO homework
                     (num, title, intro, codeName, ratedatanum, sec, sbnum, isDetected,
                      vitalSpace, disorderedOutput, isLint, created_at, updated_at)
                 VALUES
                     (77, 'Legacy Problem', 'Solve it', 'main', 0, 2, 10, 0, 0, 0, 0,
                      CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-                """
-            )
-        )
-        connection.execute(
-            text(
-                """
+                """))
+        connection.execute(text("""
                 INSERT INTO submissions
                     (homework_num, user_id, submission_mode, attempt_no, language, status,
                      code_text, submitted_at)
                 VALUES (77, 'student', 'official', 1, 'python', 'pending', 'code', CURRENT_TIMESTAMP)
-                """
-            )
-        )
+                """))
     # Re-run only the idempotent backfill body after legacy rows appear.
     from app.migrations.v0006_problem_revisions import upgrade
 
@@ -277,14 +256,20 @@ def test_problem_migration_backfills_homework_and_submissions(tmp_path: Path):
             text("SELECT id, code FROM problems WHERE code = 'homework-77'")
         ).one()
         revision = connection.execute(
-            text("SELECT id, status FROM problem_revisions WHERE problem_id = :id"),
+            text(
+                "SELECT id, status FROM problem_revisions WHERE problem_id = :id"
+            ),
             {"id": problem[0]},
         ).one()
         assignment = connection.execute(
-            text("SELECT revision_id FROM assignment_problems WHERE homework_num = 77")
+            text(
+                "SELECT revision_id FROM assignment_problems WHERE homework_num = 77"
+            )
         ).one()
         submission_revision = connection.execute(
-            text("SELECT problem_revision_id FROM submissions WHERE homework_num = 77")
+            text(
+                "SELECT problem_revision_id FROM submissions WHERE homework_num = 77"
+            )
         ).scalar_one()
 
     assert problem[1] == "homework-77"

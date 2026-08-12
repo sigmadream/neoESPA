@@ -80,7 +80,7 @@ def test_grade_export_returns_csv(
 
     assert response.status_code == 200
     assert "text/csv" in response.headers["content-type"]
-    assert 'homework_1_grades.csv' in response.headers["content-disposition"]
+    assert "homework_1_grades.csv" in response.headers["content-disposition"]
 
     rows = list(csv.DictReader(io.StringIO(response.text)))
     assert len(rows) == 2
@@ -96,7 +96,6 @@ def test_grade_export_returns_csv(
     assert rows[1]["total_score"] == "70.0"
     assert rows[1]["submission_score"] == "70.0"
     assert rows[1]["quality_score"] == "0.0"
-
 
 
 def test_latest_submissions_can_be_downloaded_as_archive(
@@ -171,10 +170,19 @@ def test_latest_submissions_can_be_downloaded_as_archive(
 
     assert response.status_code == 200
     assert response.headers["content-type"] == "application/zip"
-    assert 'homework_2_latest_submissions.zip' in response.headers["content-disposition"]
+    assert (
+        "homework_2_latest_submissions.zip"
+        in response.headers["content-disposition"]
+    )
     assert latest_alpha_submission.code_text != "print('alpha-new')\n"
-    assert decompress_text(latest_alpha_submission.code_text) == "print('alpha-new')\n"
-    assert beta_submission.code_text == '#include <iostream>\nint main(){std::cout<<"beta";}\n'
+    assert (
+        decompress_text(latest_alpha_submission.code_text)
+        == "print('alpha-new')\n"
+    )
+    assert (
+        beta_submission.code_text
+        == '#include <iostream>\nint main(){std::cout<<"beta";}\n'
+    )
 
     with zipfile.ZipFile(io.BytesIO(response.content)) as archive:
         names = sorted(archive.namelist())
@@ -183,9 +191,9 @@ def test_latest_submissions_can_be_downloaded_as_archive(
             "homework_2/20249004_student-beta/attempt_1_answer.cpp",
         ]
         assert (
-            archive.read("homework_2/20249003_student-alpha/attempt_2_main.py").decode(
-                "utf-8"
-            )
+            archive.read(
+                "homework_2/20249003_student-alpha/attempt_2_main.py"
+            ).decode("utf-8")
             == "print('alpha-new')\n"
         )
         assert (

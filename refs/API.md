@@ -24,7 +24,7 @@
 ```bash
 curl -X POST "http://localhost:8000/api/auth/login" \
   -H "Content-Type: application/json" \
-  -d '{"id":"admin","ps":"pllab818"}'
+  -d '{"id":"admin","ps":"pllab2026"}'
 ```
 
 성공 응답 예시:
@@ -580,7 +580,7 @@ curl "http://localhost:8000/api/ping"
 ```bash
 TOKEN=$(curl -sS -X POST "http://localhost:8000/api/auth/login" \
   -H "Content-Type: application/json" \
-  -d '{"id":"admin","ps":"pllab818"}' | python -c 'import sys, json; print(json.load(sys.stdin)["access_token"])')
+  -d '{"id":"admin","ps":"pllab2026"}' | python -c 'import sys, json; print(json.load(sys.stdin)["access_token"])')
 
 curl -sS -X POST "http://localhost:8000/api/admin/homeworks/import" \
   -H "Authorization: Bearer ${TOKEN}" \

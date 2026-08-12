@@ -8,8 +8,6 @@ from app.main import app
 from app.models.schemas import AuditLog, User
 from app.services.auth_service import AuthService
 
-
-
 engine = create_engine(
     "sqlite://", connect_args={"check_same_thread": False}, poolclass=StaticPool
 )
@@ -39,7 +37,9 @@ def _create_user(
 
 
 def _login(client: TestClient, user_id: str, password: str) -> str:
-    response = client.post("/api/auth/login", json={"id": user_id, "ps": password})
+    response = client.post(
+        "/api/auth/login", json={"id": user_id, "ps": password}
+    )
     assert response.status_code == 200
     return response.json()["access_token"]
 
@@ -54,7 +54,9 @@ def teardown_function():
 
 def test_admin_can_change_user_role():
     with Session(engine) as session:
-        _create_user(session, "role-admin", 20246001, "admin-pass", role="admin")
+        _create_user(
+            session, "role-admin", 20246001, "admin-pass", role="admin"
+        )
         _create_user(session, "managed-user", 20246002, "student-pass")
         _create_user(session, "other-user", 20246003, "student-pass", role="ta")
 
@@ -158,7 +160,9 @@ def test_profile_update_rejects_invalid_email():
 
 def test_admin_can_update_own_profile():
     with Session(engine) as session:
-        _create_user(session, "profile-admin", 20246022, "admin-pass", role="admin")
+        _create_user(
+            session, "profile-admin", 20246022, "admin-pass", role="admin"
+        )
 
         def get_session_override():
             return session
@@ -188,7 +192,9 @@ def test_admin_can_update_own_profile():
 
 def test_admin_can_deactivate_user():
     with Session(engine) as session:
-        _create_user(session, "status-admin", 20246004, "admin-pass", role="admin")
+        _create_user(
+            session, "status-admin", 20246004, "admin-pass", role="admin"
+        )
         _create_user(session, "status-user", 20246005, "student-pass")
 
         def get_session_override():
@@ -224,7 +230,9 @@ def test_admin_can_deactivate_user():
 
 def test_admin_can_bulk_register_users():
     with Session(engine) as session:
-        _create_user(session, "bulk-admin", 20246010, "admin-pass", role="admin")
+        _create_user(
+            session, "bulk-admin", 20246010, "admin-pass", role="admin"
+        )
         _create_user(session, "existing-user", 20246011, "student-pass")
 
         def get_session_override():
@@ -278,7 +286,9 @@ def test_admin_can_bulk_register_users():
             "/api/auth/login",
             json={"id": "new-ta", "ps": "ta-custom-pass"},
         )
-        list_response = client.get("/api/admin/users?search=new-", headers=headers)
+        list_response = client.get(
+            "/api/admin/users?search=new-", headers=headers
+        )
 
         app.dependency_overrides.clear()
 
@@ -294,7 +304,10 @@ def test_admin_can_bulk_register_users():
     assert created_login.status_code == 200
     assert custom_login.status_code == 200
     assert list_response.status_code == 200
-    assert [user["id"] for user in list_response.json()] == ["new-student", "new-ta"]
+    assert [user["id"] for user in list_response.json()] == [
+        "new-student",
+        "new-ta",
+    ]
 
 
 def test_user_read_serialization_backfills_missing_timestamps():
@@ -317,9 +330,12 @@ def test_user_read_serialization_backfills_missing_timestamps():
     assert payload.created_at is not None
     assert payload.updated_at is not None
 
+
 def test_admin_user_list_rejects_invalid_role_filter():
     with Session(engine) as session:
-        _create_user(session, "filter-admin", 20246030, "admin-pass", role="admin")
+        _create_user(
+            session, "filter-admin", 20246030, "admin-pass", role="admin"
+        )
 
         def get_session_override():
             return session
@@ -339,7 +355,9 @@ def test_admin_user_list_rejects_invalid_role_filter():
 
 def test_admin_cannot_change_own_role_or_deactivate_self():
     with Session(engine) as session:
-        _create_user(session, "self-admin", 20246031, "admin-pass", role="admin")
+        _create_user(
+            session, "self-admin", 20246031, "admin-pass", role="admin"
+        )
 
         def get_session_override():
             return session
@@ -365,12 +383,16 @@ def test_admin_cannot_change_own_role_or_deactivate_self():
     assert role_response.status_code == 400
     assert role_response.json()["detail"] == "Cannot change your own role"
     assert status_response.status_code == 400
-    assert status_response.json()["detail"] == "Cannot deactivate your own account"
+    assert (
+        status_response.json()["detail"] == "Cannot deactivate your own account"
+    )
 
 
 def test_admin_user_management_returns_404_for_missing_user():
     with Session(engine) as session:
-        _create_user(session, "missing-admin", 20246032, "admin-pass", role="admin")
+        _create_user(
+            session, "missing-admin", 20246032, "admin-pass", role="admin"
+        )
 
         def get_session_override():
             return session
@@ -408,7 +430,9 @@ def test_admin_user_management_returns_404_for_missing_user():
 
 def test_admin_bulk_user_creation_validates_duplicates_and_existing_users():
     with Session(engine) as session:
-        _create_user(session, "bulk-check-admin", 20246033, "admin-pass", role="admin")
+        _create_user(
+            session, "bulk-check-admin", 20246033, "admin-pass", role="admin"
+        )
         _create_user(session, "existing-bulk-user", 20246034, "student-pass")
 
         def get_session_override():
@@ -493,16 +517,27 @@ def test_admin_bulk_user_creation_validates_duplicates_and_existing_users():
         app.dependency_overrides.clear()
 
     assert duplicate_id_response.status_code == 400
-    assert duplicate_id_response.json()["detail"] == "Duplicate user id in request: dup-user"
+    assert (
+        duplicate_id_response.json()["detail"]
+        == "Duplicate user id in request: dup-user"
+    )
     assert duplicate_sid_response.status_code == 400
-    assert duplicate_sid_response.json()["detail"] == "Duplicate student ID in request: 20246037"
+    assert (
+        duplicate_sid_response.json()["detail"]
+        == "Duplicate student ID in request: 20246037"
+    )
     assert existing_user_response.status_code == 400
-    assert existing_user_response.json()["detail"] == "User already exists: existing-bulk-user"
+    assert (
+        existing_user_response.json()["detail"]
+        == "User already exists: existing-bulk-user"
+    )
 
 
 def test_admin_bulk_user_creation_requires_non_empty_password_and_valid_role():
     with Session(engine) as session:
-        _create_user(session, "bulk-validate-admin", 20246038, "admin-pass", role="admin")
+        _create_user(
+            session, "bulk-validate-admin", 20246038, "admin-pass", role="admin"
+        )
 
         def get_session_override():
             return session
@@ -552,14 +587,19 @@ def test_admin_bulk_user_creation_requires_non_empty_password_and_valid_role():
         app.dependency_overrides.clear()
 
     assert empty_password_response.status_code == 400
-    assert empty_password_response.json()["detail"] == "Default password must not be empty"
+    assert (
+        empty_password_response.json()["detail"]
+        == "Default password must not be empty"
+    )
     assert invalid_role_response.status_code == 400
     assert invalid_role_response.json()["detail"] == "Unsupported user role"
 
 
 def test_admin_can_reset_password_and_old_password_stops_working():
     with Session(engine) as session:
-        _create_user(session, "reset-admin", 20246041, "admin-pass", role="admin")
+        _create_user(
+            session, "reset-admin", 20246041, "admin-pass", role="admin"
+        )
         _create_user(session, "reset-user", 20246042, "old-pass")
 
         def get_session_override():

@@ -7,7 +7,6 @@ from app.main import app
 from app.models.schemas import User
 from app.services.auth_service import AuthService
 
-
 engine = create_engine(
     "sqlite://", connect_args={"check_same_thread": False}, poolclass=StaticPool
 )
@@ -29,7 +28,9 @@ def _create_user(session: Session, user_id: str, sid: int, role: str) -> None:
 
 
 def _login(client: TestClient, user_id: str) -> str:
-    response = client.post("/api/auth/login", json={"id": user_id, "ps": "password"})
+    response = client.post(
+        "/api/auth/login", json={"id": user_id, "ps": "password"}
+    )
     assert response.status_code == 200
     return response.json()["access_token"]
 
@@ -91,7 +92,9 @@ def test_admin_can_create_material_and_students_see_only_published_items():
     assert draft_response.status_code == 200
 
     assert student_list_response.status_code == 200
-    assert [item["title"] for item in student_list_response.json()] == ["Week 6 Slides"]
+    assert [item["title"] for item in student_list_response.json()] == [
+        "Week 6 Slides"
+    ]
 
     assert admin_list_response.status_code == 200
     assert [item["title"] for item in admin_list_response.json()] == [
@@ -127,7 +130,10 @@ def test_material_update_delete_and_comments():
         )
         mat_id = create_resp.json()["id"]
 
-        get_resp = client.get(f"/api/materials/{mat_id}", headers={"Authorization": f"Bearer {student_token}"})
+        get_resp = client.get(
+            f"/api/materials/{mat_id}",
+            headers={"Authorization": f"Bearer {student_token}"},
+        )
         assert get_resp.status_code == 200
         assert get_resp.json()["content"] == "Detailed article content here"
 
@@ -154,7 +160,10 @@ def test_material_update_delete_and_comments():
         assert update_resp.status_code == 200
         assert update_resp.json()["title"] == "C Programming Guide (Updated)"
 
-        del_resp = client.delete(f"/api/admin/materials/{mat_id}", headers={"Authorization": f"Bearer {admin_token}"})
+        del_resp = client.delete(
+            f"/api/admin/materials/{mat_id}",
+            headers={"Authorization": f"Bearer {admin_token}"},
+        )
         assert del_resp.status_code == 200
 
         app.dependency_overrides.clear()
@@ -197,7 +206,13 @@ def test_material_attachment_upload_and_download(tmp_path, monkeypatch):
 
         upload_resp = client.post(
             f"/api/admin/materials/{mat_id}/attachment",
-            files={"upload": ("week1.pdf", b"%PDF-1.4 fake-content", "application/pdf")},
+            files={
+                "upload": (
+                    "week1.pdf",
+                    b"%PDF-1.4 fake-content",
+                    "application/pdf",
+                )
+            },
             headers={"Authorization": f"Bearer {admin_token}"},
         )
         assert upload_resp.status_code == 200

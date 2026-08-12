@@ -10,19 +10,25 @@ from app.domains.homework.zip_parser import (
     parse_homework_testcase_archives,
 )
 
+
 def _build_zip(members):
     buffer = io.BytesIO()
-    with zipfile.ZipFile(buffer, "w", compression=zipfile.ZIP_DEFLATED) as archive:
+    with zipfile.ZipFile(
+        buffer, "w", compression=zipfile.ZIP_DEFLATED
+    ) as archive:
         for name, content in members:
             archive.writestr(name, content)
     return buffer.getvalue()
+
 
 def test_zip_parser_happy_path():
     input_zip = _build_zip([("a.txt", b"1\n"), ("b.txt", b"2\n")])
     output_zip = _build_zip([("a.txt", b"out1\n"), ("b.txt", b"out2\n")])
 
-    testcases = parse_homework_testcase_archives(io.BytesIO(input_zip), io.BytesIO(output_zip))
-    
+    testcases = parse_homework_testcase_archives(
+        io.BytesIO(input_zip), io.BytesIO(output_zip)
+    )
+
     assert len(testcases) == 2
     assert testcases[0].name == "a.txt"
     assert testcases[0].input == "1\n"
@@ -47,7 +53,10 @@ def test_zip_parser_happy_path():
 )
 def test_zip_parser_matches_pairs_independent_of_archive_member_order(pairs):
     input_zip = _build_zip(
-        [(name, input_text.encode("utf-8")) for name, (input_text, _) in pairs.items()]
+        [
+            (name, input_text.encode("utf-8"))
+            for name, (input_text, _) in pairs.items()
+        ]
     )
     output_zip = _build_zip(
         [
@@ -56,7 +65,9 @@ def test_zip_parser_matches_pairs_independent_of_archive_member_order(pairs):
         ]
     )
 
-    testcases = parse_homework_testcase_archives(io.BytesIO(input_zip), io.BytesIO(output_zip))
+    testcases = parse_homework_testcase_archives(
+        io.BytesIO(input_zip), io.BytesIO(output_zip)
+    )
 
     assert [testcase.name for testcase in testcases] == sorted(pairs)
     assert {
@@ -64,20 +75,26 @@ def test_zip_parser_matches_pairs_independent_of_archive_member_order(pairs):
         for testcase in testcases
     } == pairs
 
+
 def test_zip_parser_mismatched_filenames():
     input_zip = _build_zip([("a.txt", b"1")])
     output_zip = _build_zip([("b.txt", b"1")])
 
     with pytest.raises(HomeworkZipValidationError) as exc:
-        parse_homework_testcase_archives(io.BytesIO(input_zip), io.BytesIO(output_zip))
+        parse_homework_testcase_archives(
+            io.BytesIO(input_zip), io.BytesIO(output_zip)
+        )
     assert "matching filenames" in str(exc.value)
+
 
 def test_zip_parser_flattens_nested_paths():
     # Folder-compressed archives store members as folder/name; use the basename.
     input_zip = _build_zip([("nested/a.txt", b"1")])
     output_zip = _build_zip([("nested/a.txt", b"out1")])
 
-    testcases = parse_homework_testcase_archives(io.BytesIO(input_zip), io.BytesIO(output_zip))
+    testcases = parse_homework_testcase_archives(
+        io.BytesIO(input_zip), io.BytesIO(output_zip)
+    )
 
     assert [testcase.name for testcase in testcases] == ["a.txt"]
 
@@ -92,7 +109,9 @@ def test_zip_parser_skips_directory_and_metadata_entries():
     input_zip = _build_zip(members)
     output_zip = _build_zip([("a.txt", b"out1")])
 
-    testcases = parse_homework_testcase_archives(io.BytesIO(input_zip), io.BytesIO(output_zip))
+    testcases = parse_homework_testcase_archives(
+        io.BytesIO(input_zip), io.BytesIO(output_zip)
+    )
 
     assert [testcase.name for testcase in testcases] == ["a.txt"]
 
@@ -102,7 +121,9 @@ def test_zip_parser_rejects_traversal_paths():
     output_zip = _build_zip([("../a.txt", b"1")])
 
     with pytest.raises(HomeworkZipValidationError) as exc:
-        parse_homework_testcase_archives(io.BytesIO(input_zip), io.BytesIO(output_zip))
+        parse_homework_testcase_archives(
+            io.BytesIO(input_zip), io.BytesIO(output_zip)
+        )
     assert "unsupported member path" in str(exc.value).lower()
 
 
@@ -110,6 +131,8 @@ def test_zip_parser_assigns_equal_share_scores():
     input_zip = _build_zip([("a.txt", b"1"), ("b.txt", b"2")])
     output_zip = _build_zip([("a.txt", b"out1"), ("b.txt", b"out2")])
 
-    testcases = parse_homework_testcase_archives(io.BytesIO(input_zip), io.BytesIO(output_zip))
+    testcases = parse_homework_testcase_archives(
+        io.BytesIO(input_zip), io.BytesIO(output_zip)
+    )
 
     assert [testcase.score for testcase in testcases] == [50.0, 50.0]

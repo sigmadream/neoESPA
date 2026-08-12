@@ -37,7 +37,9 @@ class SnapshotRetentionService:
         for snapshot in snapshots:
             scope = (snapshot.homework_num, snapshot.user_id)
             kept_count = kept_counts.get(scope, 0)
-            is_within_retention_window = _as_utc_naive(snapshot.created_at) >= _as_utc_naive(older_than)
+            is_within_retention_window = _as_utc_naive(
+                snapshot.created_at
+            ) >= _as_utc_naive(older_than)
             should_keep_for_scope = kept_count < keep_latest_per_scope
 
             if is_within_retention_window or should_keep_for_scope:

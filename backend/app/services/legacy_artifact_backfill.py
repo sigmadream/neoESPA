@@ -7,7 +7,11 @@ from pathlib import Path
 from sqlmodel import Session, select
 
 from ..models.schemas import (
-    AssignmentProblem, GradingRule, ProblemAsset, Submission, SubmissionFile,
+    AssignmentProblem,
+    GradingRule,
+    ProblemAsset,
+    Submission,
+    SubmissionFile,
 )
 from .artifact_store import LocalArtifactStore
 from .course_bundle import CourseBundleService
@@ -32,7 +36,11 @@ class LegacyArtifactBackfillService:
         "output_zip_meta": "legacy_output_archive",
     }
 
-    def __init__(self, store: LocalArtifactStore | None = None, legacy_root: Path | None = None):
+    def __init__(
+        self,
+        store: LocalArtifactStore | None = None,
+        legacy_root: Path | None = None,
+    ):
         self.store = store or LocalArtifactStore()
         self.legacy_root = (legacy_root or self.store.root.parent).resolve()
 
@@ -58,7 +66,9 @@ class LegacyArtifactBackfillService:
             if result and result.startswith("invalid:"):
                 invalid.append(result.removeprefix("invalid:"))
         for rule in session.exec(
-            select(GradingRule).where(GradingRule.rule_name.in_(list(self.METADATA_KINDS)))
+            select(GradingRule).where(
+                GradingRule.rule_name.in_(list(self.METADATA_KINDS))
+            )
         ).all():
             result = self._migrate_metadata_rule(session, rule)
             migrated += result == "migrated"
@@ -85,11 +95,17 @@ class LegacyArtifactBackfillService:
         else:
             missing.extend(reconciliation.missing)
             invalid.extend(reconciliation.checksum_mismatch)
-        return LegacyBackfillReport(migrated, already, sorted(missing), sorted(invalid))
+        return LegacyBackfillReport(
+            migrated, already, sorted(missing), sorted(invalid)
+        )
 
     def _legacy_path(self, value: str) -> Path:
         raw = Path(value)
-        candidate = raw.resolve() if raw.is_absolute() else (self.legacy_root / raw).resolve()
+        candidate = (
+            raw.resolve()
+            if raw.is_absolute()
+            else (self.legacy_root / raw).resolve()
+        )
         if not raw.is_absolute() and self.legacy_root not in candidate.parents:
             raise ValueError(value)
         return candidate
@@ -114,15 +130,18 @@ class LegacyArtifactBackfillService:
         row.storage_sha256 = stored.sha256
         return "migrated"
 
-    def _migrate_metadata_rule(self, session: Session, rule: GradingRule) -> str:
+    def _migrate_metadata_rule(
+        self, session: Session, rule: GradingRule
+    ) -> str:
         try:
             metadata = json.loads(rule.rule_value)
             relative = metadata["stored_relpath"]
             source = self._legacy_path(relative)
-        except (ValueError, KeyError, TypeError, json.JSONDecodeError):
+        except ValueError, KeyError, TypeError, json.JSONDecodeError:
             return f"invalid:grading_rule:{rule.id}"
         assignment = session.exec(
-            select(AssignmentProblem).where(AssignmentProblem.homework_num == rule.homework_num)
+            select(AssignmentProblem)
+            .where(AssignmentProblem.homework_num == rule.homework_num)
             .order_by(AssignmentProblem.position)
         ).first()
         if assignment is None:
@@ -131,7 +150,8 @@ class LegacyArtifactBackfillService:
             select(ProblemAsset).where(
                 ProblemAsset.revision_id == assignment.revision_id,
                 ProblemAsset.asset_kind == self.METADATA_KINDS[rule.rule_name],
-                ProblemAsset.display_name == metadata.get("original_name", source.name),
+                ProblemAsset.display_name
+                == metadata.get("original_name", source.name),
             )
         ).first()
         if existing is not None:
@@ -140,10 +160,16 @@ class LegacyArtifactBackfillService:
             return f"missing:{relative}"
         with source.open("rb") as stream:
             stored = self.store.put_stream(stream)
-        session.add(ProblemAsset(
-            revision_id=assignment.revision_id, asset_kind=self.METADATA_KINDS[rule.rule_name],
-            display_name=metadata.get("original_name", source.name),
-            storage_path=stored.relative_path, sha256=stored.sha256,
-            size_bytes=stored.size_bytes, content_type=metadata.get("content_type"), is_hidden=True,
-        ))
+        session.add(
+            ProblemAsset(
+                revision_id=assignment.revision_id,
+                asset_kind=self.METADATA_KINDS[rule.rule_name],
+                display_name=metadata.get("original_name", source.name),
+                storage_path=stored.relative_path,
+                sha256=stored.sha256,
+                size_bytes=stored.size_bytes,
+                content_type=metadata.get("content_type"),
+                is_hidden=True,
+            )
+        )
         return "migrated"

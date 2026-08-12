@@ -18,7 +18,8 @@ def upgrade(engine) -> None:
     inspector = inspect(engine)
     if inspector.has_table("lecture_materials"):
         existing_columns = {
-            column["name"] for column in inspector.get_columns("lecture_materials")
+            column["name"]
+            for column in inspector.get_columns("lecture_materials")
         }
         with engine.begin() as connection:
             for column_name, definition in LECTURE_MATERIAL_COLUMNS.items():

@@ -6,12 +6,21 @@ from sqlmodel import Session, select
 from ...api.dependencies import require_capability
 from ...api.runtime import observability_service
 from ...core.db import get_session
-from ...core.system_settings import SYSTEM_SETTING_DEFINITIONS, normalize_setting_value
-from ...models.schemas import (
-    SystemSetting, SystemSettingHistory, SystemSettingRead, SystemSettingsUpdateRequest, User,
+from ...core.system_settings import (
+    SYSTEM_SETTING_DEFINITIONS,
+    normalize_setting_value,
 )
-from ..settings.helpers import load_known_system_settings, to_system_setting_read
-
+from ...models.schemas import (
+    SystemSetting,
+    SystemSettingHistory,
+    SystemSettingRead,
+    SystemSettingsUpdateRequest,
+    User,
+)
+from ..settings.helpers import (
+    load_known_system_settings,
+    to_system_setting_read,
+)
 
 router = APIRouter()
 
@@ -48,7 +57,9 @@ async def update_admin_settings(
             )
 
         try:
-            normalized_value, value_type = normalize_setting_value(item.key, item.value)
+            normalized_value, value_type = normalize_setting_value(
+                item.key, item.value
+            )
         except ValueError as error:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
@@ -58,7 +69,9 @@ async def update_admin_settings(
         definition = SYSTEM_SETTING_DEFINITIONS[item.key]
         setting = session.get(SystemSetting, item.key)
         before_values[item.key] = (
-            setting.value if setting is not None else definition["default_value"]
+            setting.value
+            if setting is not None
+            else definition["default_value"]
         )
         if setting is None:
             setting = SystemSetting(
@@ -74,10 +87,14 @@ async def update_admin_settings(
             setting.description = definition["description"]
             setting.updated_at = datetime.now(UTC)
         session.add(setting)
-        session.add(SystemSettingHistory(
-            setting_key=item.key, previous_value=before_values[item.key],
-            new_value=normalized_value, changed_by=current_user.id,
-        ))
+        session.add(
+            SystemSettingHistory(
+                setting_key=item.key,
+                previous_value=before_values[item.key],
+                new_value=normalized_value,
+                changed_by=current_user.id,
+            )
+        )
         updated_settings.append(setting)
 
     observability_service.record_audit(
@@ -104,15 +121,21 @@ async def rollback_admin_setting(
 ):
     setting = session.get(SystemSetting, key)
     if setting is None:
-        raise HTTPException(status_code=404, detail="Setting has no stored value")
+        raise HTTPException(
+            status_code=404, detail="Setting has no stored value"
+        )
     history = session.exec(
-        select(SystemSettingHistory).where(
+        select(SystemSettingHistory)
+        .where(
             SystemSettingHistory.setting_key == key,
             SystemSettingHistory.rolled_back_at.is_(None),
-        ).order_by(SystemSettingHistory.id.desc())
+        )
+        .order_by(SystemSettingHistory.id.desc())
     ).first()
     if history is None or history.previous_value is None:
-        raise HTTPException(status_code=409, detail="Setting has no rollback value")
+        raise HTTPException(
+            status_code=409, detail="Setting has no rollback value"
+        )
     current_value = setting.value
     setting.value = history.previous_value
     setting.updated_at = datetime.now(UTC)
@@ -120,9 +143,13 @@ async def rollback_admin_setting(
     session.add(setting)
     session.add(history)
     observability_service.record_audit(
-        session, actor_user_id=current_user.id, action_type="rollback_system_setting",
-        target_type="system_setting", target_id=key,
-        before={"value": current_value}, after={"value": setting.value},
+        session,
+        actor_user_id=current_user.id,
+        action_type="rollback_system_setting",
+        target_type="system_setting",
+        target_id=key,
+        before={"value": current_value},
+        after={"value": setting.value},
     )
     session.commit()
     session.refresh(setting)

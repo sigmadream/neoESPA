@@ -19,7 +19,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "neoESPA Modernized",
-  description: "Modernized neoESPA platform",
+  description: "neoESPA platform",
 };
 
 export default function RootLayout({

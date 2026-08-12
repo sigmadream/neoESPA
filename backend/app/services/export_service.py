@@ -55,11 +55,18 @@ class ExportService:
 
         included_user_ids: set[str] = set()
         for user in students:
-            if user.user_group != "student" and user.id not in latest_submissions:
+            if (
+                user.user_group != "student"
+                and user.id not in latest_submissions
+            ):
                 continue
 
             submission = latest_submissions.get(user.id)
-            result = submission_results.get(submission.id or 0) if submission is not None else None
+            result = (
+                submission_results.get(submission.id or 0)
+                if submission is not None
+                else None
+            )
             writer.writerow(
                 [
                     user.sid,
@@ -74,10 +81,19 @@ class ExportService:
                     self._effective_total_score(result),
                     result.submission_score if result is not None else "",
                     result.quality_score if result is not None else "",
-                    result.manual_total_score if result is not None and result.manual_total_score is not None else "",
+                    (
+                        result.manual_total_score
+                        if result is not None
+                        and result.manual_total_score is not None
+                        else ""
+                    ),
                     result.compile_status if result is not None else "",
                     result.run_status if result is not None else "",
-                    submission.submitted_at.isoformat() if submission is not None else "",
+                    (
+                        submission.submitted_at.isoformat()
+                        if submission is not None
+                        else ""
+                    ),
                 ]
             )
             included_user_ids.add(user.id)
@@ -103,7 +119,12 @@ class ExportService:
                     self._effective_total_score(result),
                     result.submission_score if result is not None else "",
                     result.quality_score if result is not None else "",
-                    result.manual_total_score if result is not None and result.manual_total_score is not None else "",
+                    (
+                        result.manual_total_score
+                        if result is not None
+                        and result.manual_total_score is not None
+                        else ""
+                    ),
                     result.compile_status if result is not None else "",
                     result.run_status if result is not None else "",
                     submission.submitted_at.isoformat(),
@@ -112,11 +133,17 @@ class ExportService:
 
         return output.getvalue().encode("utf-8")
 
-    def build_latest_submission_archive(self, session: Session, homework: Homework) -> bytes:
-        latest_submissions = self._latest_submission_by_user(session, homework.num or 0)
+    def build_latest_submission_archive(
+        self, session: Session, homework: Homework
+    ) -> bytes:
+        latest_submissions = self._latest_submission_by_user(
+            session, homework.num or 0
+        )
         archive_buffer = io.BytesIO()
 
-        with zipfile.ZipFile(archive_buffer, "w", zipfile.ZIP_DEFLATED) as archive:
+        with zipfile.ZipFile(
+            archive_buffer, "w", zipfile.ZIP_DEFLATED
+        ) as archive:
             for user_id in sorted(latest_submissions):
                 submission = latest_submissions[user_id]
                 source_text = decompress_text(submission.code_text or "")
@@ -127,9 +154,12 @@ class ExportService:
                 if user is None:
                     continue
 
-                source_name = submission.original_filename or DEFAULT_SOURCE_NAMES.get(
-                    submission.language,
-                    "main.txt",
+                source_name = (
+                    submission.original_filename
+                    or DEFAULT_SOURCE_NAMES.get(
+                        submission.language,
+                        "main.txt",
+                    )
                 )
                 safe_source_name = Path(source_name).name
                 archive_path = (
@@ -168,16 +198,24 @@ class ExportService:
         session: Session,
         submissions: list[Submission],
     ) -> dict[int, SubmissionResult]:
-        submission_ids = [submission.id for submission in submissions if submission.id is not None]
+        submission_ids = [
+            submission.id
+            for submission in submissions
+            if submission.id is not None
+        ]
         if not submission_ids:
             return {}
 
         results = session.exec(
-            select(SubmissionResult).where(SubmissionResult.submission_id.in_(submission_ids))
+            select(SubmissionResult).where(
+                SubmissionResult.submission_id.in_(submission_ids)
+            )
         ).all()
         return {result.submission_id: result for result in results}
 
-    def _effective_total_score(self, result: SubmissionResult | None) -> float | str:
+    def _effective_total_score(
+        self, result: SubmissionResult | None
+    ) -> float | str:
         if result is None:
             return ""
         if result.manual_total_score is not None:

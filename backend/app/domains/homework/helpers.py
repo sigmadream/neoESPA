@@ -15,7 +15,6 @@ from ...models.schemas import (
 from ...services.code_runner import SUPPORTED_LANGUAGES
 from ..shared.schedules import compute_schedule_window
 
-
 ARTIFACT_METADATA_RULE_DESCRIPTIONS: dict[str, str] = {
     "problem_file_meta": "Problem statement file metadata.",
     "input_zip_meta": "Input testcase archive metadata.",
@@ -118,14 +117,21 @@ def load_homework_lint_week(session: Session, homework_num: int) -> str | None:
 
 def _validate_artifact_metadata_rule_name(rule_name: str) -> None:
     if rule_name not in ARTIFACT_METADATA_RULE_DESCRIPTIONS:
-        raise ValueError(f"Unsupported artifact metadata rule name: {rule_name}")
+        raise ValueError(
+            f"Unsupported artifact metadata rule name: {rule_name}"
+        )
 
 
 def _normalize_artifact_metadata_payload(payload: Any) -> dict[str, Any]:
     if not isinstance(payload, dict):
         raise ValueError("Artifact metadata payload must be an object")
 
-    required_keys = {"original_name", "stored_relpath", "size_bytes", "content_type"}
+    required_keys = {
+        "original_name",
+        "stored_relpath",
+        "size_bytes",
+        "content_type",
+    }
     if set(payload.keys()) != required_keys:
         raise ValueError(
             "Artifact metadata payload must include exactly original_name, "
@@ -138,23 +144,33 @@ def _normalize_artifact_metadata_payload(payload: Any) -> dict[str, Any]:
     content_type = payload["content_type"]
 
     if not isinstance(original_name, str) or not original_name.strip():
-        raise ValueError("Artifact metadata original_name must be a non-empty string")
+        raise ValueError(
+            "Artifact metadata original_name must be a non-empty string"
+        )
     if not isinstance(stored_relpath, str) or not stored_relpath.strip():
-        raise ValueError("Artifact metadata stored_relpath must be a non-empty string")
+        raise ValueError(
+            "Artifact metadata stored_relpath must be a non-empty string"
+        )
     if (
         isinstance(size_bytes, bool)
         or not isinstance(size_bytes, int)
         or size_bytes < 0
     ):
-        raise ValueError("Artifact metadata size_bytes must be a non-negative integer")
+        raise ValueError(
+            "Artifact metadata size_bytes must be a non-negative integer"
+        )
     if content_type is not None and not isinstance(content_type, str):
-        raise ValueError("Artifact metadata content_type must be a string or null")
+        raise ValueError(
+            "Artifact metadata content_type must be a string or null"
+        )
 
     return {
         "original_name": original_name.strip(),
         "stored_relpath": stored_relpath.strip(),
         "size_bytes": size_bytes,
-        "content_type": content_type.strip() if isinstance(content_type, str) else None,
+        "content_type": (
+            content_type.strip() if isinstance(content_type, str) else None
+        ),
     }
 
 
@@ -194,7 +210,7 @@ def load_homework_artifact_metadata(
     try:
         loaded = json.loads(rule.rule_value)
         return _normalize_artifact_metadata_payload(loaded)
-    except (json.JSONDecodeError, ValueError):
+    except json.JSONDecodeError, ValueError:
         return None
 
 
@@ -233,7 +249,9 @@ def upsert_homework_rule(
     session.add(rule)
 
 
-def delete_homework_rule(session: Session, homework_num: int, rule_name: str) -> None:
+def delete_homework_rule(
+    session: Session, homework_num: int, rule_name: str
+) -> None:
     rule = get_grading_rule(session, homework_num, rule_name)
     if rule is not None:
         session.delete(rule)
@@ -311,7 +329,9 @@ def to_homework_read(session: Session, homework: Homework) -> HomeworkRead:
     )
 
 
-def to_homework_admin_read(session: Session, homework: Homework) -> HomeworkAdminRead:
+def to_homework_admin_read(
+    session: Session, homework: Homework
+) -> HomeworkAdminRead:
     homework_read = to_homework_read(session, homework)
     homework_num = homework.num or 0
     testcases = load_homework_testcases(session, homework_num)
@@ -341,10 +361,14 @@ def to_homework_admin_read(session: Session, homework: Homework) -> HomeworkAdmi
             else None
         ),
         input_zip_name=(
-            input_zip_meta["original_name"] if input_zip_meta is not None else None
+            input_zip_meta["original_name"]
+            if input_zip_meta is not None
+            else None
         ),
         output_zip_name=(
-            output_zip_meta["original_name"] if output_zip_meta is not None else None
+            output_zip_meta["original_name"]
+            if output_zip_meta is not None
+            else None
         ),
         parsed_testcase_count=len(testcases),
     )
@@ -388,7 +412,7 @@ def to_homework_admin_read_batch(
                 loaded = json.loads(lang_rule.rule_value)
                 if isinstance(loaded, list):
                     allowed_languages = normalize_allowed_languages(loaded)
-            except (json.JSONDecodeError, HTTPException):
+            except json.JSONDecodeError, HTTPException:
                 pass
 
         # Parse testcases
@@ -397,24 +421,30 @@ def to_homework_admin_read_batch(
         if tc_rule:
             try:
                 loaded = json.loads(tc_rule.rule_value)
-                raw_cases = loaded.get("cases", []) if isinstance(loaded, dict) else []
+                raw_cases = (
+                    loaded.get("cases", []) if isinstance(loaded, dict) else []
+                )
                 if isinstance(raw_cases, list):
                     for raw_case in raw_cases:
                         if isinstance(raw_case, dict):
                             testcases.append(
                                 HomeworkTestCaseWrite(
                                     name=str(
-                                        raw_case.get("name", f"case-{len(testcases)+1}")
+                                        raw_case.get(
+                                            "name", f"case-{len(testcases)+1}"
+                                        )
                                     ),
                                     input=str(raw_case.get("input", "")),
                                     expected_output=str(
                                         raw_case.get("expected_output", "")
                                     ),
                                     score=float(raw_case.get("score", 0.0)),
-                                    is_hidden=bool(raw_case.get("is_hidden", False)),
+                                    is_hidden=bool(
+                                        raw_case.get("is_hidden", False)
+                                    ),
                                 )
                             )
-            except (json.JSONDecodeError, ValueError):
+            except json.JSONDecodeError, ValueError:
                 pass
 
         # Parse metadata
@@ -426,12 +456,16 @@ def to_homework_admin_read_batch(
                 try:
                     loaded = json.loads(meta_rule.rule_value)
                     metas[key] = _normalize_artifact_metadata_payload(loaded)
-                except (json.JSONDecodeError, ValueError):
+                except json.JSONDecodeError, ValueError:
                     metas[key] = None
             else:
                 metas[key] = None
 
-        lint_week = (h_rules.get("lint_week").rule_value.strip() or None) if h_rules.get("lint_week") else None
+        lint_week = (
+            (h_rules.get("lint_week").rule_value.strip() or None)
+            if h_rules.get("lint_week")
+            else None
+        )
 
         schedule_status, can_submit = compute_schedule_window(
             homework.starttime, homework.deadline
@@ -462,9 +496,21 @@ def to_homework_admin_read_batch(
                 **homework_read_data,
                 testcases=testcases,
                 lint_week=lint_week,
-                problem_file_name=metas["problem_file_meta"]["original_name"] if metas["problem_file_meta"] else None,
-                input_zip_name=metas["input_zip_meta"]["original_name"] if metas["input_zip_meta"] else None,
-                output_zip_name=metas["output_zip_meta"]["original_name"] if metas["output_zip_meta"] else None,
+                problem_file_name=(
+                    metas["problem_file_meta"]["original_name"]
+                    if metas["problem_file_meta"]
+                    else None
+                ),
+                input_zip_name=(
+                    metas["input_zip_meta"]["original_name"]
+                    if metas["input_zip_meta"]
+                    else None
+                ),
+                output_zip_name=(
+                    metas["output_zip_meta"]["original_name"]
+                    if metas["output_zip_meta"]
+                    else None
+                ),
                 parsed_testcase_count=len(testcases),
             )
         )

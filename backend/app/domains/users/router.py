@@ -31,7 +31,6 @@ from ...services.user_management import (
 from ...services.authorization_service import KNOWN_CAPABILITIES
 from ..users.serializers import to_user_read, user_management_bad_request
 
-
 router = APIRouter()
 
 
@@ -125,7 +124,10 @@ async def update_user_role(
         normalized_role = normalize_user_group(payload.user_group)
     except UserManagementError as error:
         raise user_management_bad_request(error) from error
-    if user.id == current_user.id and normalized_role != current_user.user_group:
+    if (
+        user.id == current_user.id
+        and normalized_role != current_user.user_group
+    ):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Cannot change your own role",
@@ -293,7 +295,9 @@ async def reset_user_password(
     return to_user_read(user)
 
 
-@router.get("/admin/roles/{role_name}/capabilities", response_model=RoleCapabilitiesRead)
+@router.get(
+    "/admin/roles/{role_name}/capabilities", response_model=RoleCapabilitiesRead
+)
 async def get_role_capabilities(
     role_name: str,
     _: User = Depends(require_step_up("user:manage")),
@@ -302,14 +306,18 @@ async def get_role_capabilities(
     if role_name not in MANAGEABLE_USER_ROLES:
         raise HTTPException(status_code=404, detail="Role not found")
     configured = session.exec(
-        select(RoleCapability.capability).where(RoleCapability.role_name == role_name)
+        select(RoleCapability.capability).where(
+            RoleCapability.role_name == role_name
+        )
     ).all()
     return RoleCapabilitiesRead(
         role_name=role_name, capabilities=sorted(set(configured) - {"__none__"})
     )
 
 
-@router.put("/admin/roles/{role_name}/capabilities", response_model=RoleCapabilitiesRead)
+@router.put(
+    "/admin/roles/{role_name}/capabilities", response_model=RoleCapabilitiesRead
+)
 async def replace_role_capabilities(
     role_name: str,
     payload: RoleCapabilitiesUpdate,
@@ -317,22 +325,34 @@ async def replace_role_capabilities(
     session: Session = Depends(get_session),
 ):
     if role_name not in MANAGEABLE_USER_ROLES or role_name == "super_admin":
-        raise HTTPException(status_code=400, detail="Role capabilities cannot be changed")
+        raise HTTPException(
+            status_code=400, detail="Role capabilities cannot be changed"
+        )
     requested = {item.strip() for item in payload.capabilities if item.strip()}
     if "*" in requested or requested - KNOWN_CAPABILITIES:
-        raise HTTPException(status_code=400, detail="Unknown or unsafe capability")
+        raise HTTPException(
+            status_code=400, detail="Unknown or unsafe capability"
+        )
     existing = session.exec(
         select(RoleCapability).where(RoleCapability.role_name == role_name)
     ).all()
-    before = sorted(item.capability for item in existing if item.capability != "__none__")
+    before = sorted(
+        item.capability for item in existing if item.capability != "__none__"
+    )
     for item in existing:
         session.delete(item)
     for capability in requested or {"__none__"}:
         session.add(RoleCapability(role_name=role_name, capability=capability))
     observability_service.record_audit(
-        session, actor_user_id=current_user.id, action_type="replace_role_capabilities",
-        target_type="role", target_id=role_name,
-        before={"capabilities": before}, after={"capabilities": sorted(requested)},
+        session,
+        actor_user_id=current_user.id,
+        action_type="replace_role_capabilities",
+        target_type="role",
+        target_id=role_name,
+        before={"capabilities": before},
+        after={"capabilities": sorted(requested)},
     )
     session.commit()
-    return RoleCapabilitiesRead(role_name=role_name, capabilities=sorted(requested))
+    return RoleCapabilitiesRead(
+        role_name=role_name, capabilities=sorted(requested)
+    )

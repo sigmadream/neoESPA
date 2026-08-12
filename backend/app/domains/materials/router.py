@@ -6,7 +6,11 @@ from fastapi import APIRouter, Depends, HTTPException, UploadFile, status
 from fastapi.responses import FileResponse
 from sqlmodel import Session, select
 
-from ...api.dependencies import get_optional_current_user, require_capability, require_roles
+from ...api.dependencies import (
+    get_optional_current_user,
+    require_capability,
+    require_roles,
+)
 from ...api.runtime import observability_service
 from ...core.config import settings
 from ...core.db import get_session
@@ -21,7 +25,6 @@ from ...models.schemas import (
 from ..materials.serializers import to_lecture_material_read
 from ..users.serializers import is_staff
 
-
 router = APIRouter()
 
 
@@ -35,8 +38,12 @@ def _get_visible_material(
     current_user: User | None,
 ) -> LectureMaterial:
     material = session.get(LectureMaterial, material_id)
-    if material is None or (not material.is_published and not is_staff(current_user)):
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Material not found")
+    if material is None or (
+        not material.is_published and not is_staff(current_user)
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Material not found"
+        )
     return material
 
 
@@ -45,9 +52,14 @@ def list_materials(
     current_user: User | None = Depends(get_optional_current_user),
     session: Session = Depends(get_session),
 ):
-    materials = session.exec(select(LectureMaterial).order_by(LectureMaterial.id.desc())).all()
+    materials = session.exec(
+        select(LectureMaterial).order_by(LectureMaterial.id.desc())
+    ).all()
     if is_staff(current_user):
-        return [to_lecture_material_read(material, session) for material in materials]
+        return [
+            to_lecture_material_read(material, session)
+            for material in materials
+        ]
     return [
         to_lecture_material_read(material, session)
         for material in materials
@@ -73,12 +85,19 @@ def download_material_attachment(
 ):
     material = _get_visible_material(session, material_id, current_user)
     if not material.attachment_relpath:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Attachment not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Attachment not found"
+        )
 
     attachment_root = _get_material_attachment_root().resolve()
     attachment_path = (attachment_root / material.attachment_relpath).resolve()
-    if not attachment_path.is_relative_to(attachment_root) or not attachment_path.is_file():
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Attachment not found")
+    if (
+        not attachment_path.is_relative_to(attachment_root)
+        or not attachment_path.is_file()
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Attachment not found"
+        )
 
     return FileResponse(
         attachment_path,
@@ -117,7 +136,10 @@ def create_material(
     return to_lecture_material_read(material, session)
 
 
-@router.post("/admin/materials/{material_id}/attachment", response_model=LectureMaterialRead)
+@router.post(
+    "/admin/materials/{material_id}/attachment",
+    response_model=LectureMaterialRead,
+)
 def upload_material_attachment(
     material_id: int,
     upload: UploadFile,
@@ -126,7 +148,9 @@ def upload_material_attachment(
 ):
     material = session.get(LectureMaterial, material_id)
     if material is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Material not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Material not found"
+        )
 
     safe_name = Path(upload.filename or "").name.strip()
     if not safe_name:
@@ -157,7 +181,9 @@ def upload_material_attachment(
     return to_lecture_material_read(material, session)
 
 
-@router.patch("/admin/materials/{material_id}", response_model=LectureMaterialRead)
+@router.patch(
+    "/admin/materials/{material_id}", response_model=LectureMaterialRead
+)
 def update_material(
     material_id: int,
     payload: LectureMaterialWrite,
@@ -166,7 +192,9 @@ def update_material(
 ):
     material = session.get(LectureMaterial, material_id)
     if material is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Material not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Material not found"
+        )
 
     material.title = payload.title
     material.description = payload.description
@@ -198,7 +226,9 @@ def delete_material(
 ):
     material = session.get(LectureMaterial, material_id)
     if material is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Material not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Material not found"
+        )
 
     session.delete(material)
     observability_service.record_audit(
@@ -217,11 +247,15 @@ def delete_material(
     return {"message": "Material deleted successfully"}
 
 
-@router.post("/materials/{material_id}/comments", response_model=LectureMaterialRead)
+@router.post(
+    "/materials/{material_id}/comments", response_model=LectureMaterialRead
+)
 def add_material_comment(
     material_id: int,
     payload: MaterialCommentCreate,
-    current_user: User = Depends(require_roles("student", "ta", "instructor", "admin")),
+    current_user: User = Depends(
+        require_roles("student", "ta", "instructor", "admin")
+    ),
     session: Session = Depends(get_session),
 ):
     material = _get_visible_material(session, material_id, current_user)

@@ -5,13 +5,22 @@ from sqlmodel import Session, SQLModel, create_engine, select
 from sqlmodel.pool import StaticPool
 
 from app.core.system_settings import DEFAULT_LINT_SETTINGS
-from app.models.schemas import GradingRule, Homework, Submission, SubmissionResult, SystemSetting, User
+from app.models.schemas import (
+    GradingRule,
+    Homework,
+    Submission,
+    SubmissionResult,
+    SystemSetting,
+    User,
+)
 from app.services.auth_service import AuthService
-from app.services.code_runner import CodeRunner, PhaseExecutionResult, RunnerExecutionResult
+from app.services.code_runner import (
+    CodeRunner,
+    PhaseExecutionResult,
+    RunnerExecutionResult,
+)
 from app.services.grading_service import GradingService
 from app.services.lint_pipeline import LintPipelineService
-
-
 
 engine = create_engine(
     "sqlite://", connect_args={"check_same_thread": False}, poolclass=StaticPool
@@ -33,7 +42,12 @@ class PassingRunner(CodeRunner):
             source_name=source_name or "answer.py",
             workspace="/tmp/stub",
             compile_result=PhaseExecutionResult(
-                command=["python3", "-m", "py_compile", source_name or "answer.py"],
+                command=[
+                    "python3",
+                    "-m",
+                    "py_compile",
+                    source_name or "answer.py",
+                ],
                 exit_code=0,
                 duration_ms=1,
             ),
@@ -49,7 +63,9 @@ class PassingRunner(CodeRunner):
 
 
 def _dt_string(offset_days: int) -> str:
-    return (datetime.now(UTC) + timedelta(days=offset_days)).strftime("%Y-%m-%d %H:%M:%S")
+    return (datetime.now(UTC) + timedelta(days=offset_days)).strftime(
+        "%Y-%m-%d %H:%M:%S"
+    )
 
 
 def setup_function():
@@ -85,7 +101,10 @@ def test_python_lint_messages_are_normalized():
     assert normalized[0].neo_severity == "style"
     assert normalized[0].message_kor == "라인의 끝에 공백이 있습니다"
     assert normalized[0].enabled_for_week is True
-    assert normalized[1].message_kor == "파일의 마지막 줄에는 빈 라인을 추가해 주세요"
+    assert (
+        normalized[1].message_kor
+        == "파일의 마지막 줄에는 빈 라인을 추가해 주세요"
+    )
 
 
 def test_lint_penalty_affects_total_score():
@@ -129,13 +148,37 @@ def test_lint_penalty_affects_total_score():
 
         submission = session.exec(select(Submission)).first()
         session.add(SubmissionResult(submission_id=submission.id or 0))
-        session.add(SystemSetting(key="lint_calc_weight", value="30", value_type="number"))
-        session.add(SystemSetting(key="lint_calc_panalty", value="10", value_type="number"))
-        session.add(SystemSetting(key="lint_err_issue", value="1", value_type="number"))
-        session.add(SystemSetting(key="lint_err_style", value="1", value_type="number"))
-        session.add(SystemSetting(key="lint_err_performance", value="1", value_type="number"))
-        session.add(SystemSetting(key="lint_err_information", value="1", value_type="number"))
-        session.add(SystemSetting(key="lint_set_default", value="true", value_type="boolean"))
+        session.add(
+            SystemSetting(
+                key="lint_calc_weight", value="30", value_type="number"
+            )
+        )
+        session.add(
+            SystemSetting(
+                key="lint_calc_panalty", value="10", value_type="number"
+            )
+        )
+        session.add(
+            SystemSetting(key="lint_err_issue", value="1", value_type="number")
+        )
+        session.add(
+            SystemSetting(key="lint_err_style", value="1", value_type="number")
+        )
+        session.add(
+            SystemSetting(
+                key="lint_err_performance", value="1", value_type="number"
+            )
+        )
+        session.add(
+            SystemSetting(
+                key="lint_err_information", value="1", value_type="number"
+            )
+        )
+        session.add(
+            SystemSetting(
+                key="lint_set_default", value="true", value_type="boolean"
+            )
+        )
         session.add(
             GradingRule(
                 scope="homework",
@@ -211,15 +254,41 @@ def test_lint_is_saved_but_not_applied_below_threshold():
         )
         session.commit()
 
-        submission = session.exec(select(Submission).where(Submission.homework_num == 2)).first()
+        submission = session.exec(
+            select(Submission).where(Submission.homework_num == 2)
+        ).first()
         session.add(SubmissionResult(submission_id=submission.id or 0))
-        session.add(SystemSetting(key="lint_calc_weight", value="30", value_type="number"))
-        session.add(SystemSetting(key="lint_calc_panalty", value="10", value_type="number"))
-        session.add(SystemSetting(key="lint_err_issue", value="1", value_type="number"))
-        session.add(SystemSetting(key="lint_err_style", value="1", value_type="number"))
-        session.add(SystemSetting(key="lint_err_performance", value="1", value_type="number"))
-        session.add(SystemSetting(key="lint_err_information", value="1", value_type="number"))
-        session.add(SystemSetting(key="lint_set_default", value="true", value_type="boolean"))
+        session.add(
+            SystemSetting(
+                key="lint_calc_weight", value="30", value_type="number"
+            )
+        )
+        session.add(
+            SystemSetting(
+                key="lint_calc_panalty", value="10", value_type="number"
+            )
+        )
+        session.add(
+            SystemSetting(key="lint_err_issue", value="1", value_type="number")
+        )
+        session.add(
+            SystemSetting(key="lint_err_style", value="1", value_type="number")
+        )
+        session.add(
+            SystemSetting(
+                key="lint_err_performance", value="1", value_type="number"
+            )
+        )
+        session.add(
+            SystemSetting(
+                key="lint_err_information", value="1", value_type="number"
+            )
+        )
+        session.add(
+            SystemSetting(
+                key="lint_set_default", value="true", value_type="boolean"
+            )
+        )
         session.add(
             GradingRule(
                 scope="homework",
@@ -253,19 +322,23 @@ def test_lint_is_saved_but_not_applied_below_threshold():
     assert result.grader_summary is not None
     assert "Lint was not applied to the total" in result.grader_summary
 
+
 def test_lint_pipeline_collects_syntax_errors_and_disallowed_names():
     pipeline = LintPipelineService()
 
     syntax_issues = pipeline._collect_python_issues("def broken(:\n")
     disallowed_name_issues = pipeline._collect_python_issues(
-        "def demo(foo1, i):\n"
-        "    foo1 = foo1 + 1\n"
-        "    return i\n"
+        "def demo(foo1, i):\n" "    foo1 = foo1 + 1\n" "    return i\n"
     )
 
     assert any(issue["rule"] == "syntax-error" for issue in syntax_issues)
-    assert any(issue["rule"] == "disallowed-name" for issue in disallowed_name_issues)
-    assert any(issue["message"] == "Disallowed name foo1" for issue in disallowed_name_issues)
+    assert any(
+        issue["rule"] == "disallowed-name" for issue in disallowed_name_issues
+    )
+    assert any(
+        issue["message"] == "Disallowed name foo1"
+        for issue in disallowed_name_issues
+    )
 
 
 def test_lint_pipeline_message_and_setting_fallbacks():
@@ -275,7 +348,9 @@ def test_lint_pipeline_message_and_setting_fallbacks():
         "kor": "정규식이 잘못된 경우 기본 번역을 사용합니다",
     }
 
-    unknown_message = pipeline._render_message("pylint", "unknown-rule", "raw message")
+    unknown_message = pipeline._render_message(
+        "pylint", "unknown-rule", "raw message"
+    )
     broken_pattern_message = pipeline._render_message(
         "pylint",
         "broken-rule",

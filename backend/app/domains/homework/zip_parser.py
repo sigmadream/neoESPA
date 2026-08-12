@@ -84,12 +84,12 @@ def _read_archive_members(
         archive_stream.seek(0, io.SEEK_END)
         archive_size = archive_stream.tell()
         archive_stream.seek(0)
-        
+
         if archive_size > MAX_HOMEWORK_ARCHIVE_BYTES:
             raise HomeworkZipValidationError(
                 f"{archive_label} exceeds {MAX_HOMEWORK_ARCHIVE_BYTES // (1024 * 1024)}MB archive size limit"
             )
-    except (io.UnsupportedOperation, AttributeError):
+    except io.UnsupportedOperation, AttributeError:
         # Fallback: zipfile will handle large files, but we can't pre-check the archive size easily
         pass
 
@@ -100,10 +100,14 @@ def _read_archive_members(
     try:
         with zipfile.ZipFile(archive_stream) as archive:
             for info in archive.infolist():
-                if _is_ignorable_member(info.filename, is_directory=info.is_dir()):
+                if _is_ignorable_member(
+                    info.filename, is_directory=info.is_dir()
+                ):
                     continue
 
-                member_name = _validate_member_name(info.filename, archive_label)
+                member_name = _validate_member_name(
+                    info.filename, archive_label
+                )
                 if member_name in seen_names:
                     raise HomeworkZipValidationError(
                         f"{archive_label} contains duplicate testcase name: {member_name}"
@@ -123,10 +127,17 @@ def _read_archive_members(
                     ) from error
 
                 seen_names.add(member_name)
-                members.append(_ArchiveMember(name=member_name, content=content))
+                members.append(
+                    _ArchiveMember(name=member_name, content=content)
+                )
     except HomeworkZipValidationError:
         raise
-    except (zipfile.BadZipFile, zipfile.LargeZipFile, OSError, RuntimeError) as error:
+    except (
+        zipfile.BadZipFile,
+        zipfile.LargeZipFile,
+        OSError,
+        RuntimeError,
+    ) as error:
         raise HomeworkZipValidationError(
             f"{archive_label} is corrupt or unreadable"
         ) from error

@@ -1,14 +1,17 @@
 from collections.abc import Callable
 
 from fastapi import Depends, HTTPException, status
-from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer, OAuth2PasswordBearer
+from fastapi.security import (
+    HTTPAuthorizationCredentials,
+    HTTPBearer,
+    OAuth2PasswordBearer,
+)
 from sqlmodel import Session
 
 from ..core.db import get_session
 from ..models.schemas import User
 from ..services.auth_service import AuthService
 from ..services.authorization_service import AuthorizationService
-
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/auth/login")
 optional_bearer_scheme = HTTPBearer(auto_error=False)
@@ -25,6 +28,7 @@ async def get_current_user(
         headers={"WWW-Authenticate": "Bearer"},
     )
     payload = AuthService.decode_token(token)
+
     if payload is None:
         raise credentials_exception
 
@@ -38,7 +42,9 @@ async def get_current_user(
     return user
 
 
-async def get_current_active_user(current_user: User = Depends(get_current_user)) -> User:
+async def get_current_active_user(
+    current_user: User = Depends(get_current_user),
+) -> User:
     if not current_user.is_active:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
@@ -48,7 +54,9 @@ async def get_current_active_user(current_user: User = Depends(get_current_user)
 
 
 def require_roles(*roles: str) -> Callable[[User], User]:
-    async def dependency(current_user: User = Depends(get_current_active_user)) -> User:
+    async def dependency(
+        current_user: User = Depends(get_current_active_user),
+    ) -> User:
         if current_user.user_group not in roles:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
@@ -64,7 +72,9 @@ def require_capability(capability: str) -> Callable[[User], User]:
         current_user: User = Depends(get_current_active_user),
         session: Session = Depends(get_session),
     ) -> User:
-        if not authorization_service.has_capability(session, current_user, capability):
+        if not authorization_service.has_capability(
+            session, current_user, capability
+        ):
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail=f"Missing capability: {capability}",
@@ -100,7 +110,10 @@ def require_step_up(capability: str) -> Callable[[User], User]:
             return current_user
         payload = AuthService.decode_token(token)
         step_up_until = payload.get("step_up_until") if payload else None
-        if not isinstance(step_up_until, (int, float)) or step_up_until < datetime.now(UTC).timestamp():
+        if (
+            not isinstance(step_up_until, (int, float))
+            or step_up_until < datetime.now(UTC).timestamp()
+        ):
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Recent step-up authentication is required",
@@ -111,7 +124,9 @@ def require_step_up(capability: str) -> Callable[[User], User]:
 
 
 async def get_optional_current_user(
-    credentials: HTTPAuthorizationCredentials | None = Depends(optional_bearer_scheme),
+    credentials: HTTPAuthorizationCredentials | None = Depends(
+        optional_bearer_scheme
+    ),
     session: Session = Depends(get_session),
 ) -> User | None:
     if credentials is None:
