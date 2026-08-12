@@ -1,0 +1,32 @@
+FROM ghcr.io/astral-sh/uv:python3.14-trixie-slim AS nsjail-builder
+
+ARG NSJAIL_REVISION=f78475530b46d0186111a9096b30725f816b55fe
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    autoconf bison flex gcc g++ git libprotobuf-dev libnl-route-3-dev \
+    libtool make pkg-config protobuf-compiler ca-certificates \
+    && git clone --recursive https://github.com/google/nsjail.git /src/nsjail \
+    && cd /src/nsjail \
+    && git checkout --detach "$NSJAIL_REVISION" \
+    && git submodule update --init --recursive \
+    && make -j2 \
+    && mkdir -p /out \
+    && install -m 0755 nsjail /out/nsjail
+
+FROM ghcr.io/astral-sh/uv:python3.14-trixie-slim
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    gcc g++ make libc6-dev default-jdk-headless \
+    libprotobuf32 libnl-route-3-200 libnl-3-200 \
+    && ln -s /usr/local/bin/python3 /usr/bin/python3 \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY --from=nsjail-builder /out/nsjail /usr/local/bin/nsjail
+WORKDIR /app
+COPY pyproject.toml uv.lock ./
+RUN uv sync --frozen --no-dev
+COPY . .
+
+# The image is deliberately not an API image. Production invokes the hostile
+# self-test before starting this worker, and runs it with the namespace/cgroup
+# privileges required by nsjail.
+CMD ["/app/.venv/bin/python", "-m", "app.cli", "run-judge-worker"]

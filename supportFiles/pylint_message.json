@@ -1,0 +1,1462 @@
+{
+    "invalid-name": {
+        "eng": "(.+) name (.+) doesn't conform to (.+)",
+        "kor": "%s 이름 %s이(가) %s에 부합하지 않습니다."
+    },
+    "disallowed-name": {
+        "eng": "Disallowed name (.+)",
+        "kor": "금지된 이름 %s"
+    },
+    "typevar-name-incorrect-variance": {
+        "eng": "Type variable name does not reflect variance(.+)",
+        "kor": "타입 변수 이름이 변이를 반영하지 않습니다%s"
+    },
+    "empty-docstring": {
+        "eng": "Empty (.+) docstring",
+        "kor": "%s의 문서화 문자열이 비어 있습니다"
+    },
+    "missing-module-docstring": {
+        "eng": "missing-module-docstring",
+        "kor": "모듈 문서화 문자열이 누락되었습니다"
+    },
+    "missing-class-docstring": {
+        "eng": "Missing class docstring",
+        "kor": "클래스 문서화 문자열이 누락되었습니다"
+    },
+    "missing-function-docstring": {
+        "eng": "Missing function or method docstring",
+        "kor": "함수 또는 메소드 문서화 문자열이 누락되었습니다"
+    },
+    "unnecessary-negation": {
+        "eng": "Consider changing (.+) to (.+)",
+        "kor": "%s를 %s로 변경하는 것을 고려해보세요"
+    },
+    "singleton-comparison": {
+        "eng": "Comparison (.+) should be (.+)",
+        "kor": "%s 비교는 %s이어야 합니다"
+    },
+    "unidiomatic-typecheck": {
+        "eng": "Use isinstance\\(\\) rather than type\\(\\) for a typecheck.",
+        "kor": "타입 체크에는 type() 대신 isinstance()를 사용하세요."
+    },
+    "typevar-double-variance": {
+        "eng": "TypeVar cannot be both covariant and contravariant",
+        "kor": "TypeVar는 공변성과 반공변성을 동시에 가질 수 없습니다"
+    },
+    "typevar-name-mismatch": {
+        "eng": "TypeVar name (.+) does not match assigned variable name (.+)",
+        "kor": "TypeVar 이름 %s이(가) 할당된 변수 이름 %s과(와) 일치하지 않습니다"
+    },
+    "consider-using-enumerate": {
+        "eng": "Consider using enumerate instead of iterating with range and len",
+        "kor": "range와 len을 사용하는 대신 enumerate를 사용하는 것을 고려해보세요"
+    },
+    "consider-iterating-dictionary": {
+        "eng": "Consider iterating the dictionary directly instead of calling .keys\\(\\)",
+        "kor": ".keys()를 호출하는 대신 사전을 직접 반복하는 것을 고려해보세요"
+    },
+    "bad-classmethod-argument": {
+        "eng": "Class method (.+) should have (.+) as first argument",
+        "kor": "클래스 메소드 %s는 첫 번째 인자로 %s을(를) 가져야 합니다"
+    },
+    "bad-mcs-method-argument": {
+        "eng": "Metaclass method (.+) should have (.+) as first argument",
+        "kor": "메타클래스 메소드 %s는 첫 번째 인자로 %s을(를) 가져야 합니다"
+    },
+    "bad-mcs-classmethod-argument": {
+        "eng": "Metaclass class method (.+) should have (.+) as first argument",
+        "kor": "메타클래스 클래스 메소드 %s는 첫 번째 인자로 %s을(를) 가져야 합니다"
+    },
+    "single-string-used-for-slots": {
+        "eng": "Class __slots__ should be a non-string iterable",
+        "kor": "클래스 __slots__는 문자열이 아닌 iterable이어야 합니다"
+    },
+    "consider-using-dict-items": {
+        "eng": "Consider iterating with .items\\(\\)",
+        "kor": ".items()를 사용하여 반복하는 것을 고려해보세요"
+    },
+    "use-maxsplit-arg": {
+        "eng": "Use (.+) instead",
+        "kor": "%s를 대신 사용하세요"
+    },
+    "use-sequence-for-iteration": {
+        "eng": "Use a sequence type when iterating over values",
+        "kor": "값을 반복하는 경우 시퀀스 유형을 사용하세요"
+    },
+    "consider-using-f-string": {
+        "eng": "Formatting a regular string which could be an f-string",
+        "kor": "f-문자열이 될 수 있는 일반 문자열을 형식화하고 있습니다"
+    },
+    "line-too-long": {
+        "eng": "Line too long (.+)\/(.+)",
+        "kor": "줄이 너무 깁니다 %s\/%s"
+    },
+    "too-many-lines": {
+        "eng": "Too many lines in module (.+)\/(.+)",
+        "kor": "모듈에 너무 많은 줄이 있습니다 %s\/%s"
+    },
+    "trailing-whitespace": {
+        "eng": "There is a trailing whitespace",
+        "kor": "라인의 끝에 공백이 있습니다"
+    },
+    "missing-final-newline": {
+        "eng": "Please add a blank line at the end of the file",
+        "kor": "파일의 마지막 줄에는 빈 라인을 추가해 주세요"
+    },
+    "trailing-newlines": {
+        "eng": "There are more than 2 lines of whitespace at the end of the file",
+        "kor": "파일의 마지막에 2줄 이상 라인이 있습니다"
+    },
+    "multiple-statements": {
+        "eng": "More than one statement on a single line",
+        "kor": "한 줄에 둘 이상의 문장이 있습니다"
+    },
+    "superfluous-parens": {
+        "eng": "Unnecessary parens after (.+) keyword",
+        "kor": "%s 키워드 뒤에 불필요한 괄호가 있습니다"
+    },
+    "mixed-line-endings": {
+        "eng": "Mixed line endings LF and CRLF",
+        "kor": "줄 시퀸스의 끝 속성인 LF와 CRLF가 혼합되어있습니다."
+    },
+    "unexpected-line-ending-format": {
+        "eng": "Unexpected line ending format. There is (.+) while it should be (.+).",
+        "kor": "예상치 못한 줄 끝 형식입니다. %s이(가) %s여야 합니다."
+    },
+    "wrong-spelling-in-comment": {
+        "eng": "Wrong spelling of a word (.+) in a comment:",
+        "kor": "주석에서 단어 %s의 철자가 잘못되었습니다:"
+    },
+    "wrong-spelling-in-docstring": {
+        "eng": "Wrong spelling of a word (.+) in a docstring:",
+        "kor": "문서화 문자열에서 단어 %s의 철자가 잘못되었습니다:"
+    },
+    "invalid-characters-in-docstring": {
+        "eng": "Invalid characters (.+) in a docstring",
+        "kor": "문서화 문자열에 잘못된 문자 %s이(가) 있습니다"
+    },
+    "multiple-imports": {
+        "eng": "Multiple imports on one line (.+)",
+        "kor": "한 줄에 여러 개의 import가 있습니다 %s"
+    },
+    "wrong-import-order": {
+        "eng": "(.+) should be placed before (.+)",
+        "kor": "%s은(는) %s 앞에 배치되어야 합니다"
+    },
+    "ungrouped-imports": {
+        "eng": "Imports from package (.+) are not grouped",
+        "kor": "%s 패키지로부터의 import가 그룹화되지 않았습니다"
+    },
+    "wrong-import-position": {
+        "eng": "Import (.+) should be placed at the top of the module",
+        "kor": "%s import는 모듈 상단에 위치해야 합니다"
+    },
+    "useless-import-alias": {
+        "eng": "Import alias does not rename original package",
+        "kor": "Import 별칭은 원래 패키지의 이름을 바꾸지 않습니다"
+    },
+    "import-outside-toplevel": {
+        "eng": "Import outside toplevel (.+)",
+        "kor": "toplevel 외부에서 import하고 있습니다 %s"
+    },
+    "use-implicit-booleaness-not-len": {
+        "eng": "Do not use `len\\(SEQUENCE\\)` without comparison to determine if a sequence is empty",
+        "kor": "시퀀스가 비어 있는지를 결정하기 위해 `len(SEQUENCE)`을(를) 비교없이 사용하지 마십시오"
+    },
+    "use-implicit-booleaness-not-comparison": {
+        "eng": "(.+) can be simplified to (.+), if it is strictly a sequence, as an empty (.+) is falsey",
+        "kor": "%s은(는) 엄격히 시퀀스인 경우 %s(으)로 단순화할 수 있습니다. 비어 있는 %s은(는) 거짓입니다."
+    },
+    "use-implicit-booleaness-not-comparison-to-string": {
+        "eng": "(.+) can be simplified to (.+), if it is striclty a string, as an empty string is falsey",
+        "kor": "%s은(는) 엄격히 문자열인 경우 %s(으)로 단순화할 수 있습니다. 빈 문자열은 거짓입니다."
+    },
+    "use-implicit-booleaness-not-comparison-to-zero": {
+        "eng": "(.+) can be simplified to (.+), if it is strictly an int, as 0 is falsey",
+        "kor": "%s은(는) 엄격히 정수인 경우 %s(으)로 단순화할 수 있습니다. 0은 거짓입니다."
+    },
+    "non-ascii-name": {
+        "eng": "(.+) name (.+) contains a non-ASCII character, consider renaming it.",
+        "kor": "%s 이름 %s에 비 ASCII 문자가 포함되어 있습니다. 이름을 변경하는 것을 고려해주세요."
+    },
+    "non-ascii-module-import": {
+        "eng": "Module name (.+) contains a non-ASCII character, use an ASCII-only alias for import.",
+        "kor": "모듈 이름 %s에 비 ASCII 문자가 포함되어 있습니다. import를 위해 ASCII만 허용되는 별칭을 사용하세요."
+    },
+    "bad-file-encoding": {
+        "eng": "PEP8 recommends UTF-8 as encoding for Python files",
+        "kor": "PEP8은 Python 파일의 인코딩으로 UTF-8을 권장합니다."
+    },
+    "unnecessary-dunder-call": {
+        "eng": "Unnecessarily calls dunder method (.+). (.+).",
+        "kor": "불필요하게 dunder 메소드 %s을(를) 호출합니다. %s."
+    },
+    "unnecessary-lambda-assignment": {
+        "eng": "Lambda expression assigned to a variable. Define a function using the \"def\" keyword instead.",
+        "kor": "변수에 할당된 람다 표현식입니다. 대신 \"def\" 키워드를 사용하여 함수를 정의하세요."
+    },
+    "unnecessary-direct-lambda-call": {
+        "eng": "Lambda expression called directly. Execute the expression inline instead.",
+        "kor": "람다 표현식이 직접 호출되었습니다. 대신 표현식을 인라인으로 실행하세요."
+    },
+    "unrecognized-inline-option": {
+        "eng": "Unrecognized file option (.+)",
+        "kor": "인식되지 않는 파일 옵션 %s"
+    },
+    "bad-plugin-value": {
+        "eng": "Plugin (.+) is impossible to load, is it installed ? (.+)",
+        "kor": "%s 플러그인을 불러올 수 없습니다. 설치되어 있는지 확인하세요. %s"
+    },
+    "bad-configuration-section": {
+        "eng": "Out-of-place setting encountered in top level configuration-section (.+) : (.+)",
+        "kor": "최상위 설정 섹션 %s에서 잘못된 설정이 발견되었습니다 : %s"
+    },
+    "unrecognized-option": {
+        "eng": "Unrecognized option found: (.+)",
+        "kor": "인식되지 않는 옵션이 발견되었습니다: %s"
+    },
+    "init-is-generator": {
+        "eng": "__init__ method is a generator",
+        "kor": "__init__ 메소드가 제너레이터입니다."
+    },
+    "return-in-init": {
+        "eng": "Explicit return in __init__",
+        "kor": "__init__에서 명시적인 반환이 있습니다."
+    },
+    "function-redefined": {
+        "eng": "(.+) already defined line (.+)",
+        "kor": "%s가(이) 이미 %s 라인에서 정의되었습니다."
+    },
+    "not-in-loop": {
+        "eng": "(.+) not properly in loop",
+        "kor": "%s이(가) 반복문 내에 제대로 있지 않습니다."
+    },
+    "return-outside-function": {
+        "eng": "Return outside function",
+        "kor": "함수 외부에서 반환"
+    },
+    "yield-outside-function": {
+        "eng": "Yield outside function",
+        "kor": "함수 외부에서 yield"
+    },
+    "nonexistent-operator": {
+        "eng": "Use of the non-existent (.+) operator",
+        "kor": "존재하지 않는 %s 연산자의 사용"
+    },
+    "duplicate-argument-name": {
+        "eng": "Duplicate argument name (.+) in function definition",
+        "kor": "함수 정의에서 중복된 인수 이름 %s"
+    },
+    "abstract-class-instantiated": {
+        "eng": "Abstract class (.+) with abstract methods instantiated",
+        "kor": "추상 메소드가 있는 추상 클래스 %s가 인스턴스화되었습니다."
+    },
+    "bad-reversed-sequence": {
+        "eng": "The first reversed\\(\\) argument is not a sequence",
+        "kor": "reversed()의 첫 번째 인자가 시퀀스가 아닙니다."
+    },
+    "too-many-star-expressions": {
+        "eng": "More than one starred expression in assignment",
+        "kor": "할당에서 별표 표현식이 하나 이상 있습니다."
+    },
+    "invalid-star-assignment-target": {
+        "eng": "Starred assignment target must be in a list or tuple",
+        "kor": "별표 할당 대상은 리스트나 튜플에 있어야 합니다."
+    },
+    "star-needs-assignment-target": {
+        "eng": "Can use starred expression only in assignment target",
+        "kor": "별표 표현식은 할당 대상에서만 사용할 수 있습니다."
+    },
+    "nonlocal-and-global": {
+        "eng": "Name (.+) is nonlocal and global",
+        "kor": "%s 이름이 nonlocal이면서 global입니다."
+    },
+    "continue-in-finally": {
+        "eng": "'continue' not supported inside 'finally' clause",
+        "kor": "'finally' 절 내에서 'continue'를 지원하지 않습니다."
+    },
+    "nonlocal-without-binding": {
+        "eng": "nonlocal name (.+) found without binding",
+        "kor": "바인딩 없이 nonlocal 이름 %s이(가) 발견되었습니다."
+    },
+    "used-prior-global-declaration": {
+        "eng": "Name (.+) is used prior to global declaration",
+        "kor": "%s 이름이 전역 선언 이전에 사용되었습니다."
+    },
+    "misplaced-format-function": {
+        "eng": "format function is not called on str",
+        "kor": "format 함수가 str에 호출되지 않았습니다."
+    },
+    "method-hidden": {
+        "eng": "An attribute defined in (.+) line (.+) hides this method",
+        "kor": "%s 라인 %s에서 정의된 속성이 이 메소드를 가려놓습니다."
+    },
+    "access-member-before-definition": {
+        "eng": "Access to member (.+) before its definition line (.+)",
+        "kor": "정의된 라인 %s 이전에 멤버 %s에 액세스합니다."
+    },
+    "no-method-argument": {
+        "eng": "Method (.+) has no argument",
+        "kor": "%s 메소드에는 인자가 없습니다."
+    },
+    "no-self-argument": {
+        "eng": "Method (.+) should have \"self\" as first argument",
+        "kor": "%s 메소드는 첫 번째 인자로 'self'를 가져야 합니다."
+    },
+    "invalid-slots-object": {
+        "eng": "Invalid object (.+) in __slots__, must contain only non empty strings",
+        "kor": "__slots__에 유효하지 않은 객체 %s이 있습니다. 비어 있지 않은 문자열만 포함해야 합니다."
+    },
+    "assigning-non-slot": {
+        "eng": "Assigning to attribute (.+) not defined in class slots",
+        "kor": "클래스 슬롯에 정의되지 않은 속성 %s에 할당합니다."
+    },
+    "invalid-slots": {
+        "eng": "Invalid __slots__ object",
+        "kor": "__slots__ 객체가 잘못되었습니다."
+    },
+    "inherit-non-class": {
+        "eng": "Inheriting (.+), which is not a class.",
+        "kor": "%s을(를) 클래스가 아닌 것에서 상속받습니다."
+    },
+    "inconsistent-mro": {
+        "eng": "Inconsistent method resolution order for class (.+)",
+        "kor": "클래스 %s의 메소드 해결 순서가 일관되지 않습니다."
+    },
+    "duplicate-bases": {
+        "eng": "Duplicate bases for class (.+)",
+        "kor": "클래스 %s에 중복된 베이스가 있습니다."
+    },
+    "class-variable-slots-conflict": {
+        "eng": "Value (.+) in slots conflicts with class variable",
+        "kor": "슬롯 %s의 값이 클래스 변수와 충돌합니다."
+    },
+    "invalid-class-object": {
+        "eng": "Invalid assignment to '__class__'. Should be a class definition but got a (.+)",
+        "kor": "'__class__'에 잘못된 할당입니다. 클래스 정의여야 하지만 %s를 받았습니다."
+    },
+    "invalid-enum-extension": {
+        "eng": "Extending inherited Enum class (.+)",
+        "kor": "상속된 Enum 클래스 %s를 확장합니다."
+    },
+    "non-iterator-returned": {
+        "eng": "__iter__ returns non-iterator",
+        "kor": "__iter__가 반복자를 반환하지 않습니다."
+    },
+    "unexpected-special-method-signature": {
+        "eng": "The special method (.+) expects (.+) param\\(s\\), (.+) (.+) given",
+        "kor": "특수 메소드 %s은(는) %s개의 인자를 예상하는데, %d %s이(가) 주어졌습니다."
+    },
+    "invalid-length-returned": {
+        "eng": "__len__ does not return non-negative integer",
+        "kor": "__len__이 음이 아닌 정수를 반환하지 않습니다."
+    },
+    "invalid-bool-returned": {
+        "eng": "__bool__ does not return bool",
+        "kor": "__bool__이 불리언을 반환하지 않습니다."
+    },
+    "invalid-index-returned": {
+        "eng": "__index__ does not return int",
+        "kor": "__index__가 정수를 반환하지 않습니다."
+    },
+    "invalid-repr-returned": {
+        "eng": "__repr__ does not return str",
+        "kor": "__repr__이 문자열을 반환하지 않습니다."
+    },
+    "invalid-str-returned": {
+        "eng": "__str__ does not return str",
+        "kor": "__str__이 문자열을 반환하지 않습니다."
+    },
+    "invalid-bytes-returned": {
+        "eng": "__bytes__ does not return bytes",
+        "kor": "__bytes__가 바이트를 반환하지 않습니다."
+    },
+    "invalid-hash-returned": {
+        "eng": "__hash__ does not return int",
+        "kor": "__hash__가 정수를 반환하지 않습니다."
+    },
+    "invalid-length-hint-returned": {
+        "eng": "__length_hint__ does not return non-negative integer",
+        "kor": "__length_hint__이 음이 아닌 정수를 반환하지 않습니다."
+    },
+    "invalid-format-returned": {
+        "eng": "__format__ does not return str",
+        "kor": "__format__이 문자열을 반환하지 않습니다."
+    },
+    "invalid-getnewargs-returned": {
+        "eng": "__getnewargs__ does not return a tuple",
+        "kor": "__getnewargs__가 튜플을 반환하지 않습니다."
+    },
+    "invalid-getnewargs-ex-returned": {
+        "eng": "__getnewargs_ex__ does not return a tuple containing \\(tuple, dict\\)",
+        "kor": "__getnewargs_ex__가 (튜플, 사전)을 포함하는 튜플을 반환하지 않습니다."
+    },
+    "import-error": {
+        "eng": "Unable to import (.+)",
+        "kor": "%s를 가져올 수 없습니다."
+    },
+    "relative-beyond-top-level": {
+        "eng": "Attempted relative import beyond top-level package",
+        "kor": "최상위 패키지 이상의 상대적인 가져오기를 시도했습니다."
+    },
+    "used-before-assignment": {
+        "eng": "Using variable (.+) before assignment",
+        "kor": "할당 전에 변수 %s을(를) 사용하고 있습니다."
+    },
+    "undefined-variable": {
+        "eng": "Undefined variable (.+)",
+        "kor": "정의되지 않은 변수 %s입니다."
+    },
+    "undefined-all-variable": {
+        "eng": "Undefined variable name (.+) in __all__",
+        "kor": "__all__에 정의되지 않은 변수 이름 %s입니다."
+    },
+    "invalid-all-object": {
+        "eng": "Invalid object (.+) in __all__, must contain only strings",
+        "kor": "__all__에 잘못된 객체 %s이(가) 포함되어 있습니다. 문자열만 포함해야 합니다."
+    },
+    "invalid-all-format": {
+        "eng": "Invalid format for __all__, must be tuple or list",
+        "kor": "__all__ 형식이 잘못되었습니다. 튜플이나 리스트여야 합니다."
+    },
+    "no-name-in-module": {
+        "eng": "No name (.+) in module (.+)",
+        "kor": "모듈 %s에 이름 %s이(가) 없습니다."
+    },
+    "unpacking-non-sequence": {
+        "eng": "Attempting to unpack a non-sequence(.+)",
+        "kor": "비 시퀀스 %s를 언패킹하려고 시도했습니다."
+    },
+    "potential-index-error": {
+        "eng": "Invalid index for iterable length",
+        "kor": "반복 가능한 길이에 대한 잘못된 인덱스입니다."
+    },
+    "bad-except-order": {
+        "eng": "Bad except clauses order (.+)",
+        "kor": "잘못된 except 절 순서입니다. %s"
+    },
+    "raising-bad-type": {
+        "eng": "Raising (.+) while only classes or instances are allowed",
+        "kor": "클래스나 인스턴스만 허용되는 상태에서 %s을(를) 발생시킵니다."
+    },
+    "misplaced-bare-raise": {
+        "eng": "The raise statement is not inside an except clause",
+        "kor": "raise 문이 except 절 내부에 있지 않습니다."
+    },
+    "bad-exception-cause": {
+        "eng": "Exception cause set to something which is not an exception, nor None",
+        "kor": "예외 원인이 예외나 None이 아닌 다른 값으로 설정되었습니다."
+    },
+    "raising-non-exception": {
+        "eng": "Raising a new style class which doesn't inherit from BaseException",
+        "kor": "BaseException을 상속받지 않은 새로운 스타일 클래스를 발생시킵니다."
+    },
+    "notimplemented-raised": {
+        "eng": "NotImplemented raised - should raise NotImplementedError",
+        "kor": "NotImplemented가 발생되었습니다. NotImplementedError를 발생시켜야 합니다."
+    },
+    "catching-non-exception": {
+        "eng": "Catching an exception which doesn't inherit from Exception: (.+)",
+        "kor": "Exception을 상속받지 않은 예외를 잡습니다: %s"
+    },
+    "bad-super-call": {
+        "eng": "Bad first argument (.+) given to super\\(\\)",
+        "kor": "super()에 잘못된 첫 번째 인수 %s이(가) 주어졌습니다."
+    },
+    "no-member": {
+        "eng": "(.+) (.+) has no (.+) member(.+)",
+        "kor": "%s %s에는 %s 멤버가 없습니다%s"
+    },
+    "not-callable": {
+        "eng": "(.+) is not callable",
+        "kor": "%s은(는) 호출 가능한 객체가 아닙니다."
+    },
+    "assignment-from-no-return": {
+        "eng": "Assigning result of a function call, where the function has no return",
+        "kor": "함수 호출의 결과를 할당하는데, 함수가 반환값을 갖지 않습니다."
+    },
+    "no-value-for-parameter": {
+        "eng": "No value for argument (.+) in (.+) call",
+        "kor": "%s 호출에서 %s 인자에 대한 값이 없습니다."
+    },
+    "too-many-function-args": {
+        "eng": "Too many positional arguments for (.+) call",
+        "kor": "%s 호출에 대해 너무 많은 위치 인자가 있습니다."
+    },
+    "unexpected-keyword-arg": {
+        "eng": "Unexpected keyword argument (.+) in (.+) call",
+        "kor": "%s 호출에서 예상치 않은 키워드 인자 %s이(가) 있습니다."
+    },
+    "redundant-keyword-arg": {
+        "eng": "Argument (.+) passed by position and keyword in (.+) call",
+        "kor": "%s 호출에 대해 위치 및 키워드로 전달된 인수 %s이(가) 있습니다."
+    },
+    "missing-kwoa": {
+        "eng": "Missing mandatory keyword argument (.+) in (.+) call",
+        "kor": "%s 호출에서 필수 키워드 인자 %s이(가) 누락되었습니다."
+    },
+    "invalid-sequence-index": {
+        "eng": "Sequence index is not an int, slice, or instance with __index__",
+        "kor": "시퀀스 인덱스가 int, slice 또는 __index__를 가진 인스턴스가 아닙니다."
+    },
+    "invalid-slice-index": {
+        "eng": "Slice index is not an int, None, or instance with __index__",
+        "kor": "슬라이스 인덱스가 int, None 또는 __index__를 가진 인스턴스가 아닙니다."
+    },
+    "assignment-from-none": {
+        "eng": "Assigning result of a function call, where the function returns None",
+        "kor": "함수 호출 결과를 None을 반환하는 함수에서 할당하고 있습니다."
+    },
+    "not-context-manager": {
+        "eng": "Context manager (.+) doesn't implement __enter__ and __exit__.",
+        "kor": "컨텍스트 매니저 %s은(는) __enter__와 __exit__을 구현하지 않습니다."
+    },
+    "repeated-keyword": {
+        "eng": "Got multiple values for keyword argument (.+) in function call",
+        "kor": "함수 호출에서 키워드 인자 %s에 대해 여러 값을 받았습니다."
+    },
+    "not-an-iterable": {
+        "eng": "Non-iterable value (.+) is used in an iterating context",
+        "kor": "반복하는 문맥에서 반복 가능하지 않은 값 %s이(가) 사용되었습니다."
+    },
+    "not-a-mapping": {
+        "eng": "Non-mapping value (.+) is used in a mapping context",
+        "kor": "매핑하는 문맥에서 매핑이 아닌 값 %s이(가) 사용되었습니다."
+    },
+    "unsupported-membership-test": {
+        "eng": "Value (.+) doesn't support membership test",
+        "kor": "값 %s은(는) 멤버십 테스트를 지원하지 않습니다."
+    },
+    "unsubscriptable-object": {
+        "eng": "Value (.+) is unsubscriptable",
+        "kor": "값 %s은(는) 구독할 수 없습니다."
+    },
+    "unsupported-assignment-operation": {
+        "eng": "(.+) does not support item assignment",
+        "kor": "%s은(는) 항목 할당을 지원하지 않습니다."
+    },
+    "unsupported-delete-operation": {
+        "eng": "(.+) does not support item deletion",
+        "kor": "%s은(는) 항목 삭제를 지원하지 않습니다."
+    },
+    "invalid-metaclass": {
+        "eng": "Invalid metaclass (.+) used",
+        "kor": "잘못된 메타클래스 %s이(가) 사용되었습니다."
+    },
+    "dict-iter-missing-items": {
+        "eng": "Unpacking a dictionary in iteration without calling .items\\(\\)",
+        "kor": "딕셔너리를 반복하는 동안 .items()를 호출하지 않고 딕셔너리를 언패킹했습니다."
+    },
+    "await-outside-async": {
+        "eng": "'await' should be used within an async function",
+        "kor": "'await'은 비동기 함수 내에서 사용해야 합니다."
+    },
+    "unhashable-member": {
+        "eng": "(.+) is unhashable and can't be used as a (.+) in a (.+)",
+        "kor": "%s은(는) 해시할 수 없으며 %s로서 %s에 사용할 수 없습니다."
+    },
+    "invalid-slice-step": {
+        "eng": "Slice step cannot be 0",
+        "kor": "슬라이스 단계는 0이 될 수 없습니다."
+    },
+    "logging-unsupported-format": {
+        "eng": "Unsupported logging format character (.+) (.+) at index (.+)",
+        "kor": "로그 형식 문자 %s %s은(는) 지원되지 않습니다. 인덱스 %s에서 발생했습니다."
+    },
+    "logging-format-truncated": {
+        "eng": "Logging format string ends in middle of conversion specifier",
+        "kor": "로그 형식 문자열이 변환 지정자 중간에 끝납니다."
+    },
+    "logging-too-many-args": {
+        "eng": "Too many arguments for logging format string",
+        "kor": "로그 형식 문자열에 너무 많은 인수가 있습니다."
+    },
+    "logging-too-few-args": {
+        "eng": "Not enough arguments for logging format string",
+        "kor": "로그 형식 문자열에 충분한 인수가 없습니다."
+    },
+    "bad-format-character": {
+        "eng": "Unsupported format character (.+) \\((.+)\\) at index (.+)",
+        "kor": "지원되지 않는 형식 문자 %s (%s)이(가) 인덱스 %s에서 발견되었습니다."
+    },
+    "truncated-format-string": {
+        "eng": "Format string ends in middle of conversion specifier",
+        "kor": "형식 문자열이 변환 지정자 중간에 끝납니다."
+    },
+    "mixed-format-string": {
+        "eng": "Mixing named and unnamed conversion specifiers in format string",
+        "kor": "형식 문자열에서 명명된 변환 지정자와 무명 변환 지정자를 혼합했습니다."
+    },
+    "format-needs-mapping": {
+        "eng": "Expected mapping for format string, not (.+)",
+        "kor": "형식 문자열에는 매핑이 필요합니다. 현재 %s입니다."
+    },
+    "missing-format-string-key": {
+        "eng": "Missing key (.+) in format string dictionary",
+        "kor": "형식 문자열 사전에서 키 %s이(가) 누락되었습니다."
+    },
+    "too-many-format-args": {
+        "eng": "Too many arguments for format string",
+        "kor": "형식 문자열에 너무 많은 인수가 있습니다."
+    },
+    "too-few-format-args": {
+        "eng": "Not enough arguments for format string",
+        "kor": "형식 문자열에 충분한 인수가 없습니다."
+    },
+    "bad-string-format-type": {
+        "eng": "Argument (.+) does not match format type (.+)",
+        "kor": "인수 %s은(는) 형식 유형 %s과(와) 일치하지 않습니다."
+    },
+    "bad-str-strip-call": {
+        "eng": "Suspicious argument in (.+).(.+) call",
+        "kor": "%s.%s 호출에 의심스러운 인수가 있습니다."
+    },
+    "invalid-envvar-value": {
+        "eng": "(.+) does not support (.+) type argument",
+        "kor": "%s은(는) %s 유형의 인수를 지원하지 않습니다."
+    },
+    "singledispatch-method": {
+        "eng": "singledispatch decorator should not be used with methods, use singledispatchmethod instead.",
+        "kor": "singledispatch 데코레이터는 메서드와 함께 사용되어서는 안 됩니다. 대신 singledispatchmethod를 사용하십시오."
+    },
+    "singledispatchmethod-function": {
+        "eng": "singledispatchmethod decorator should not be used with functions, use singledispatch instead.",
+        "kor": "singledispatchmethod 데코레이터는 함수와 함께 사용되어서는 안 됩니다. 대신 singledispatch를 사용하십시오."
+    },
+    "yield-inside-async-function": {
+        "eng": "Yield inside async function",
+        "kor": "비동기 함수 내부에서 yield를 사용하십시오."
+    },
+    "not-async-context-manager": {
+        "eng": "Async context manager (.+) doesn't implement __aenter__ and __aexit__.",
+        "kor": "비동기 컨텍스트 관리자 %s는 __aenter__ 및 __aexit__를 구현하지 않습니다."
+    },
+    "invalid-unicode-codec": {
+        "eng": "UTF-16 and UTF-32 aren't backward compatible. Use UTF-8 instead",
+        "kor": "UTF-16 및 UTF-32는 역호환성이 없습니다. 대신 UTF-8을 사용하십시오."
+    },
+    "bidirectional-unicode": {
+        "eng": "Contains control characters that can permit obfuscated code executed differently than displayed",
+        "kor": "표시된 것과 다르게 실행된 암호화된 코드를 허용할 수 있는 제어 문자가 포함되어 있습니다."
+    },
+    "invalid-character-backspace": {
+        "eng": "Invalid unescaped character backspace, use \"\\b\" instead.",
+        "kor": "유효하지 않은 탈출되지 않은 문자 backspace, 대신 \"\\b\"을(를) 사용하십시오."
+    },
+    "invalid-character-carriage-return": {
+        "eng": "Invalid unescaped character carriage-return, use \"\\r\" instead.",
+        "kor": "유효하지 않은 탈출되지 않은 문자 carriage-return, 대신 \"\\r\"을(를) 사용하십시오."
+    },
+    "invalid-character-sub": {
+        "eng": "Invalid unescaped character sub, use \"\\x1A\" instead.",
+        "kor": "유효하지 않은 탈출되지 않은 문자 sub, 대신 \"\\x1A\"을(를) 사용하십시오."
+    },
+    "invalid-character-esc": {
+        "eng": "Invalid unescaped character esc, use \"\\x1B\" instead.",
+        "kor": "유효하지 않은 탈출되지 않은 문자 esc, 대신 \"\\x1B\"을(를) 사용하십시오."
+    },
+    "invalid-character-nul": {
+        "eng": "Invalid unescaped character nul, use \"\\0\" instead.",
+        "kor": "유효하지 않은 탈출되지 않은 문자 nul, 대신 \"\\0\"을(를) 사용하십시오."
+    },
+    "invalid-character-zero-width-space": {
+        "eng": "Invalid unescaped character zero-width-space, use \"\\u200B\" instead.",
+        "kor": "유효하지 않은 탈출되지 않은 문자 zero-width-space, 대신 \"\\u200B\"을(를) 사용하십시오."
+    },
+    "positional-only-arguments-expected": {
+        "eng": "`(.+)` got some positional-only arguments passed as keyword arguments: (.+)",
+        "kor": "`%s()`에 일부 위치 전용 인수가 키워드 인수로 전달되었습니다: %s"
+    },
+    "invalid-field-call": {
+        "eng": "Invalid usage of field\\(\\), (.+)",
+        "kor": "field()의 사용법이 잘못되었습니다. %s"
+    },
+    "modified-iterating-dict": {
+        "eng": "Iterated dict (.+) is being modified inside for loop body, iterate through a copy of it instead.",
+        "kor": "이터레이션하는 dict %s가 for 루프 본문 내에서 수정되고 있습니다. 대신 해당 사본을 반복하십시오."
+    },
+    "modified-iterating-set": {
+        "eng": "Iterated set (.+) is being modified inside for loop body, iterate through a copy of it instead.",
+        "kor": "이터레이션하는 집합 %s이(가) for 루프 본문 내에서 수정되고 있습니다. 대신 해당 사본을 반복하십시오."
+    },
+    "astroid-error": {
+        "eng": "(.+): (.+)",
+        "kor": "%s: %s"
+    },
+    "parse-error": {
+        "eng": "error while code parsing: (.+)",
+        "kor": "코드 구문 분석 중 오류 발생: %s"
+    },
+    "config-parse-error": {
+        "eng": "error while parsing the configuration: (.+)",
+        "kor": "구성 구문 분석 중 오류 발생: %s"
+    },
+    "method-check-failed": {
+        "eng": "Unable to check methods signature (.+) \/ (.+)",
+        "kor": "메서드 시그니처를 확인할 수 없습니다 %s \/ %s"
+    },
+    "raw-checker-failed": {
+        "eng": "Unable to run raw checkers on built-in module (.+)",
+        "kor": "내장 모듈 %s에 대해 원시 체커를 실행할 수 없습니다"
+    },
+    "bad-inline-option": {
+        "eng": "Unable to consider inline option (.+)",
+        "kor": "인라인 옵션 %s을(를) 고려할 수 없습니다"
+    },
+    "locally-disabled": {
+        "eng": "Locally disabling (.+) (.+)",
+        "kor": "%s을(를) 지역적으로 비활성화 중입니다 %s"
+    },
+    "file-ignored": {
+        "eng": "Ignoring entire file",
+        "kor": "전체 파일을 무시합니다"
+    },
+    "suppressed-message": {
+        "eng": "Suppressed (.+) (from line (.+))",
+        "kor": "%s을(를) 억제했습니다 (줄 %d)"
+    },
+    "useless-suppression": {
+        "eng": "Useless suppression of (.+)",
+        "kor": "%s을(를) 억제하는 것이 무의미합니다"
+    },
+    "deprecated-pragma": {
+        "eng": "Pragma (.+) is deprecated, use (.+) instead",
+        "kor": "Pragma %s은(는) 더 이상 사용되지 않습니다. 대신 %s을(를) 사용하십시오"
+    },
+    "c-extension-no-member": {
+        "eng": "(.+) (.+) has no (.+) member(.+), but source is unavailable. Consider adding this module to extension-pkg-allow-list if you want to perform analysis based on run-time introspection of living objects.",
+        "kor": "%s %s에는 %s 멤버 %s가 없지만 소스를 사용할 수 없습니다. 이 모듈을 extension-pkg-allow-list에 추가하면 실행 중인 객체의 런타임 내부 검사를 기반으로 분석을 수행할 수 있습니다."
+    },
+    "useless-option-value": {
+        "eng": "Useless option value for (.+), (.+)",
+        "kor": "%s에 대한 무의미한 옵션 값, %s"
+    },
+    "literal-comparison": {
+        "eng": "In (.+), use (.+) when comparing constant literals not (.+) (.+)",
+        "kor": "%s에서 상수 리터럴을 비교할 때 %s를 사용하십시오. %s %s"
+    },
+    "comparison-with-itself": {
+        "eng": "Redundant comparison - (.+)",
+        "kor": "중복 비교 - %s"
+    },
+    "comparison-of-constants": {
+        "eng": "Comparison between constants: '(.+) (.+) (.+)' has a constant value",
+        "kor": "상수 간 비교: '%s %s %s'는(은) 상수 값을 갖습니다."
+    },
+    "no-classmethod-decorator": {
+        "eng": "Consider using a decorator instead of calling classmethod",
+        "kor": "classmethod를 호출하는 대신 데코레이터를 사용하는 것을 고려해보세요."
+    },
+    "no-staticmethod-decorator": {
+        "eng": "Consider using a decorator instead of calling staticmethod",
+        "kor": "staticmethod를 호출하는 대신 데코레이터를 사용하는 것을 고려해보세요."
+    },
+    "useless-object-inheritance": {
+        "eng": "Class (.+) inherits from object, can be safely removed from bases in python3",
+        "kor": "클래스 %s은(는) object를 상속받습니다. Python3에서는 bases에서 안전하게 제거할 수 있습니다."
+    },
+    "property-with-parameters": {
+        "eng": "Cannot have defined parameters for properties",
+        "kor": "속성에 정의된 매개변수를 가질 수 없습니다."
+    },
+    "cyclic-import": {
+        "eng": "Cyclic import (.+)",
+        "kor": "순환적 임포트 %s"
+    },
+    "consider-using-from-import": {
+        "eng": "Use 'from (.+) import (.+)' instead",
+        "kor": "'from %s import %s'를 사용하는 것을 고려해보세요."
+    },
+    "duplicate-code": {
+        "eng": "Similar lines in (.+) files",
+        "kor": "%s 파일에서 유사한 라인이 있습니다."
+    },
+    "too-many-ancestors": {
+        "eng": "Too many ancestors (.+)\/(.+)",
+        "kor": "조상이 너무 많습니다 %s\/%s"
+    },
+    "too-many-instance-attributes": {
+        "eng": "Too many instance attributes (.+)\/(.+)",
+        "kor": "인스턴스 속성이 너무 많습니다 %s\/%s"
+    },
+    "too-few-public-methods": {
+        "eng": "Too few public methods (.+)\/(.+)",
+        "kor": "공개 메서드가 너무 적습니다 %s\/%s"
+    },
+    "too-many-public-methods": {
+        "eng": "Too many public methods (.+)\/(.+)",
+        "kor": "공개 메서드가 너무 많습니다 %s\/%s"
+    },
+    "too-many-return-statements": {
+        "eng": "Too many return statements (.+)\/(.+)",
+        "kor": "return 문이 너무 많습니다 %s\/%s"
+    },
+    "too-many-branches": {
+        "eng": "Too many branches (.+)\/(.+)",
+        "kor": "분기가 너무 많습니다 %s\/%s"
+    },
+    "too-many-arguments": {
+        "eng": "Too many arguments (.+)\/(.+)",
+        "kor": "인수가 너무 많습니다 %s\/%s"
+    },
+    "too-many-locals": {
+        "eng": "Too many local variables (.+)\/(.+)",
+        "kor": "로컬 변수가 너무 많습니다 %s\/%s"
+    },
+    "too-many-statements": {
+        "eng": "Too many statements (.+)\/(.+)",
+        "kor": "문이 너무 많습니다 %s\/%s"
+    },
+    "too-many-boolean-expressions": {
+        "eng": "Too many boolean expressions in if statement (.+)\/(.+)",
+        "kor": "if 문에서 부울 표현식이 너무 많습니다 %s\/%s"
+    },
+    "consider-merging-isinstance": {
+        "eng": "Consider merging these isinstance calls to isinstance\\((.+), (.+))",
+        "kor": "이 isinstance 호출을 isinstance(%s, %s)로 병합하는 것을 고려해보세요."
+    },
+    "too-many-nested-blocks": {
+        "eng": "Too many nested blocks (.+)\/(.+)",
+        "kor": "중첩된 블록이 너무 많습니다 %s\/%s"
+    },
+    "simplifiable-if-statement": {
+        "eng": "The if statement can be replaced with (.+)",
+        "kor": "if 문을 %s로 대체할 수 있습니다."
+    },
+    "redefined-argument-from-local": {
+        "eng": "Redefining argument with the local name (.+)",
+        "kor": "로컬 이름 %s으로 인수를 재정의합니다."
+    },
+    "no-else-return": {
+        "eng": "Unnecessary (.+) after \"return\", (.+)",
+        "kor": "\"return\" 후에 불필요한 %s, %s"
+    },
+    "consider-using-ternary": {
+        "eng": "Consider using ternary (.+)",
+        "kor": "삼항 연산자 사용을 고려하세요 %s"
+    },
+    "trailing-comma-tuple": {
+        "eng": "Disallow trailing comma tuple",
+        "kor": "쉼표로 끝나는 튜플을 허용하지 않습니다"
+    },
+    "stop-iteration-return": {
+        "eng": "Do not raise StopIteration in generator, use return statement instead",
+        "kor": "제너레이터에서 StopIteration을 발생시키지 마세요. 대신 return 문을 사용하세요."
+    },
+    "simplify-boolean-expression": {
+        "eng": "Boolean expression may be simplified to (.+)",
+        "kor": "부울 표현식을 %s으로 단순화할 수 있습니다."
+    },
+    "inconsistent-return-statements": {
+        "eng": "Either all return statements in a function should return an expression, or none of them should.",
+        "kor": "함수의 모든 return 문이 표현식을 반환하거나 그렇지 않아야 합니다."
+    },
+    "useless-return": {
+        "eng": "Useless return at end of function or method",
+        "kor": "함수나 메서드의 끝에 있는 무의미한 return"
+    },
+    "consider-swap-variables": {
+        "eng": "Consider using tuple unpacking for swapping variables",
+        "kor": "변수를 교환할 때 튜플 언패킹 사용을 고려하세요"
+    },
+    "consider-using-join": {
+        "eng": "Consider using str.join(sequence) for concatenating strings from an iterable",
+        "kor": "이터러블에서 문자열을 연결하기 위해 str.join(sequence)을 사용하는 것을 고려하세요"
+    },
+    "consider-using-in": {
+        "eng": "Consider merging these comparisons with 'in' by using '(.+) (.?)in (.+)'. Use a set instead if elements are hashable.",
+        "kor": "'in'을 사용하여 이 비교를 '%s %s in %s'으로 병합하는 것을 고려하세요. 요소가 해시 가능하면 대신 집합을 사용하세요."
+    },
+    "consider-using-get": {
+        "eng": "Consider using dict.get for getting values from a dict if a key is present or a default if not",
+        "kor": "키가 있으면 딕셔너리에서 값 가져오기 위해 dict.get을 사용하는 것을 고려하세요. 없으면 기본값을 사용하세요."
+    },
+    "chained-comparison": {
+        "eng": "Simplify chained comparison between the operands",
+        "kor": "피연산자 사이의 연쇄 비교를 단순화하세요"
+    },
+    "consider-using-dict-comprehension": {
+        "eng": "Consider using a dictionary comprehension",
+        "kor": "딕셔너리 컴프리헨션 사용을 고려하세요"
+    },
+    "consider-using-set-comprehension": {
+        "eng": "Consider using a set comprehension",
+        "kor": "집합 컴프리헨션 사용을 고려하세요"
+    },
+    "simplifiable-if-expression": {
+        "eng": "The if expression can be replaced with (.+)",
+        "kor": "if 표현식을 %s으로 대체할 수 있습니다"
+    },
+    "no-else-raise": {
+        "eng": "Unnecessary (.+) after \"raise\", (.+)",
+        "kor": "\"raise\" 후에 불필요한 %s, %s"
+    },
+    "unnecessary-comprehension": {
+        "eng": "Unnecessary use of a comprehension, use (.+) instead.",
+        "kor": "컴프리헨션의 불필요한 사용, 대신 %s을(를) 사용하세요."
+    },
+    "consider-using-sys-exit": {
+        "eng": "Consider using 'sys.exit' instead",
+        "kor": "'sys.exit'을(를) 사용하는 것을 고려하세요"
+    },
+    "no-else-break": {
+        "eng": "Unnecessary (.+) after \"break\", (.+)",
+        "kor": "\"break\" 후에 불필요한 %s, %s"
+    },
+    "no-else-continue": {
+        "eng": "Unnecessary (.+) after \"continue\", (.+)",
+        "kor": "\"continue\" 후에 불필요한 %s, %s"
+    },
+    "super-with-arguments": {
+        "eng": "Consider using Python 3 style super\\(\\) without arguments",
+        "kor": "인수 없이 Python 3 스타일의 super()을(를) 사용하는 것을 고려하세요"
+    },
+    "simplifiable-condition": {
+        "eng": "Boolean condition (.+) may be simplified to (.+)",
+        "kor": "부울 조건 %s은(는) %s(으)로 단순화될 수 있습니다"
+    },
+    "condition-evals-to-constant": {
+        "eng": "Boolean condition (.+) will always evaluate to (.+)",
+        "kor": "부울 조건 %s은(는) 항상 %s(으)로 평가됩니다"
+    },
+    "consider-using-generator": {
+        "eng": "Consider using a generator instead '(.+)(.+)'",
+        "kor": "'%s%s' 대신에 제너레이터 사용을 고려하세요"
+    },
+    "use-a-generator": {
+        "eng": "Use a generator instead '(.+)(.+)'",
+        "kor": "'%s%s' 대신에 제너레이터를 사용하세요"
+    },
+    "consider-using-min-builtin": {
+        "eng": "Consider using (.+) instead of unnecessary if block",
+        "kor": "불필요한 if 블록 대신에 %s 사용을 고려하세요"
+    },
+    "consider-using-max-builtin": {
+        "eng": "Consider using (.+) instead of unnecessary if block",
+        "kor": "불필요한 if 블록 대신에 %s 사용을 고려하세요"
+    },
+    "consider-using-with": {
+        "eng": "Consider using 'with' for resource-allocating operations",
+        "kor": "리소스 할당 작업에 'with' 사용을 고려하세요"
+    },
+    "unnecessary-dict-index-lookup": {
+        "eng": "Unnecessary dictionary index lookup, use (.+) instead",
+        "kor": "불필요한 사전 인덱스 조회, 대신 %s을(를) 사용하세요"
+    },
+    "use-list-literal": {
+        "eng": "Consider using \\[\\] instead of list\\(\\)",
+        "kor": "list() 대신에 [] 사용을 고려하세요"
+    },
+    "use-dict-literal": {
+        "eng": "Consider using (.+) instead of a call to 'dict'.",
+        "kor": "'dict' 호출 대신에 %s을(를) 사용하는 것을 고려하세요."
+    },
+    "unnecessary-list-index-lookup": {
+        "eng": "Unnecessary list index lookup, use (.+) instead",
+        "kor": "불필요한 리스트 인덱스 조회, 대신 %s을(를) 사용하세요"
+    },
+    "unknown-option-value": {
+        "eng": "Unknown option value for (.+), expected a valid pylint message and got (.+)",
+        "kor": "%s에 대한 알 수 없는 옵션 값, 유효한 pylint 메시지를 예상했지만 %s을(를) 받았습니다"
+    },
+    "unreachable": {
+        "eng": "Unreachable code",
+        "kor": "도달할 수 없는 코드"
+    },
+    "dangerous-default-value": {
+        "eng": "Dangerous default value (.+) as argument",
+        "kor": "위험한 기본값 %s을(를) 인수로 사용함"
+    },
+    "pointless-statement": {
+        "eng": "Statement seems to have no effect",
+        "kor": "문장이 효과가 없는 것으로 보입니다"
+    },
+    "pointless-string-statement": {
+        "eng": "String statement has no effect",
+        "kor": "문자열 문장이 효과가 없습니다"
+    },
+    "expression-not-assigned": {
+        "eng": "Expression (.+) is assigned to nothing",
+        "kor": "%s 표현식이 아무것도 할당되지 않습니다"
+    },
+    "unnecessary-pass": {
+        "eng": "Unnecessary pass statement",
+        "kor": "불필요한 pass 문"
+    },
+    "unnecessary-lambda": {
+        "eng": "Lambda may not be necessary",
+        "kor": "람다가 필요하지 않을 수 있습니다"
+    },
+    "duplicate-key": {
+        "eng": "Duplicate key (.+) in dictionary",
+        "kor": "사전에서 중복된 키 %s"
+    },
+    "useless-else-on-loop": {
+        "eng": "Else clause on loop without a break statement, remove the else and de-indent all the code inside it",
+        "kor": "break 문이 없는 반복문에 else 절이 있으며, else를 제거하고 내부의 모든 코드를 들여쓰기 해제하세요"
+    },
+    "exec-used": {
+        "eng": "Use of exec",
+        "kor": "exec 사용"
+    },
+    "eval-used": {
+        "eng": "Use of eval",
+        "kor": "eval 사용"
+    },
+    "confusing-with-statement": {
+        "eng": "Following \"as\" with another context manager looks like a tuple.",
+        "kor": "\"as\" 다음에 다른 컨텍스트 관리자가 오면 튜플처럼 보입니다."
+    },
+    "using-constant-test": {
+        "eng": "Using a conditional statement with a constant value",
+        "kor": "상수 값을 가진 조건문 사용"
+    },
+    "missing-parentheses-for-call-in-test": {
+        "eng": "Using a conditional statement with potentially wrong function or method call due to missing parentheses",
+        "kor": "괄호가 누락되어 함수 또는 메서드 호출에 잠재적으로 잘못된 조건문 사용"
+    },
+    "self-assigning-variable": {
+        "eng": "Assigning the same variable (.+) to itself",
+        "kor": "동일한 변수 %s를 자신에게 할당하는 중"
+    },
+    "redeclared-assigned-name": {
+        "eng": "Redeclared variable (.+) in assignment",
+        "kor": "할당 중에 변수 %s을(를) 재선언했습니다"
+    },
+    "assert-on-string-literal": {
+        "eng": "Assert statement has a string literal as its first argument. The assert will (.+) fail.",
+        "kor": "어설트 문은 첫 번째 인수로 문자열 리터럴을 가지고 있습니다. 어설트는 %s 실패할 것입니다."
+    },
+    "duplicate-value": {
+        "eng": "Duplicate value (.+) in set",
+        "kor": "집합에 중복된 값 %s"
+    },
+    "named-expr-without-context": {
+        "eng": "Named expression used without context",
+        "kor": "컨텍스트 없이 사용된 명명된 표현식"
+    },
+    "pointless-exception-statement": {
+        "eng": "Exception statement has no effect",
+        "kor": "예외 문장이 효과가 없습니다"
+    },
+    "return-in-finally": {
+        "eng": "'return' shadowed by the 'finally' clause.",
+        "kor": "'finally' 절에 의해 'return'이 가려졌습니다."
+    },
+    "comparison-with-callable": {
+        "eng": "Comparing against a callable, did you omit the parenthesis?",
+        "kor": "호출 가능한 대상과의 비교, 괄호를 생략했나요?"
+    },
+    "lost-exception": {
+        "eng": "(.+) statement in finally block may swallow exception",
+        "kor": "finally 블록의 %s 문은 예외를 삼켰을 수 있습니다"
+    },
+    "nan-comparison": {
+        "eng": "Comparison (.+) should be (.+)",
+        "kor": "%s 비교는 %s이어야 합니다"
+    },
+    "assert-on-tuple": {
+        "eng": "Assert called on a populated tuple. Did you mean 'assert x,y'?",
+        "kor": "포함된 튜플에 대해 어설트가 호출되었습니다. 'assert x,y'를 의미한 건가요?"
+    },
+    "attribute-defined-outside-init": {
+        "eng": "Attribute (.+) defined outside __init__",
+        "kor": "%s 속성이 __init__ 외부에서 정의되었습니다"
+    },
+    "bad-staticmethod-argument": {
+        "eng": "Static method with (.+) as first argument",
+        "kor": "%s을(를) 첫 번째 인수로 사용한 정적 메서드"
+    },
+    "protected-access": {
+        "eng": "Access to a protected member (.+) of a client class",
+        "kor": "클라이언트 클래스의 보호된 멤버 %s에 대한 접근"
+    },
+    "implicit-flag-alias": {
+        "eng": "Flag member (.+) shares bit positions with (.+)",
+        "kor": "플래그 멤버 %s가 %s와 비트 위치를 공유합니다"
+    },
+    "arguments-differ": {
+        "eng": "(.+) (.+) (.+) method",
+        "kor": "%s %s %s 메서드의 매개변수가 다릅니다"
+    },
+    "signature-differs": {
+        "eng": "Signature differs from (.+) (.+) method",
+        "kor": "서명이 %s %s 메서드와 다릅니다"
+    },
+    "abstract-method": {
+        "eng": "Method (.+) is abstract in class (.+) but is not overridden in child class (.+)",
+        "kor": "%s 메서드는 클래스 %s에서 추상적입니다. 그러나 자식 클래스 %s에서 재정의되지 않았습니다"
+    },
+    "super-init-not-called": {
+        "eng": "__init__ method from base class (.+) is not called",
+        "kor": "기본 클래스 %s의 __init__ 메서드가 호출되지 않았습니다"
+    },
+    "non-parent-init-called": {
+        "eng": "__init__ method from a non direct base class (.+) is called",
+        "kor": "비직접 기본 클래스 %s의 __init__ 메서드가 호출되었습니다"
+    },
+    "invalid-overridden-method": {
+        "eng": "Method (.+) was expected to be (.+), found it instead as (.+)",
+        "kor": "%s 메서드는 예상되는 %s이어야 했지만 대신 %s을(를) 찾았습니다"
+    },
+    "arguments-renamed": {
+        "eng": "(.+) (.+) (.+) method",
+        "kor": "%s %s %s 메서드의 매개변수가 이름이 변경되었습니다"
+    },
+    "unused-private-member": {
+        "eng": "Unused private member `(.+).(.+)`",
+        "kor": "사용되지 않는 비공개 멤버 `%s.%s`"
+    },
+    "overridden-final-method": {
+        "eng": "Method (.+) overrides a method decorated with typing.final which is defined in class (.+)",
+        "kor": "%s 메서드가 typing.final로 데코레이트된 메서드를 재정의합니다. 이는 %s 클래스에 정의되어 있습니다"
+    },
+    "subclassed-final-class": {
+        "eng": "Class (.+) is a subclass of a class decorated with typing.final: (.+)",
+        "kor": "%s 클래스는 typing.final로 데코레이트된 클래스 %s의 하위 클래스입니다"
+    },
+    "redefined-slots-in-subclass": {
+        "eng": "Redefined slots (.+) in subclass",
+        "kor": "하위 클래스에서 슬롯 %s을(를) 재정의했습니다"
+    },
+    "super-without-brackets": {
+        "eng": "Super call without brackets",
+        "kor": "괄호 없이 슈퍼 호출"
+    },
+    "useless-parent-delegation": {
+        "eng": "Useless parent or super\\(\\) delegation in method (.+)",
+        "kor": "메서드 %s에서 불필요한 부모 또는 super() 위임"
+    },
+    "unnecessary-semicolon": {
+        "eng": "Unnecessary semicolon",
+        "kor": "불필요한 세미콜론"
+    },
+    "bad-indentation": {
+        "eng": "Bad indentation. Found (.+) (.+), expected (.+)",
+        "kor": "잘못된 들여쓰기. %s %s이(가) 발견되었습니다. 예상되는 것은 %s"
+    },
+    "wildcard-import": {
+        "eng": "Wildcard import (.+)",
+        "kor": "와일드카드 임포트 %s"
+    },
+    "reimported": {
+        "eng": "Reimport (.+) (imported line (.+)\\)",
+        "kor": "%s을(를) 다시 임포트했습니다 (임포트된 줄 %s)"
+    },
+    "import-self": {
+        "eng": "Module import itself",
+        "kor": "모듈이 자기 자신을 임포트함"
+    },
+    "preferred-module": {
+        "eng": "Prefer importing (.+) instead of (.+)",
+        "kor": "%s을(를) %s 대신 임포트하는 것을 선호합니다"
+    },
+    "misplaced-future": {
+        "eng": "__future__ import is not the first non docstring statement",
+        "kor": "__future__ 임포트가 첫 번째가 아닌 문 앞에 있습니다"
+    },
+    "shadowed-import": {
+        "eng": "Shadowed (.+) (imported line (.+))",
+        "kor": "%s이(가) 가려졌습니다 (임포트된 줄 %s)"
+    },
+    "global-variable-undefined": {
+        "eng": "Global variable (.+) undefined at the module level",
+        "kor": "모듈 수준에서 정의되지 않은 전역 변수 %s"
+    },
+    "global-variable-not-assigned": {
+        "eng": "Using global for (.+) but no assignment is done",
+        "kor": "%s에 대해 global을 사용했지만 할당이 이루어지지 않았습니다"
+    },
+    "global-statement": {
+        "eng": "Using the global statement",
+        "kor": "global 문을 사용 중"
+    },
+    "global-at-module-level": {
+        "eng": "Using the global statement at the module level",
+        "kor": "모듈 수준에서 global 문을 사용 중"
+    },
+    "unused-import": {
+        "eng": "Unused (.+)",
+        "kor": "사용되지 않는 %s"
+    },
+    "unused-variable": {
+        "eng": "Unused variable (.+)",
+        "kor": "사용되지 않는 변수 %s"
+    },
+    "unused-argument": {
+        "eng": "Unused argument (.+)",
+        "kor": "사용되지 않는 인수 %s"
+    },
+    "unused-wildcard-import": {
+        "eng": "Unused import\\(s\\) (.+) from wildcard import of (.+)",
+        "kor": "와일드카드 임포트에서 %s으로부터 사용되지 않은 임포트 %s"
+    },
+    "redefined-outer-name": {
+        "eng": "Redefining name (.+) from outer scope \\(line (.+)\\)",
+        "kor": "테스트 외부 범위의 이름 %s을(를) 재정의합니다. (%s번 라인)"
+    },
+    "redefined-builtin": {
+        "eng": "Redefining built-in (.+)",
+        "kor": "내장 %s을(를) 재정의함"
+    },
+    "undefined-loop-variable": {
+        "eng": "Using possibly undefined loop variable (.+)",
+        "kor": "아마도 정의되지 않은 루프 변수 %s을(를) 사용 중"
+    },
+    "unbalanced-tuple-unpacking": {
+        "eng": "Possible unbalanced tuple unpacking with sequence (.+): left side has (.+) (.+), right side has (.+) (.+)",
+        "kor": "%s 시퀀스의 균형 잡히지 않은 튜플 언패킹: 왼쪽에는 %s개 %s(이)가 있고, 오른쪽에는 %s개 %s가 있습니다 "
+    },
+    "cell-var-from-loop": {
+        "eng": "Cell variable (.+) defined in loop",
+        "kor": "루프 내에서 정의된 셀 변수 %s"
+    },
+    "possibly-unused-variable": {
+        "eng": "Possibly unused variable (.+)",
+        "kor": "아마도 사용되지 않는 변수 %s"
+    },
+    "self-cls-assignment": {
+        "eng": "Invalid assignment to (.+) in method",
+        "kor": "메서드 내에서 %s에 잘못된 할당"
+    },
+    "unbalanced-dict-unpacking": {
+        "eng": "Possible unbalanced dict unpacking with (.+): left side has (.+) (.+), right side has (.+) (.+)",
+        "kor": "%s의 균형 잡히지 않은 딕셔너리 언패킹: 왼쪽에는 %s개 %s(이)가 있고, 오른쪽에는 %s개 %s가 있습니다"
+    },
+    "bare-except": {
+        "eng": "No exception type\\(s\\) specified",
+        "kor": "예외 유형이 지정되지 않음"
+    },
+    "duplicate-except": {
+        "eng": "Catching previously caught exception type (.+)",
+        "kor": "이전에 잡힌 예외 유형 %s을(를) 잡음"
+    },
+    "try-except-raise": {
+        "eng": "The except handler raises immediately",
+        "kor": "except 핸들러가 즉시 예외를 발생시킵니다"
+    },
+    "raise-missing-from": {
+        "eng": "Consider explicitly re-raising using (.+)'(.+) from (.+)'",
+        "kor": "명시적으로 %s'%s from %s'를 사용하여 다시 발생시키는 것을 고려하십시오"
+    },
+    "binary-op-exception": {
+        "eng": "Exception to catch is the result of a binary (.+) operation",
+        "kor": "잡을 예외는 이진 %s 연산의 결과입니다"
+    },
+    "raising-format-tuple": {
+        "eng": "Exception arguments suggest string formatting might be intended",
+        "kor": "예외 인수가 문자열 형식화를 의도한 것으로 보입니다"
+    },
+    "wrong-exception-operation": {
+        "eng": "Invalid exception operation. (.+)",
+        "kor": "잘못된 예외 작업입니다. %s"
+    },
+    "broad-exception-caught": {
+        "eng": "Catching too general exception (.+)",
+        "kor": "너무 일반적인 예외 %s를 잡음"
+    },
+    "broad-exception-raised": {
+        "eng": "Raising too general exception: (.+)",
+        "kor": "너무 일반적인 예외를 발생시킴: %s"
+    },
+    "keyword-arg-before-vararg": {
+        "eng": "Keyword argument before variable positional arguments list in the definition of (.+) function",
+        "kor": "%s 함수 정의에서 변수 위치 인수 목록 앞에 키워드 인수가 있습니다"
+    },
+    "arguments-out-of-order": {
+        "eng": "Positional arguments appear to be out of order",
+        "kor": "위치 인수가 순서를 벗어난 것으로 보입니다"
+    },
+    "non-str-assignment-to-dunder-name": {
+        "eng": "Non-string value assigned to __name__",
+        "kor": "__name__에 문자열이 아닌 값이 할당됨"
+    },
+    "isinstance-second-argument-not-valid-type": {
+        "eng": "Second argument of isinstance is not a type",
+        "kor": "isinstance의 두 번째 인수가 타입이 아닙니다"
+    },
+    "kwarg-superseded-by-positional-arg": {
+        "eng": "(.+) will be included in (.+) since a positional-only parameter with this name already exists",
+        "kor": "이름이 이미 있는 위치 전용 매개변수가 있기 때문에 %s이 %s에 포함됩니다"
+    },
+    "logging-not-lazy": {
+        "eng": "Use (.+) formatting in logging functions",
+        "kor": "로그 기능에서 %s 서식을 사용하세요"
+    },
+    "logging-format-interpolation": {
+        "eng": "Use (.+) formatting in logging functions",
+        "kor": "로그 기능에서 %s 서식을 사용하세요"
+    },
+    "logging-fstring-interpolation": {
+        "eng": "Use (.+) formatting in logging functions",
+        "kor": "로그 기능에서 %s 서식을 사용하세요"
+    },
+    "bad-format-string-key": {
+        "eng": "Format string dictionary key should be a string, not (.+)",
+        "kor": "형식 문자열 사전 키는 문자열이어야 합니다. %s가 아닙니다"
+    },
+    "unused-format-string-key": {
+        "eng": "Unused key (.+) in format string dictionary",
+        "kor": "형식 문자열 사전에 사용되지 않은 키 %s"
+    },
+    "bad-format-string": {
+        "eng": "Invalid format string",
+        "kor": "잘못된 형식 문자열"
+    },
+    "missing-format-argument-key": {
+        "eng": "Missing keyword argument (.+) for format string",
+        "kor": "형식 문자열의 키워드 인수 %s이(가) 누락되었습니다"
+    },
+    "unused-format-string-argument": {
+        "eng": "Unused format argument (.+)",
+        "kor": "사용되지 않은 형식 인수 %s"
+    },
+    "format-combined-specification": {
+        "eng": "Format string contains both automatic field numbering and manual field specification",
+        "kor": "형식 문자열에는 자동 필드 번호 지정 및 수동 필드 지정이 모두 포함되어 있습니다"
+    },
+    "missing-format-attribute": {
+        "eng": "Missing format attribute (.+) in format specifier (.+)",
+        "kor": "형식 지정기 %s에서 누락된 형식 속성 %s"
+    },
+    "invalid-format-index": {
+        "eng": "Using invalid lookup key (.+) in format specifier (.+)",
+        "kor": "형식 지정기 %s에서 잘못된 조회 키 %s 사용"
+    },
+    "duplicate-string-formatting-argument": {
+        "eng": "Duplicate string formatting argument (.+), consider passing as named argument",
+        "kor": "중복된 문자열 형식 인수 %s이(가) 있습니다. 이름이 있는 인수로 전달하는 것이 좋습니다"
+    },
+    "f-string-without-interpolation": {
+        "eng": "Using an f-string that does not have any interpolated variables",
+        "kor": "보간된 변수가 없는 f-문자열을 사용 중입니다"
+    },
+    "format-string-without-interpolation": {
+        "eng": "Using formatting for a string that does not have any interpolated variables",
+        "kor": "보간된 변수가 없는 문자열에 형식 지정을 사용 중입니다"
+    },
+    "anomalous-backslash-in-string": {
+        "eng": "Anomalous backslash in string: (.+). String constant might be missing an r prefix.",
+        "kor": "문자열에 이상한 백슬래시가 있습니다: %s. 문자열 상수에 r 접두사가 누락되었을 수 있습니다."
+    },
+    "anomalous-unicode-escape-in-string": {
+        "eng": "Anomalous Unicode escape in byte string: (.+). String constant might be missing an r or u prefix.",
+        "kor": "바이트 문자열에 이상한 유니코드 이스케이프가 있습니다: %s. 문자열 상수에 r 또는 u 접두사가 누락되었을 수 있습니다."
+    },
+    "implicit-str-concat": {
+        "eng": "Implicit string concatenation found in (.+)",
+        "kor": "%s에서 암묵적인 문자열 연결이 발견되었습니다"
+    },
+    "inconsistent-quotes": {
+        "eng": "Quote delimiter (.+) is inconsistent with the rest of the file",
+        "kor": "따옴표 구분자 %s가 파일의 나머지 부분과 일관되지 않습니다"
+    },
+    "redundant-u-string-prefix": {
+        "eng": "The u prefix for strings is no longer necessary in Python >=3.0",
+        "kor": "문자열에 대한 u 접두사는 더 이상 Python >=3.0에서 필요하지 않습니다"
+    },
+    "bad-open-mode": {
+        "eng": "(.+) is not a valid mode for open.",
+        "kor": "%s는 open에 대한 유효한 모드가 아닙니다."
+    },
+    "redundant-unittest-assert": {
+        "eng": "Redundant use of (.+) with constant value (.+)",
+        "kor": "상수 값 %s와 함께 %s의 중복된 사용"
+    },
+    "bad-thread-instantiation": {
+        "eng": "threading.Thread needs the target function",
+        "kor": "threading.Thread에는 대상 함수가 필요합니다"
+    },
+    "shallow-copy-environ": {
+        "eng": "Using copy.copy\\(os.environ\\). Use os.environ.copy\\(\\) instead.",
+        "kor": "copy.copy(os.environ)을 사용하고 있습니다. 대신 os.environ.copy()를 사용하세요."
+    },
+    "invalid-envvar-default": {
+        "eng": "(.+) default type is (.+). Expected str or None.",
+        "kor": "%s의 기본 유형은 %s입니다. str 또는 None이 예상됩니다."
+    },
+    "subprocess-popen-preexec-fn": {
+        "eng": "Using preexec_fn keyword which may be unsafe in the presence of threads",
+        "kor": "스레드가 있는 경우 안전하지 않을 수 있는 preexec_fn 키워드를 사용 중입니다"
+    },
+    "subprocess-run-check": {
+        "eng": "'subprocess.run' used without explicitly defining the value for 'check'.",
+        "kor": "'check'의 값을 명시적으로 정의하지 않고 'subprocess.run'을 사용 중입니다."
+    },
+    "unspecified-encoding": {
+        "eng": "Using open without explicitly specifying an encoding",
+        "kor": "인코딩을 명시적으로 지정하지 않고 open을 사용 중입니다"
+    },
+    "forgotten-debug-statement": {
+        "eng": "Leaving functions creating breakpoints in production code is not recommended",
+        "kor": "생산 코드에 중단점을 만드는 함수를 남겨두는 것은 권장되지 않습니다"
+    },
+    "method-cache-max-size-none": {
+        "eng": "'lru_cache\\(maxsize=None\\)' or 'cache' will keep all method args alive indefinitely, including 'self'",
+        "kor": "'lru_cache(maxsize=None)' 또는 'cache'는 'self'를 포함한 모든 메서드 인수를 무기한으로 유지합니다"
+    },
+    "useless-with-lock": {
+        "eng": "'(.+)\\(\\)' directly created in 'with' has no effect",
+        "kor": "'%s()'를 직접 'with'에서 만들었지만 효과가 없습니다"
+    },
+    "unnecessary-ellipsis": {
+        "eng": "Unnecessary ellipsis constant",
+        "kor": "불필요한 타원형 상수"
+    },
+    "non-ascii-file-name": {
+        "eng": "File name (.+) contains a non-ASCII character.",
+        "kor": "파일 이름 %s에 비 ASCII 문자가 포함되어 있습니다."
+    },
+    "using-f-string-in-unsupported-version": {
+        "eng": "F-strings are not supported by all versions included in the py-version setting",
+        "kor": "F-문자열은 py-version 설정에 포함된 모든 버전에서 지원되지 않습니다"
+    },
+    "using-final-decorator-in-unsupported-version": {
+        "eng": "typing.final is not supported by all versions included in the py-version setting",
+        "kor": "typing.final은 py-version 설정에 포함된 모든 버전에서 지원되지 않습니다"
+    },
+    "missing-timeout": {
+        "eng": "Missing timeout argument for method (.+) can cause your program to hang indefinitely",
+        "kor": "%s 메서드에 대한 timeout 인수가 누락되면 프로그램이 무기한 대기 상태에 빠질 수 있습니다"
+    },
+    "nested-min-max": {
+        "eng": "Do not use nested call of (.+); it's possible to do (.+) instead",
+        "kor": "%s의 중첩 호출을 사용하지 마세요. 대신 %s을(를) 사용할 수 있습니다"
+    },
+    "bad-chained-comparison": {
+        "eng": "Suspicious (.+)-part chained comparison using semantically incompatible operators \\((.+)\\)",
+        "kor": "%s 부분 연쇄 비교는 의미론적으로 호환되지 않는 연산자를 사용합니다 %s"
+    },
+    "modified-iterating-list": {
+        "eng": "Iterated list (.+) is being modified inside for loop body, consider iterating through a copy of it instead.",
+        "kor": "반복되는 목록 %s이(가) for 루프 본문 내에서 수정되고 있으므로 대신 그의 사본을 통해 반복하는 것을 고려하세요."
+    },
+    "deprecated-module": {
+        "eng": "Deprecated module (.+)",
+        "kor": "사용되지 않는 모듈 %s"
+    },
+    "deprecated-method": {
+        "eng": "Using deprecated method (.+)\\(\\)",
+        "kor": "사용되지 않는 메서드 %s() 사용"
+    },
+    "deprecated-argument": {
+        "eng": "Using deprecated argument (.+) of method (.+)\\(\\)",
+        "kor": "메서드 %s()의 사용되지 않는 인수 %s 사용"
+    },
+    "deprecated-class": {
+        "eng": "Using deprecated class (.+) of module (.+)",
+        "kor": "모듈 %s의 사용되지 않는 클래스 %s 사용"
+    },
+    "deprecated-decorator": {
+        "eng": "Using deprecated decorator (.+)\\(\\)",
+        "kor": "사용되지 않는 데코레이터 %s() 사용"
+    },
+    "return-arg-in-generator": {
+        "eng": "Return with argument inside generator",
+        "kor": "생성기 내에서 인수와 함께 반환"
+    },
+    "boolean-datetime": {
+        "eng": "Using datetime.time in a boolean context.",
+        "kor": "boolean 컨텍스트에서 datetime.time 사용."
+    }
+}
