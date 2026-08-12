@@ -12,7 +12,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && mkdir -p /out \
     && install -m 0755 nsjail /out/nsjail
 
-FROM ghcr.io/astral-sh/uv:python3.14-trixie-slim
+# ---------------------------------------------------------------------------
+# judge-base: nsjail 바이너리 + 런타임 의존성 (운영 이미지와 테스트 이미지 공용)
+# ---------------------------------------------------------------------------
+FROM ghcr.io/astral-sh/uv:python3.14-trixie-slim AS judge-base
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     gcc g++ make libc6-dev default-jdk-headless \
@@ -24,7 +27,48 @@ COPY --from=nsjail-builder /out/nsjail /usr/local/bin/nsjail
 WORKDIR /app
 COPY pyproject.toml uv.lock ./
 RUN uv sync --frozen --no-dev
-COPY . .
+
+# ---------------------------------------------------------------------------
+# judge-test: 실제 nsjail로 격리 정책을 검증하는 테스트 전용 이미지
+#
+# 운영 이미지와 동일한 nsjail 바이너리·커널 인터페이스를 사용하되, dev 의존성과
+# 테스트 코드를 추가한다. mock 없이 tests/sandbox/test_nsjail_real.py 를 실행한다.
+#   docker compose -f docker-compose.test.yml run --rm --build sandbox-tests
+# ---------------------------------------------------------------------------
+FROM judge-base AS judge-test
+
+# dev 그룹(pytest 등) 추가 설치
+RUN uv sync --frozen
+
+# backend/Dockerfile 의 test 타깃과 동일하게 저장소 레이아웃을 재현한다.
+COPY --from=supportfiles . /supportFiles
+RUN mkdir -p /database
+
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONPYCACHEPREFIX=/tmp/pycache \
+    LANG=C.UTF-8 \
+    LC_ALL=C.UTF-8 \
+    TZ=UTC
+
+COPY app ./app
+COPY tests ./tests
+COPY deploy ./deploy
+COPY openapi.json API.md create_sample_data.py ./
+
+ENTRYPOINT ["/app/.venv/bin/pytest"]
+CMD ["tests/sandbox"]
+
+# ---------------------------------------------------------------------------
+# judge: 운영 워커 이미지 (docker build 기본 타깃)
+# ---------------------------------------------------------------------------
+FROM judge-base AS judge
+
+# 워커 실행에 필요한 파일만 복사한다. (.dockerignore 변경과 무관하게
+# 테스트 코드·문서가 심사 대상 이미지에 섞여 들어가지 않도록 한다.)
+COPY app ./app
+COPY deploy ./deploy
+COPY openapi.json ./
 
 # The image is deliberately not an API image. Production invokes the hostile
 # self-test before starting this worker, and runs it with the namespace/cgroup

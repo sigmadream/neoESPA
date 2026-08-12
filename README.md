@@ -2,7 +2,7 @@
 
 > neoESPA 프로젝트를 빠르게 실행하는 방법입니다.
 
-## 도커(Docker) 기반 실행 방법
+## 1. 도커(Docker) 기반 실행 방법
 
 Docker 및 Docker Compose가 설치된 환경에서 아래 명령어로 백엔드와 프론트엔드를 함께 기동합니다.
 
@@ -92,10 +92,23 @@ NEXT_PUBLIC_API_BASE_URL=http://localhost:8000 npm run dev
 
 ## 3. 테스트 실행
 
+백엔드 테스트는 운영체제와 무관하게 동일한 Linux 컨테이너 안에서 실행합니다. 호스트에 Python·uv·컴파일러가 없어도 됩니다.
+
 ```bash
-cd backend
-uv run pytest
+# Linux / macOS / Git Bash
+./backend/scripts/test.sh
+
+# Windows PowerShell
+.\backend\scripts\test.ps1
+
+# 래퍼 없이 직접 실행
+docker compose -f docker-compose.test.yml run --rm --build tests
+
+# 샌드박스 격리 실검증 (실제 nsjail 실행, 첫 빌드는 수 분 소요)
+docker compose -f docker-compose.test.yml run --rm --build sandbox-tests
 ```
+
+세부 옵션(특정 테스트만 실행, 커버리지, 포맷 검사)은 [backend/README.md](./backend/README.md#테스트-수행-docker-기반)를 참고하시기 바랍니다.
 
 ## 추가 문서
 

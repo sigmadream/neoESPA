@@ -22,6 +22,11 @@ neoespa-admin = "app.cli:main"
 [tool.black]
 line-length = 80
 
+[tool.pytest.ini_options]
+markers = [
+    "nsjail: 실제 nsjail 바이너리와 커널 네임스페이스 권한이 필요한 테스트. 그 외 환경에서는 자동으로 skip 된다.",
+]
+
 [dependency-groups]
 dev = [
     "black>=26.5.1",

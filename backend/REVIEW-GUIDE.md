@@ -101,7 +101,10 @@ CLI 14개 명령의 목록과 용도는 [README.md](./README.md)의 표에 있�
 카테고리별 구성은 [README.md](./README.md)에 정리돼 있습니다. 전부 읽기보다 커버리지가 낮은 영역과 아래 두 파일을 보십시오.
 
 - `tests/core/test_openapi_contract.py` - 문서와 runtime router의 일치를 강제합니다
-- `tests/sandbox/` - 샌드박스 격리 검증
+- `tests/sandbox/test_nsjail_contract.py` - mock 기반 계약 검증 (모든 OS에서 실행)
+- `tests/sandbox/test_nsjail_real.py` - 실제 nsjail로 격리를 실행 검증 (`sandbox-tests` 서비스 전용, 그 외 환경에서는 skip)
+
+샌드박스 정책(`deploy/nsjail.cfg`)은 이제 mock 없이 실제로 실행되며, 그 과정에서 드러난 결함을 수정했습니다. 상세는 [README.md](./README.md)의 "샌드박스(nsjail) 실검증"을 참고하십시오.
 
 ---
 
