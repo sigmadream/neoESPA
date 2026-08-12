@@ -308,7 +308,7 @@ def test_failed_job_can_be_explicitly_retried(session):
 
 def test_successful_job_cannot_be_retried(session):
     service = JudgeJobService()
-    job = service.enqueue(session, job_type="noop", payload={})
+    service.enqueue(session, job_type="noop", payload={})
     session.commit()
     claimed = service.claim_next(session, "retry-worker")
     assert claimed is not None

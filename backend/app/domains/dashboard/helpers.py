@@ -1,7 +1,6 @@
 from datetime import UTC, datetime
 
 from ...models.schemas import Homework, StudentDashboardHomeworkItem, Submission, SubmissionResult
-from ..homework.helpers import to_homework_read
 from ..shared.schedules import compute_schedule_window, parse_datetime
 from ..submissions.helpers import dashboard_score_for_submission
 

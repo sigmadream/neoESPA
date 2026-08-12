@@ -6,7 +6,7 @@ from fastapi.testclient import TestClient
 from sqlmodel import Session, select
 
 from app.domains.homework import router as homework_router
-from app.models.schemas import AuditLog, GradingRule, Homework
+from app.models.schemas import AuditLog, Homework
 
 
 def _read_fixture(name: str) -> bytes:

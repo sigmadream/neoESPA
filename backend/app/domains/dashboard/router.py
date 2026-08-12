@@ -7,7 +7,6 @@ from ...api.dependencies import get_current_active_user
 from ...core.db import get_session
 from ...models.schemas import Homework, StudentDashboardOverview, StudentDashboardRead, Submission, User
 from ..dashboard.helpers import to_student_dashboard_homework_item
-from ..homework.helpers import to_homework_read
 from ..shared.schedules import compute_schedule_window
 from ..submissions.helpers import build_submission_result_map, to_submission_read
 from ..users.serializers import is_staff

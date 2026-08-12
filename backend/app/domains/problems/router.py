@@ -438,7 +438,7 @@ def create_validation_job(
 ):
     problem = _problem_or_404(session, problem_id)
     _authorize_problem_scope(session, current_user, problem, "problem:review")
-    revision = _editable_revision_or_409(session, problem_id, revision_id)
+    _editable_revision_or_409(session, problem_id, revision_id)
     try:
         job = job_service.enqueue(
             session,

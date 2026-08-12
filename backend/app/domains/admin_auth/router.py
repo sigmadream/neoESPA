@@ -1,9 +1,9 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.exc import IntegrityError
 from sqlmodel import Session
 
 from ...core.db import get_session
-from ...api.dependencies import get_current_active_user, require_step_up
+from ...api.dependencies import require_step_up
 from ...api.runtime import observability_service
 from ...models.schemas import (
     AdminBootstrapCreate, AdminInvitationAccept, AdminInvitationCreate,

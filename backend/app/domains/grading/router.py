@@ -9,7 +9,6 @@ from ...api.runtime import export_service, grading_service, judge_job_service, n
 from ...core.config import settings
 from ...core.db import get_session
 from ...models.schemas import Homework, JudgeJob, Submission, SubmissionRead, SubmissionResult, SubmissionScoreAdjustRequest, User
-from ...services.user_management import ADMIN_ROLES
 from ..submissions.helpers import get_or_create_submission_result, to_submission_read
 
 

@@ -7,7 +7,6 @@ from ...api.dependencies import get_current_active_user, get_optional_current_us
 from ...api.runtime import observability_service
 from ...core.db import get_session
 from ...models.schemas import Exam, ExamRead, ExamResult, ExamSubmission, ExamSubmissionCreate, ExamSubmissionRead, ExamWrite, User
-from ...services.user_management import ADMIN_ROLES
 from ..exams.helpers import load_exam_languages, normalize_exam_languages, to_exam_read, to_exam_submission_read
 from ..shared.schedules import compute_schedule_window
 from ..users.serializers import is_staff

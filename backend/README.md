@@ -2,20 +2,22 @@
 
 > 본 프로젝트는 neoESPA 학습 관리 시스템의 백엔드 관련 기능을 제공하는 코드입니다. 많은 유틸리티가 Python으로 작성되어 있어서 현재는 FastAPI와 SQLModel(SQLAlchemy + Pydantic)을 기반으로 빠르게 작성되었습니다.
 
+> **코드 리뷰를 진행하신다면** [REVIEW-GUIDE.md](./REVIEW-GUIDE.md)의 읽는 순서를 먼저 참고하시기 바랍니다.
+
 ## 개선 목표
 
-1. 테스트를 기반으로 언제든 다른 플랫폼/프레임워크로 변경 가능하도록 관리.
-2. 수강생의 소중한 데이터가 외부에 노출되지 않도록 보안 및 안정성 강화.
-3. 유지보수 및 확장 용이성 확보.
+- 테스트를 기반으로 언제든 다른 플랫폼/프레임워크로 변경 가능하도록 관리
+- 수강생의 소중한 데이터가 외부에 노출되지 않도록 보안 및 안정성 강화
+- 유지보수 및 확장 용이성 확보
 
 ## 주요 기술 스택
 
 - [FastAPI](https://fastapi.tiangolo.com/) (>= Python 3.14)
 - [SQLModel](https://sqlmodel.tiangolo.com/)
 - [uv](https://github.com/astral-sh/uv)
-- Database: SQLite (개발용) / 확장 가능 (PostgreSQL 등)
-- Security: OAuth2 (JWT), bcrypt 비밀번호 해싱
-- Testing: pytest
+- 데이터베이스: SQLite. `DATABASE_URL` 환경변수로 SQLAlchemy가 지원하는 다른 엔진을 지정할 수 있으나, 현재 마이그레이션은 SQLite에서만 검증합니다
+- 보안: OAuth2 (JWT), bcrypt 비밀번호 해싱
+- 테스트: pytest
 
 ## 설치
 
@@ -41,7 +43,7 @@ uv run -m app.core.migrations
 개발 및 테스트를 위한 관리자 계정, 샘플 과제, 공지사항 등을 생성합니다.
 
 ```bash
-uv run create_sample_data.py
+uv run python create_sample_data.py
 ```
 
 - 관리자 계정: ID: `admin` / PW: `pllab818`
@@ -49,17 +51,24 @@ uv run create_sample_data.py
 
 ### 서버 실행
 
-로컬 개발 서버를 실행합니다.
+로컬 개발 서버를 실행합니다. ASGI 애플리케이션은 `app/main.py`의 `app` 객체입니다.
 
 ```bash
-uv run fastapi dev main.py
+uv run uvicorn app.main:app --reload
+```
+
+저장소 최상위의 공용 SQLite 파일을 사용하려면 `DATABASE_URL`을 지정합니다.
+
+```bash
+DATABASE_URL="sqlite:///$PWD/../database/database.sqlite" \
+  uv run uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 ```
 
 서버가 실행되면 [http://localhost:8000/docs](http://localhost:8000/docs)에서 인터랙티브 API 문서를 확인할 수 있습니다.
 
 ## 주요 관리 도구 (CLI)
 
-관리자 계정 생성 등 주요 운영 작업을 위한 전용 CLI 도구를 제공합니다.
+관리자 계정 생성 등 주요 운영 작업을 위한 전용 CLI 도구를 제공합니다. 전체 명령 목록은 `uv run python -m app.cli --help`로 확인할 수 있습니다.
 
 ```bash
 # 관리자 계정 생성
@@ -71,6 +80,24 @@ uv run python -m app.cli create-admin \
   --email "ops-admin@example.com" \
   --password "secure-password"
 ```
+
+주요 명령:
+
+| 명령 | 용도 |
+|---|---|
+| `create-admin` | 로컬 관리자 계정 생성 |
+| `issue-bootstrap-token` | 최초 슈퍼 관리자용 일회성 토큰 발급 |
+| `run-judge-worker` | 채점·검증 작업 큐 처리 워커 실행 |
+| `check-openapi` | 현재 API가 저장된 계약을 깨는지 검사 |
+| `export-openapi` | 정규화된 OpenAPI 계약 파일 갱신 |
+| `verify-course-bundle` / `restore-course-bundle` | 코스 번들 무결성 검증 및 복원 |
+| `create-course-snapshot` | 코스 스냅샷 생성 |
+| `export-analytics-jsonl` | 분석용 JSONL 내보내기 |
+| `reconcile-artifacts` / `backfill-legacy-artifacts` | 아티팩트 정합성 조정 및 백필 |
+| `record-capacity-baseline` | 용량 기준선 기록 |
+| `run-sandbox-self-test` | 샌드박스 자체 점검 |
+
+`check-openapi`와 `export-openapi`의 실행 순서에는 주의가 필요합니다. 자세한 내용은 [API.md](./API.md)의 "계약 검증"을 참조하시기 바랍니다.
 
 ## 개발 및 테스트 가이드
 
@@ -92,24 +119,35 @@ uv run pytest tests/homework
 
 - **`tests/auth/` (인증/권한)**: 사용자 로그인, 회원가입, JWT 토큰 발급 및 권한 제어 검증
 - **`tests/collab/` (협업)**: 실시간 협업 세션 및 WebSocket 연결 상태 검증
+- **`tests/contests/` (대회)**: 대회 생성·게시, 참가, 클래리피케이션 및 스코어보드 검증
 - **`tests/dashboard/` (대시보드)**: 통계 데이터 및 현황 요약 API 검증
 - **`tests/exams/` (시험)**: 시험 생성, 응시 및 성적 처리 로직 검증
 - **`tests/grading/` (채점)**: 자동 채점 엔진, 피드백 생성, 린트 파이프라인 및 채점 큐 동작 검증
 - **`tests/homework/` (과제)**: 과제 생성, 데이터 임포트/엑스포트, ZIP 파일 파싱 검증
+- **`tests/jobs/` (작업 큐)**: 비동기 작업 상태 전이, 재시도 및 취소 동작 검증
 - **`tests/materials/` (자료)**: 학습 자료 업로드 및 조회 API 검증
 - **`tests/notices/` (공지)**: 시스템 공지사항 관리 기능 검증
 - **`tests/notifications/` (알림)**: 사용자 알림 발송 및 수신 상태 검증
 - **`tests/observability/` (관측성)**: 시스템 상태 모니터링 및 로깅 기능 검증
 - **`tests/plagiarism/` (표절)**: 제출 코드 간 유사도 검사 및 표절 탐지 서비스 검증
+- **`tests/problems/` (문제)**: 문제·revision 수명주기, 테스트케이스 관리 및 게시 검증
+- **`tests/qa/` (Q&A)**: 질문 등록 및 답변 기능 검증
+- **`tests/sandbox/` (샌드박스)**: 코드 실행 격리 환경 및 자원 제한 검증
 - **`tests/settings/` (설정)**: 시스템 전역 설정 및 환경 구성 API 검증
 - **`tests/submissions/` (제출)**: 수강생 코드 제출 및 결과 조회 기능 검증
 - **`tests/users/` (사용자)**: 사용자 프로필 관리 및 관리자 전용 사용자 제어 검증
 - **`tests/e2e/` (종합 테스트)**: 주요 사용자 시나리오 기반의 End-to-End 통합 테스트
-- **`tests/core/` (인프라)**: 데이터베이스 설정, 마이그레이션, CLI 도구 및 스키마 유효성 검증
+- **`tests/core/` (인프라)**: 데이터베이스 설정, 마이그레이션, CLI 도구, OpenAPI 계약 및 스키마 유효성 검증
 
 ### 코드 품질 관리
 
-테스트 커버리지 측정 및 TDD 관련 향후 계획은 `TDD_TODO.md` 파일을 참조하시기 바랍니다.
+커버리지 측정은 `pytest-cov`로 수행합니다.
+
+```bash
+uv run pytest --cov=app --cov-report=term-missing
+```
+
+API를 추가·삭제·변경한 경우 [API.md](./API.md)의 "계약 검증" 절차를 따라 문서와 `openapi.json`을 함께 갱신해야 합니다. `tests/core/test_openapi_contract.py`가 문서와 runtime router의 일치 여부를 검사합니다.
 
 ### 구현 주의 사항 (FK 제약 조건)
 
@@ -129,15 +167,17 @@ session.commit()
 backend/
 ├── app/
 │   ├── api/          # 글로벌 API 설정 및 의존성
-│   ├── core/         # DB 설정, 보안, 구성 정보
+│   ├── core/         # DB 설정, 보안, 구성 정보, 마이그레이션 실행기
 │   ├── domains/      # 도메인별 비즈니스 로직 및 라우터 (Auth, Homework, etc.)
+│   ├── migrations/   # 순차 적용되는 스키마 마이그레이션 정의
 │   ├── models/       # SQLModel 데이터 스키마
-│   └── services/     # 재사용 가능한 서비스 레이어 (Grading, Lint, etc.)
+│   ├── services/     # 재사용 가능한 서비스 레이어 (Grading, Lint, etc.)
+│   ├── cli.py        # 운영용 CLI 진입점 (python -m app.cli)
+│   └── main.py       # FastAPI 애플리케이션 (app 객체)
+├── deploy/           # 배포 관련 설정
 ├── tests/            # pytest 기반 테스트 코드
 ├── API.md            # 카테고리별 API 명세서
-└── TDD_TODO.md       # 테스트 고도화 로드맵
+├── openapi.json      # 정규화된 OpenAPI 계약 기준선
+├── create_sample_data.py  # 개발용 샘플 데이터 생성 스크립트
+└── Dockerfile        # 백엔드 컨테이너 이미지 정의
 ```
-
-## 라이센스
-
-MIT

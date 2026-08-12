@@ -3,7 +3,8 @@ from sqlmodel import Session, SQLModel, create_engine, select
 from sqlmodel.pool import StaticPool
 
 from app.core.db import get_session
-from app.main import _to_user_read, app
+from app.domains.users.serializers import to_user_read
+from app.main import app
 from app.models.schemas import AuditLog, User
 from app.services.auth_service import AuthService
 
@@ -310,7 +311,7 @@ def test_user_read_serialization_backfills_missing_timestamps():
     user.created_at = None
     user.updated_at = None
 
-    payload = _to_user_read(user)
+    payload = to_user_read(user)
 
     assert payload.id == "legacy-user"
     assert payload.created_at is not None

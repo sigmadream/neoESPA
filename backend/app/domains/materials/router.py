@@ -18,7 +18,6 @@ from ...models.schemas import (
     MaterialCommentCreate,
     User,
 )
-from ...services.user_management import ADMIN_ROLES
 from ..materials.serializers import to_lecture_material_read
 from ..users.serializers import is_staff
 

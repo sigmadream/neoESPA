@@ -21,7 +21,6 @@ from ...models.schemas import (
     User,
 )
 from ...services.auth_service import AuthService
-from ...services.user_management import ADMIN_ROLES
 from ..collab.helpers import (
     active_collab_participant,
     ensure_collab_snapshot,

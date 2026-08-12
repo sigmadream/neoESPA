@@ -1,5 +1,4 @@
 import logging
-import os
 import uuid
 from contextlib import asynccontextmanager
 
@@ -13,7 +12,6 @@ from .core.config import settings
 from .core.db import engine
 from .core.migrations import apply_migrations
 from .core.request_context import request_id_context
-from .domains.users.serializers import to_user_read as _to_user_read
 from sqlalchemy import text
 from sqlmodel import Session, select
 from datetime import UTC, datetime

@@ -5,11 +5,9 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import Column, Text
 from sqlmodel import Field, Session, SQLModel, select
 
-from ...api.dependencies import get_current_active_user, get_optional_current_user, require_roles
-from ...api.runtime import observability_service
+from ...api.dependencies import get_current_active_user, get_optional_current_user
 from ...core.db import get_session
 from ...models.schemas import User
-from ...services.user_management import ADMIN_ROLES
 from ..users.serializers import is_staff
 
 

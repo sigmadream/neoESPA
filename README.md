@@ -10,6 +10,12 @@ Docker 및 Docker Compose가 설치된 환경에서 아래 명령어로 백엔�
 docker compose up --build -d
 ```
 
+운영 환경 구성은 `docker-compose.prod.yml`을 사용하며, `JWT_SECRET` 등의 값을 환경변수로 주입해야 합니다.
+
+```bash
+JWT_SECRET="<32바이트 이상의 비밀키>" docker compose -f docker-compose.prod.yml up --build -d
+```
+
 초기 샘플 데이터(관리자, 학생 계정 및 과제 데이터)를 생성하려면 아래 명령어를 실행합니다.
 
 ```bash
@@ -41,12 +47,26 @@ git clone <repository-url>
 cd neoespa_v2
 ```
 
+### 환경 변수 설정
+
+`env_example`을 복사해 `.env`를 만들고 값을 채웁니다. 최소한 `JWT_SECRET`은 32바이트 이상의 값으로 교체해야 합니다.
+
+```bash
+cp env_example .env
+```
+
 ### 백엔드 기동
 
 ```bash
 cd backend
 uv sync
 DATABASE_URL="sqlite:///$PWD/../database/database.sqlite" uv run uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+```
+
+데이터베이스 스키마는 애플리케이션 기동 시 자동으로 적용됩니다. 수동으로 적용하려면 아래 명령을 사용합니다.
+
+```bash
+uv run -m app.core.migrations
 ```
 
 샘플 데이터 생성(선택 사항):
@@ -70,3 +90,14 @@ NEXT_PUBLIC_API_BASE_URL=http://localhost:8000 npm run dev
 - 프론트엔드: http://localhost:3000
 - 백엔드 API 문서: http://localhost:8000/docs
 
+## 3. 테스트 실행
+
+```bash
+cd backend
+uv run pytest
+```
+
+## 추가 문서
+
+- [backend/README.md](./backend/README.md) — 백엔드 설치, CLI 도구, 테스트 카테고리
+- [backend/API.md](./backend/API.md) — 카테고리별 API 명세 및 계약 검증 절차

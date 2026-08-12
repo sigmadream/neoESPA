@@ -6,7 +6,6 @@ from ...api.dependencies import require_capability
 from ...api.runtime import observability_service
 from ...core.db import get_session
 from ...models.schemas import AdminDashboardRead, AuditLogRead, SystemEventLogRead, User
-from ...services.user_management import ADMIN_ROLES
 from ..observability.helpers import build_admin_dashboard
 
 

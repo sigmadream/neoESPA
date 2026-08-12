@@ -331,7 +331,7 @@ def create_contest_announcement(
     current_user: User = Depends(require_capability("problem:publish")),
     session: Session = Depends(get_session),
 ):
-    contest = _contest_or_404(session, contest_id)
+    _contest_or_404(session, contest_id)
     item = ContestAnnouncement(
         contest_id=contest_id, title=payload.title.strip(),
         message=payload.message.strip(), created_by=current_user.id,

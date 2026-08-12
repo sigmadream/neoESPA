@@ -5,7 +5,6 @@ from ...api.dependencies import require_capability
 from ...api.runtime import observability_service, plagiarism_service
 from ...core.db import get_session
 from ...models.schemas import Homework, PlagiarismPairRead, PlagiarismRunRead, User
-from ...services.user_management import ADMIN_ROLES
 
 
 router = APIRouter()

@@ -7,7 +7,6 @@ from ...api.dependencies import get_optional_current_user, require_capability
 from ...api.runtime import notification_service, observability_service
 from ...core.db import get_session
 from ...models.schemas import Notice, NoticeAdminWrite, NoticeRead, User
-from ...services.user_management import ADMIN_ROLES
 from ..notices.helpers import notice_is_publicly_visible, notice_sort_key, normalize_notice_date, to_notice_read
 from ..users.serializers import is_staff
 
