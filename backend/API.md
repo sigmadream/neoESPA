@@ -2,8 +2,8 @@
 
 이 문서는 현재 FastAPI 애플리케이션의 runtime router와 OpenAPI 스키마를 기준으로 등록된 API를 업무 카테고리별로 정리합니다. OpenAPI에 노출되지 않는 WebSocket route도 포함합니다.
 
-- 기준 계약: [openapi.json](./openapi.json) — **150개** operation
-- 이 문서의 표에 있는 행: **155개**. 차이 5개의 내역은 아래와 같으며 모두 OpenAPI 스키마에 노출되지 않습니다.
+- 기준 계약: [openapi.json](./openapi.json) — **152개** operation
+- 이 문서의 표에 있는 행: **157개**. 차이 5개의 내역은 아래와 같으며 모두 OpenAPI 스키마에 노출되지 않습니다.
   - Swagger UI·ReDoc·OpenAPI 스키마 route 4개 (1번 섹션). FastAPI가 자동 생성하며 API 표면이 아닙니다.
   - WebSocket route 1개 (8번 섹션, `WS` method 표기).
 - 모든 path의 중괄호 표기는 path parameter이며, 이름까지 runtime router와 일치합니다.
@@ -113,23 +113,25 @@
 | POST | `/api/collab/sessions/{session_id}/join` | Join Collab Session |
 | POST | `/api/collab/sessions/{session_id}/messages` | Create Collab Message |
 
-### 9. 대회 참가 (5개)
+### 9. 대회 참가 (6개)
 
 | Method | Path | Description |
 |---|---|---|
+| GET | `/api/contests` | List Open Contests |
 | GET | `/api/contests/{contest_id}/announcements` | List Contest Announcements |
 | GET | `/api/contests/{contest_id}/clarifications` | List My Clarifications |
 | POST | `/api/contests/{contest_id}/clarifications` | Ask Clarification |
 | POST | `/api/contests/{contest_id}/participations` | Join Contest |
 | GET | `/api/contests/{contest_id}/scoreboard` | Contest Scoreboard |
 
-### 10. 관리자: 대회 운영 (9개)
+### 10. 관리자: 대회 운영 (10개)
 
 | Method | Path | Description |
 |---|---|---|
 | GET | `/api/admin/contests` | List Contests |
 | POST | `/api/admin/contests` | Create Contest |
 | POST | `/api/admin/contests/{contest_id}/announcements` | Create Contest Announcement |
+| GET | `/api/admin/contests/{contest_id}/clarifications` | List Contest Clarifications |
 | PATCH | `/api/admin/contests/{contest_id}/clarifications/{clarification_id}` | Answer Clarification |
 | POST | `/api/admin/contests/{contest_id}/operation-approvals` | Approve Contest Operation |
 | POST | `/api/admin/contests/{contest_id}/problems` | Attach Contest Problem |

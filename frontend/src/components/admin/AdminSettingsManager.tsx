@@ -1,11 +1,12 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Settings, Save, RefreshCw, Sliders, CheckCircle2, AlertCircle } from 'lucide-react';
+import { Settings, Save, RefreshCw, Sliders, CheckCircle2, AlertCircle, Undo2 } from 'lucide-react';
 
 import { useAuth } from '@/components/AuthProvider';
 import {
   getAdminSettings,
+  rollbackAdminSetting,
   updateAdminSettings,
   type SystemSettingApi,
 } from '@/lib/api';
@@ -104,6 +105,19 @@ export default function AdminSettingsManager() {
     }
   };
 
+  const handleRollback = async (key: string) => {
+    if (!token || !window.confirm(`${key} 설정을 직전 값으로 되돌립니다. 계속할까요?`)) return;
+    setErrorMessage('');
+    setSuccessMessage('');
+    try {
+      const restored = await rollbackAdminSetting(key, token);
+      setSuccessMessage(`${key} 설정을 ${restored.value}(으)로 되돌렸습니다.`);
+      await loadSettings();
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : 'Rollback failed.');
+    }
+  };
+
   if (user?.user_group !== 'admin') return <div className="card-simple bg-slate-50 dark:bg-slate-900/20 border-dashed text-center py-12"><p className="text-slate-500 font-medium">최고 관리자(System Administrator) 권한 전용 메뉴입니다.</p></div>;
 
   return (
@@ -155,6 +169,14 @@ export default function AdminSettingsManager() {
                         </label>
                         <p className="text-[10px] text-slate-500 leading-relaxed mt-1">{meta?.description ?? s.description}</p>
                       </div>
+                      <button
+                        type="button"
+                        onClick={() => void handleRollback(s.key)}
+                        title="직전 값으로 되돌리기"
+                        className="shrink-0 p-1.5 rounded text-slate-400 hover:text-accent hover:bg-white dark:hover:bg-slate-900 transition-all"
+                      >
+                        <Undo2 size={13} />
+                      </button>
                     </div>
                     <input
                       type="number" step="0.1" min="0"
@@ -174,12 +196,20 @@ export default function AdminSettingsManager() {
                 onChange={e => setFormValues({...formValues, lint_set_default: e.target.checked})}
                 className="h-4 w-4 rounded border-slate-300 text-accent focus:ring-accent cursor-pointer"
               />
-              <div className="min-w-0">
+              <div className="min-w-0 flex-1">
                 <label className="text-xs font-bold text-slate-700 dark:text-slate-200 block">
                   {SETTING_KOREAN_META['lint_set_default']?.title ?? 'lint_set_default'} <span className="text-[10px] text-slate-400 font-mono">(lint_set_default)</span>
                 </label>
                 <p className="text-[10px] text-slate-500 leading-relaxed">{SETTING_KOREAN_META['lint_set_default']?.description ?? settings.find(s => s.key === 'lint_set_default')?.description}</p>
               </div>
+              <button
+                type="button"
+                onClick={() => void handleRollback('lint_set_default')}
+                title="직전 값으로 되돌리기"
+                className="shrink-0 p-1.5 rounded text-slate-400 hover:text-accent hover:bg-white dark:hover:bg-slate-900 transition-all"
+              >
+                <Undo2 size={13} />
+              </button>
             </div>
 
             <button type="submit" disabled={isSaving} className="btn-flat w-full h-12 flex items-center justify-center gap-2 shadow-sm disabled:opacity-50">

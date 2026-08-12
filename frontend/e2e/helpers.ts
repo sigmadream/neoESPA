@@ -14,7 +14,7 @@ export type TestUser = {
 
 export const adminUser = {
   id: 'admin',
-  password: 'pllab2026',
+  password: 'admin',
 };
 
 export function relativeDate(offsetDays: number, offsetHours = 0) {

@@ -48,7 +48,7 @@ docker compose exec backend uv run python create_sample_data.py
 docker compose exec backend uv run python -m app.cli --help
 ```
 
-- 관리자 계정: ID: `admin` / PW: `pllab2026`
+- 관리자 계정: ID: `admin` / PW: `admin`
 - 테스트 학생: ID: `testuser` / PW: `qwer1234`
 
 프로덕션 구성은 저장소 루트의 `docker-compose.prod.yml`을 사용합니다. 이 구성은 API 이미지와 함께 nsjail 샌드박스가 포함된 채점 워커(`deploy/Dockerfile.judge`)를 별도로 띄우며, 워커는 기동 전에 샌드박스 자체 점검을 통과해야 채점을 시작합니다.

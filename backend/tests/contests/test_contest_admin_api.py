@@ -252,3 +252,149 @@ def test_contest_organization_scope_is_enforced(
         denied.json()["detail"]
         == "Contest is restricted to selected organizations"
     )
+
+
+def test_students_see_only_visible_published_contests(
+    client, session, create_user, login_user, auth_headers
+):
+    """학생 목록에는 게시된 공개 대회와 본인이 참가한 대회만 보인다."""
+    create_user("contest-admin-3", 20259810, "password", role="admin")
+    create_user("contest-student-3", 20259811, "password", role="student")
+    now = datetime.now(UTC)
+
+    def _make(code: str, *, status: str, visibility: str) -> Contest:
+        contest = Contest(
+            code=code,
+            title=code,
+            starts_at=now - timedelta(hours=1),
+            ends_at=now + timedelta(hours=2),
+            status=status,
+            visibility=visibility,
+            scoring_format="icpc",
+            allow_virtual=True,
+            created_by="contest-admin-3",
+        )
+        session.add(contest)
+        session.commit()
+        session.refresh(contest)
+        return contest
+
+    published = _make("open-cup", status="published", visibility="public")
+    _make("draft-cup", status="draft", visibility="public")
+    private = _make("private-cup", status="published", visibility="private")
+
+    student_headers = auth_headers(login_user("contest-student-3"))
+    listed = client.get("/api/contests", headers=student_headers)
+
+    assert listed.status_code == 200
+    assert [item["code"] for item in listed.json()] == ["open-cup"]
+
+    joined = client.post(
+        f"/api/contests/{private.id}/participations",
+        json={"participation_type": "official"},
+        headers=student_headers,
+    )
+    assert joined.status_code == 201
+
+    after_join = client.get("/api/contests", headers=student_headers)
+    codes = {item["code"] for item in after_join.json()}
+    assert codes == {"open-cup", "private-cup"}
+    assert published.id is not None
+
+
+def test_staff_can_list_contest_clarifications_and_filter_open_ones(
+    client, session, create_user, login_user, auth_headers
+):
+    create_user("contest-admin-4", 20259812, "password", role="admin")
+    create_user("contest-student-4", 20259813, "password", role="student")
+    now = datetime.now(UTC)
+    contest = Contest(
+        code="clarify-cup",
+        title="Clarify Cup",
+        starts_at=now - timedelta(hours=1),
+        ends_at=now + timedelta(hours=2),
+        status="published",
+        visibility="public",
+        scoring_format="icpc",
+        allow_virtual=True,
+        created_by="contest-admin-4",
+    )
+    session.add(contest)
+    session.commit()
+    session.refresh(contest)
+
+    admin_headers = auth_headers(login_user("contest-admin-4"))
+    student_headers = auth_headers(login_user("contest-student-4"))
+    client.post(
+        f"/api/contests/{contest.id}/participations",
+        json={"participation_type": "official"},
+        headers=student_headers,
+    )
+    asked = client.post(
+        f"/api/contests/{contest.id}/clarifications",
+        json={"question": "Is the input sorted?"},
+        headers=student_headers,
+    )
+    assert asked.status_code == 201
+    clarification_id = asked.json()["id"]
+
+    listed = client.get(
+        f"/api/admin/contests/{contest.id}/clarifications",
+        headers=admin_headers,
+    )
+    assert listed.status_code == 200
+    assert [item["id"] for item in listed.json()] == [clarification_id]
+
+    open_only = client.get(
+        f"/api/admin/contests/{contest.id}/clarifications?status_filter=open",
+        headers=admin_headers,
+    )
+    assert [item["id"] for item in open_only.json()] == [clarification_id]
+
+    client.patch(
+        f"/api/admin/contests/{contest.id}/clarifications/{clarification_id}",
+        json={"answer": "Yes, ascending."},
+        headers=admin_headers,
+    )
+
+    answered_only = client.get(
+        f"/api/admin/contests/{contest.id}/clarifications?status_filter=answered",
+        headers=admin_headers,
+    )
+    assert [item["id"] for item in answered_only.json()] == [clarification_id]
+    assert (
+        client.get(
+            f"/api/admin/contests/{contest.id}/clarifications?status_filter=open",
+            headers=admin_headers,
+        ).json()
+        == []
+    )
+
+
+def test_students_cannot_list_contest_clarifications_of_others(
+    client, session, create_user, login_user, auth_headers
+):
+    create_user("contest-student-5", 20259814, "password", role="student")
+    now = datetime.now(UTC)
+    contest = Contest(
+        code="guard-cup",
+        title="Guard Cup",
+        starts_at=now - timedelta(hours=1),
+        ends_at=now + timedelta(hours=2),
+        status="published",
+        visibility="public",
+        scoring_format="icpc",
+        allow_virtual=True,
+        created_by="contest-student-5",
+    )
+    session.add(contest)
+    session.commit()
+    session.refresh(contest)
+
+    student_headers = auth_headers(login_user("contest-student-5"))
+    denied = client.get(
+        f"/api/admin/contests/{contest.id}/clarifications",
+        headers=student_headers,
+    )
+
+    assert denied.status_code == 403

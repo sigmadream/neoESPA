@@ -58,6 +58,7 @@ const Navbar = () => {
             )}
             <Link href="/homework" className="text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transition-colors">{t.nav.homework}</Link>
             <Link href="/exam" className="text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transition-colors">{t.nav.exam}</Link>
+            <Link href="/contest" className="text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transition-colors">{t.nav.contest}</Link>
             <Link href="/notice" className="text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transition-colors">{t.nav.notices}</Link>
             <Link href="/materials" className="text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transition-colors">{t.nav.materials}</Link>
             <Link href="/qa" className="text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transition-colors">{t.nav.qa}</Link>

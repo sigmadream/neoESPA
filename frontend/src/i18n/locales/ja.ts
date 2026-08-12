@@ -7,6 +7,7 @@ export const ja: TranslationDictionary = {
     materials: '学習資料',
     qa: 'Q&A',
     exam: '試験受講',
+    contest: 'コンテスト',
     collab: 'リアルタイム協働',
     profile: 'プロフィール',
     admin: '管理者コンソール',

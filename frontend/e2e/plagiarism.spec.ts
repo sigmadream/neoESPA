@@ -1,6 +1,7 @@
 import { expect, test } from '@playwright/test';
 
 import {
+  adminUser,
   createHomeworkViaAdminApi,
   createSubmissionViaApi,
   loginViaApi,
@@ -45,7 +46,7 @@ test('admin_can_compare_flagged_submissions', async ({ page, request }) => {
     original_filename: 'main.py',
   });
 
-  await loginViaUi(page, { id: 'admin', password: 'pllab2026' });
+  await loginViaUi(page, adminUser);
   await page.waitForURL('/');
   await page.goto('/admin');
   await page.getByRole('button', { name: 'Plagiarism' }).click();

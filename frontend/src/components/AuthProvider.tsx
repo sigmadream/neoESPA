@@ -12,6 +12,7 @@ import {
   getCurrentUser,
   loginRequest,
   registerRequest,
+  stepUpRequest,
   updateCurrentUserProfile,
   type AuthUser,
 } from '@/lib/api';
@@ -39,6 +40,8 @@ type AuthContextValue = {
   }) => Promise<AuthUser>;
   logout: () => void;
   refreshSession: () => Promise<AuthUser | null>;
+  /** 민감한 관리 작업 전 재인증. 성공하면 step-up 토큰으로 세션을 교체한다. */
+  stepUp: (password: string) => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -178,6 +181,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
+  async function stepUp(password: string) {
+    if (!token || !user) {
+      throw new Error('Authentication is required');
+    }
+
+    const elevated = await stepUpRequest(password, token);
+    writeStoredSession({ token: elevated.access_token, user });
+    startTransition(() => {
+      setToken(elevated.access_token);
+    });
+  }
+
   function logout() {
     writeStoredSession(null);
     startTransition(() => {
@@ -198,6 +213,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         updateProfile,
         logout,
         refreshSession,
+        stepUp,
       }}
     >
       {children}

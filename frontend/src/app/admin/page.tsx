@@ -1,14 +1,39 @@
 'use client';
 
 import { useState } from 'react';
-import { LayoutGrid, BookOpen, Bell, FileCode, Users, Settings, ShieldAlert, ChevronRight } from 'lucide-react';
+import {
+  LayoutGrid,
+  BookOpen,
+  Bell,
+  FileCode,
+  Users,
+  Settings,
+  ShieldAlert,
+  ChevronRight,
+  Gauge,
+  RotateCcw,
+  ScrollText,
+  ShieldCheck,
+  Trophy,
+  FileCode2,
+  ClipboardList,
+  MailPlus,
+} from 'lucide-react';
 
 import AuthGate from '@/components/AuthGate';
+import AdminAuditLogManager from '@/components/admin/AdminAuditLogManager';
+import AdminContestManager from '@/components/admin/AdminContestManager';
+import AdminExamManager from '@/components/admin/AdminExamManager';
+import AdminGradingManager from '@/components/admin/AdminGradingManager';
+import AdminInvitationManager from '@/components/admin/AdminInvitationManager';
 import AdminHomeworkManager from '@/components/admin/AdminHomeworkManager';
 import AdminMaterialManager from '@/components/admin/AdminMaterialManager';
 import AdminNoticeManager from '@/components/admin/AdminNoticeManager';
 import AdminOverviewManager from '@/components/admin/AdminOverviewManager';
 import AdminPlagiarismManager from '@/components/admin/AdminPlagiarismManager';
+import AdminProblemManager from '@/components/admin/AdminProblemManager';
+import AdminRejudgeManager from '@/components/admin/AdminRejudgeManager';
+import AdminRoleManager from '@/components/admin/AdminRoleManager';
 import AdminSettingsManager from '@/components/admin/AdminSettingsManager';
 import AdminUserManager from '@/components/admin/AdminUserManager';
 import { useAuth } from '@/components/AuthProvider';
@@ -16,20 +41,42 @@ import { useAuth } from '@/components/AuthProvider';
 const ADMIN_TABS = [
   { id: 'overview', label: '현황 종합', icon: LayoutGrid, description: '통계 및 채점 큐' },
   { id: 'homeworks', label: '과제 관리', icon: BookOpen, description: '과제 등록 및 삭제' },
+  { id: 'grading', label: '채점 운영', icon: Gauge, description: '채점 큐 · 워커 · 점수 조정' },
+  { id: 'rejudge', label: '일괄 재채점', icon: RotateCcw, description: '범위 지정 재채점 작업' },
+  { id: 'problems', label: '문제 뱅크', icon: FileCode2, description: '문제·리비전·테스트케이스' },
+  { id: 'contests', label: '대회 운영', icon: Trophy, description: '대회 생성·게시·질문 답변' },
+  { id: 'exams', label: '시험 관리', icon: ClipboardList, description: '시험 등록 및 일정 확인' },
   { id: 'notices', label: '공지사항 관리', icon: Bell, description: '강의 공지 등록' },
   { id: 'materials', label: '강의자료 관리', icon: FileCode, description: '참고 자료실 관리' },
   { id: 'users', label: '사용자 관리', icon: Users, description: '계정 승인 및 권한 관리' },
+  { id: 'roles', label: '역할 권한', icon: ShieldCheck, description: '역할별 수행 권한 지정' },
+  { id: 'invitations', label: '운영진 초대', icon: MailPlus, description: '관리자·조교 초대 발급' },
   { id: 'settings', label: '시스템 설정', icon: Settings, description: '전역 설정 및 규칙' },
   { id: 'plagiarism', label: '표절 검사', icon: ShieldAlert, description: '코드 유사도 검사' },
+  { id: 'audit', label: '운영 로그', icon: ScrollText, description: '감사 로그 및 시스템 이벤트' },
 ] as const;
+
+// 백엔드 권한(authorization_service)과 맞춘 노출 규칙.
+// - users/settings/roles: user:manage 등 관리자 전용
+// - grading: judge:operate (조교에게는 없음)
+// - contests: problem:publish (조교에게는 없음)
+// - exams: exam:manage, invitations: user:manage(+재인증)
+const ADMIN_ONLY_TABS = ['users', 'settings', 'roles', 'invitations'];
+const INSTRUCTOR_TABS = ['grading', 'contests', 'exams'];
 
 export default function AdminDashboardPage() {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<(typeof ADMIN_TABS)[number]['id']>('overview');
   
-  const visibleTabs = ADMIN_TABS.filter(
-    (tab) => !['users', 'settings'].includes(tab.id) || user?.user_group === 'admin',
-  );
+  const visibleTabs = ADMIN_TABS.filter((tab) => {
+    if (ADMIN_ONLY_TABS.includes(tab.id)) {
+      return user?.user_group === 'admin';
+    }
+    if (INSTRUCTOR_TABS.includes(tab.id)) {
+      return user?.user_group === 'admin' || user?.user_group === 'instructor';
+    }
+    return true;
+  });
   
   const currentTab = visibleTabs.some((tab) => tab.id === activeTab)
     ? activeTab
@@ -82,11 +129,19 @@ export default function AdminDashboardPage() {
             <div className="space-y-8 animate-in fade-in duration-300">
               {currentTab === 'overview' && <AdminOverviewManager />}
               {currentTab === 'homeworks' && <AdminHomeworkManager />}
+              {currentTab === 'grading' && <AdminGradingManager />}
+              {currentTab === 'rejudge' && <AdminRejudgeManager />}
+              {currentTab === 'problems' && <AdminProblemManager />}
+              {currentTab === 'contests' && <AdminContestManager />}
+              {currentTab === 'exams' && <AdminExamManager />}
+              {currentTab === 'invitations' && <AdminInvitationManager />}
               {currentTab === 'notices' && <AdminNoticeManager />}
               {currentTab === 'materials' && <AdminMaterialManager />}
               {currentTab === 'users' && <AdminUserManager />}
+              {currentTab === 'roles' && <AdminRoleManager />}
               {currentTab === 'settings' && <AdminSettingsManager />}
               {currentTab === 'plagiarism' && <AdminPlagiarismManager />}
+              {currentTab === 'audit' && <AdminAuditLogManager />}
             </div>
           </main>
         </div>

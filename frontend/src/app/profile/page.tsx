@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { User, Key, Info, Shield, Mail, Phone, Hash } from 'lucide-react';
 
+import AnalyticsConsentPanel from '@/components/AnalyticsConsentPanel';
 import AuthGate from '@/components/AuthGate';
 import { useAuth } from '@/components/AuthProvider';
 import { changeCurrentUserPassword } from '@/lib/api';
@@ -153,6 +154,10 @@ function ProfilePageContent() {
               </button>
             </div>
           </form>
+
+          <div className="mt-8">
+            <AnalyticsConsentPanel />
+          </div>
         </div>
 
         <aside className="space-y-8">

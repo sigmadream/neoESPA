@@ -7,6 +7,7 @@ export const en: TranslationDictionary = {
     materials: 'Materials',
     qa: 'Q&A',
     exam: 'Exams',
+    contest: 'Contests',
     collab: 'Collab',
     profile: 'Profile',
     admin: 'Admin Console',

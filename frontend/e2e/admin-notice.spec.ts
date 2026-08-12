@@ -1,11 +1,11 @@
 import { expect, test } from '@playwright/test';
 
-import { loginViaUi } from './helpers';
+import { adminUser, loginViaUi } from './helpers';
 
 test('admin_can_publish_notice', async ({ page, browser }) => {
   const title = `Published Notice ${Date.now()}`;
 
-  await loginViaUi(page, { id: 'admin', password: 'pllab2026' });
+  await loginViaUi(page, adminUser);
   await page.waitForURL('/');
   await page.goto('/admin');
   await page.getByRole('button', { name: 'Notices' }).click();

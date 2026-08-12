@@ -7,6 +7,7 @@ export const zh: TranslationDictionary = {
     materials: '学习资料',
     qa: '问答社区',
     exam: '在线考试',
+    contest: '竞赛',
     collab: '实时协作',
     profile: '个人主页',
     admin: '管理控制台',

@@ -7,6 +7,7 @@ export type TranslationDictionary = {
     materials: string;
     qa: string;
     exam: string;
+    contest: string;
     collab: string;
     profile: string;
     admin: string;

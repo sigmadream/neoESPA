@@ -341,6 +341,10 @@ async def replace_role_capabilities(
     )
     for item in existing:
         session.delete(item)
+    # 같은 flush 안에서는 INSERT 가 DELETE 보다 먼저 실행되므로, 유지되는 권한을
+    # 다시 추가할 때 (role_name, capability) UNIQUE 제약을 위반한다. 삭제를 먼저
+    # 확정한 뒤 새 행을 추가한다.
+    session.flush()
     for capability in requested or {"__none__"}:
         session.add(RoleCapability(role_name=role_name, capability=capability))
     observability_service.record_audit(

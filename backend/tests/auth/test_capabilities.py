@@ -60,3 +60,41 @@ def test_problem_setter_cannot_validate_or_publish(
 
     assert validate.status_code == 403
     assert publish.status_code == 403
+
+
+def test_role_capabilities_can_be_replaced_with_overlapping_set(
+    client, create_user, login_user, auth_headers
+):
+    """유지되는 권한이 있어도 저장이 실패하지 않아야 한다.
+
+    삭제와 재삽입이 같은 flush 에 묶이면 (role_name, capability) UNIQUE 제약을
+    위반해 500 이 발생했다.
+    """
+    create_user("role-admin", 10259401, "password", role="admin")
+    headers = auth_headers(login_user("role-admin"))
+
+    first = client.put(
+        "/api/admin/roles/ta/capabilities",
+        json={"capabilities": ["homework:manage", "grading:manual"]},
+        headers=headers,
+    )
+    assert first.status_code == 200
+    assert first.json()["capabilities"] == ["grading:manual", "homework:manage"]
+
+    # 기존 권한 하나를 그대로 두고 하나를 추가한다.
+    second = client.put(
+        "/api/admin/roles/ta/capabilities",
+        json={"capabilities": ["homework:manage", "observability:read"]},
+        headers=headers,
+    )
+    assert second.status_code == 200
+    assert second.json()["capabilities"] == [
+        "homework:manage",
+        "observability:read",
+    ]
+
+    stored = client.get("/api/admin/roles/ta/capabilities", headers=headers)
+    assert stored.json()["capabilities"] == [
+        "homework:manage",
+        "observability:read",
+    ]

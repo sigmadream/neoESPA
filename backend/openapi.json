@@ -6403,6 +6403,70 @@
         "summary": "Create Contest Announcement"
       }
     },
+    "/api/admin/contests/{contest_id}/clarifications": {
+      "get": {
+        "description": "운영진용 질문 목록. 답변 대상 질문을 찾기 위해 사용한다.",
+        "operationId": "list_contest_clarifications_api_admin_contests__contest_id__clarifications_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "contest_id",
+            "required": true,
+            "schema": {
+              "title": "Contest Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status_filter",
+            "required": false,
+            "schema": {
+              "default": "all",
+              "enum": [
+                "all",
+                "open",
+                "answered"
+              ],
+              "title": "Status Filter",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ClarificationRead"
+                  },
+                  "title": "Response List Contest Clarifications Api Admin Contests  Contest Id  Clarifications Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "List Contest Clarifications"
+      }
+    },
     "/api/admin/contests/{contest_id}/clarifications/{clarification_id}": {
       "patch": {
         "operationId": "answer_clarification_api_admin_contests__contest_id__clarifications__clarification_id__patch",
@@ -11563,6 +11627,34 @@
           }
         ],
         "summary": "Create Collab Message"
+      }
+    },
+    "/api/contests": {
+      "get": {
+        "description": "참가자가 볼 수 있는 대회 목록.\n\n게시된 대회만 노출하며, 비공개 대회는 이미 참가한 사람에게만 보인다.\n조직이 제한된 대회는 해당 조직 소속에게만 보인다. (참가 코드 자체는\n참가 시점에 검증하므로 목록 노출과 무관하다.)",
+        "operationId": "list_open_contests_api_contests_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ContestRead"
+                  },
+                  "title": "Response List Open Contests Api Contests Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "List Open Contests"
       }
     },
     "/api/contests/{contest_id}/announcements": {

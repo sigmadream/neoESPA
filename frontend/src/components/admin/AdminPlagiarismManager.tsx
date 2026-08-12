@@ -9,9 +9,11 @@ import {
   getAdminHomeworks,
   getPlagiarismPairDetail,
   getPlagiarismPairs,
+  getPlagiarismRuns,
   runHomeworkPlagiarismScan,
   type HomeworkAdminApi,
   type PlagiarismPairApi,
+  type PlagiarismRunApi,
 } from '@/lib/api';
 
 export default function AdminPlagiarismManager() {
@@ -19,6 +21,7 @@ export default function AdminPlagiarismManager() {
   const [homeworks, setHomeworks] = useState<HomeworkAdminApi[]>([]);
   const [selectedHomeworkNum, setSelectedHomeworkNum] = useState<string>('');
   const [pairs, setPairs] = useState<PlagiarismPairApi[]>([]);
+  const [runs, setRuns] = useState<PlagiarismRunApi[]>([]);
   const [selectedPair, setSelectedPair] = useState<PlagiarismPairApi | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isRunning, setIsRunning] = useState(false);
@@ -29,9 +32,14 @@ export default function AdminPlagiarismManager() {
     if (!token) return;
     setIsLoading(true);
     try {
-      const [hwRes, pRes] = await Promise.all([getAdminHomeworks(token), getPlagiarismPairs(token)]);
+      const [hwRes, pRes, runRes] = await Promise.all([
+        getAdminHomeworks(token),
+        getPlagiarismPairs(token),
+        getPlagiarismRuns(token),
+      ]);
       setHomeworks(hwRes);
       setPairs(pRes);
+      setRuns(runRes);
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : 'Load failed.');
     } finally {
@@ -47,8 +55,12 @@ export default function AdminPlagiarismManager() {
     setErrorMessage('');
     try {
       const run = await runHomeworkPlagiarismScan(Number(selectedHomeworkNum), token);
-      const updatedPairs = await getPlagiarismPairs(token, { homework_num: Number(selectedHomeworkNum) });
+      const [updatedPairs, updatedRuns] = await Promise.all([
+        getPlagiarismPairs(token, { homework_num: Number(selectedHomeworkNum) }),
+        getPlagiarismRuns(token),
+      ]);
       setPairs(updatedPairs);
+      setRuns(updatedRuns);
       setSuccessMessage(`Scan complete: ${run.flagged_pair_count} pairs flagged.`);
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : 'Scan failed.');
@@ -165,6 +177,56 @@ export default function AdminPlagiarismManager() {
             )}
           </div>
         </div>
+      </section>
+
+      <section className="card-simple">
+        <h2 className="text-sm font-bold uppercase tracking-widest text-slate-400 flex items-center gap-2 mb-6">
+          <History size={16} className="text-accent" />
+          검사 실행 이력
+        </h2>
+        {runs.length === 0 ? (
+          <p className="text-xs text-slate-400 italic">아직 실행된 검사가 없습니다.</p>
+        ) : (
+          <div className="divide-y divide-slate-50 dark:divide-slate-900">
+            {runs.map((run) => (
+              <div
+                key={run.id}
+                className="py-3 first:pt-0 last:pb-0 grid grid-cols-1 md:grid-cols-4 gap-3 items-center"
+              >
+                <div className="min-w-0">
+                  <p className="text-xs font-bold text-slate-900 dark:text-white">
+                    #{run.id} · HW {run.homework_num}
+                  </p>
+                  <p className="text-[10px] text-slate-400 font-medium">{run.created_by}</p>
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">상태</span>
+                  <span
+                    className={`text-xs font-bold ${
+                      run.status === 'completed'
+                        ? 'text-emerald-600 dark:text-emerald-400'
+                        : 'text-slate-600 dark:text-slate-400'
+                    }`}
+                  >
+                    {run.status}
+                  </span>
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">비교 / 적발</span>
+                  <span className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                    {run.compared_submission_count}건 / {run.flagged_pair_count}쌍
+                  </span>
+                </div>
+                <div className="flex flex-col min-w-0">
+                  <span className="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">실행 시각</span>
+                  <span className="text-xs font-medium text-slate-600 dark:text-slate-400 truncate">
+                    {new Date(run.created_at.replace(' ', 'T')).toLocaleString()}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </section>
     </div>
   );
