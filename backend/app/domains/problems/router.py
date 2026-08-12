@@ -932,18 +932,6 @@ def create_testcase(
     response_model=list[ProblemTestCaseRead],
     status_code=201,
 )
-@router.post(
-    "/problems/{problem_id}/revisions/{revision_id}/package",
-    response_model=list[ProblemTestCaseRead],
-    status_code=201,
-    include_in_schema=False,
-)
-@router.post(
-    "/problems/{problem_id}/revisions/{revision_id}/testcases/import",
-    response_model=list[ProblemTestCaseRead],
-    status_code=201,
-    include_in_schema=False,
-)
 def import_testcase_package(
     problem_id: int,
     revision_id: int,

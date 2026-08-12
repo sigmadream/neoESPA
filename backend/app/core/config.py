@@ -13,7 +13,7 @@ _default_db_path = _BASE_DIR / "database" / "database.sqlite"
 
 class Settings:
     PROJECT_NAME: str = "neoESPA Modernized API"
-    PROJECT_VERSION: str = "1.0.0"
+    PROJECT_VERSION: str = "3.0.0"
     
     BASE_DIR: Path = _BASE_DIR
     ALLOWED_ENVIRONMENTS = {"development", "dev", "test", "production", "prod"}
