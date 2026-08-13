@@ -19,7 +19,7 @@ def _documented_routes() -> set[tuple[str, str]]:
     return {
         (method, path)
         for method, path in re.findall(
-            r"\| (GET|POST|PATCH|PUT|DELETE|WS) \| `([^`]+)`", markdown
+            r"\| (GET|POST|PATCH|PUT|DELETE|WS)\s*\|\s*`([^`]+)`", markdown
         )
         if path not in FRAMEWORK_PATHS
     }
