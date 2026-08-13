@@ -1,6 +1,6 @@
 # neoESPA 백엔드 서비스 (FastAPI)
 
-> 본 프로젝트는 neoESPA 학습 관리 시스템의 백엔드 관련 기능을 제공하는 코드입니다. 현재는 FastAPI와 SQLModel(SQLAlchemy + Pydantic)을 기반으로 작성되었습니다. 코드 관련 세부사항은  [REVIEW-GUIDE.md](./REVIEW-GUIDE.md)를 참고하시기 바랍니다.
+> 본 프로젝트는 neoESPA 학습 관리 시스템의 백엔드 관련 기능을 제공하는 코드입니다. 현재는 FastAPI와 SQLModel(SQLAlchemy + Pydantic)을 기반으로 작성되었습니다. 코드 관련 세부사항은 [REVIEW-GUIDE.md](./REVIEW-GUIDE.md)를 참고하시기 바랍니다.
 
 ## 개선 목표
 
@@ -13,7 +13,7 @@
 - [FastAPI](https://fastapi.tiangolo.com/) (>= Python 3.14)
 - [SQLModel](https://sqlmodel.tiangolo.com/)
 - [uv](https://github.com/astral-sh/uv)
-- 데이터베이스: SQLite. 
+- 데이터베이스: SQLite.
   - `DATABASE_URL` 환경변수로 SQLAlchemy가 지원하는 다른 엔진을 지정할 수 있으나, 현재 마이그레이션은 SQLite에서만 검증함
 - 보안: OAuth2 (JWT), bcrypt 비밀번호 해싱
 - 테스트: pytest
@@ -110,21 +110,21 @@ uv run python -m app.cli create-admin \
 
 주요 명령:
 
-| 명령 | 용도 |
-|---|---|
-| `create-admin` | 로컬 관리자 계정 생성 |
-| `issue-bootstrap-token` | 최초 슈퍼 관리자용 일회성 토큰 발급 |
-| `run-judge-worker` | 채점·검증 작업 큐 처리 워커 실행 |
-| `check-openapi` | 현재 API가 저장된 계약을 깨는지 검사 |
-| `export-openapi` | 정규화된 OpenAPI 계약 파일 갱신 |
-| `verify-course-bundle` / `restore-course-bundle` | 코스 번들 무결성 검증 및 복원 |
-| `create-course-snapshot` | 코스 스냅샷 생성 |
-| `export-analytics-jsonl` | 분석용 JSONL 내보내기 |
-| `reconcile-artifacts` / `backfill-legacy-artifacts` | 아티팩트 정합성 조정 및 백필 |
-| `record-capacity-baseline` | 용량 기준선 기록 |
-| `run-sandbox-self-test` | 샌드박스 자체 점검 (nsjail이 설치된 Linux에서만 동작. 판정 근거는 [샌드박스 실검증](#샌드박스nsjail-실검증) 참고) |
+| 명령                                                | 용도                                                                                                              |
+| --------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| `create-admin`                                      | 로컬 관리자 계정 생성                                                                                             |
+| `issue-bootstrap-token`                             | 최초 슈퍼 관리자용 일회성 토큰 발급                                                                               |
+| `run-judge-worker`                                  | 채점·검증 작업 큐 처리 워커 실행                                                                                  |
+| `check-openapi`                                     | 현재 API가 저장된 계약을 깨는지 검사                                                                              |
+| `export-openapi`                                    | 정규화된 OpenAPI 계약 파일 갱신                                                                                   |
+| `verify-course-bundle` / `restore-course-bundle`    | 코스 번들 무결성 검증 및 복원                                                                                     |
+| `create-course-snapshot`                            | 코스 스냅샷 생성                                                                                                  |
+| `export-analytics-jsonl`                            | 분석용 JSONL 내보내기                                                                                             |
+| `reconcile-artifacts` / `backfill-legacy-artifacts` | 아티팩트 정합성 조정 및 백필                                                                                      |
+| `record-capacity-baseline`                          | 용량 기준선 기록                                                                                                  |
+| `run-sandbox-self-test`                             | 샌드박스 자체 점검 (nsjail이 설치된 Linux에서만 동작. 판정 근거는 [샌드박스 실검증](#샌드박스nsjail-실검증) 참고) |
 
-`check-openapi`와 `export-openapi`의 실행 순서에는 주의가 필요합니다. 자세한 내용은 [API.md](./API.md)의 "계약 검증"을 참조하시기 바랍니다.
+`check-openapi`와 `export-openapi`의 실행 순서에는 주의가 필요합니다. 자세한 내용은 [API.md](./API.md)의 "스펙 검증"을 참조하시기 바랍니다.
 
 ## 개발 및 테스트 가이드
 
@@ -162,13 +162,13 @@ pytest 인자는 그대로 전달됩니다.
 
 제공되는 compose 서비스는 다음과 같습니다.
 
-| 서비스 | 용도 | 실행 |
-|---|---|---|
-| `tests` | 이미지에 구워진 소스로 전체 테스트 실행 (기본 검증 대상) | `./backend/scripts/test.sh` |
-| `tests-live` | 재빌드 없이 호스트의 `app/`·`tests/`를 읽기 전용 마운트하여 반복 실행 | `SERVICE=tests-live ./backend/scripts/test.sh` |
-| `coverage` | 커버리지 측정 후 `backend/.reports/`에 HTML·XML 리포트 생성 | `SERVICE=coverage ./backend/scripts/test.sh` |
-| `format` | `black --check --diff`로 포매팅 위반 검사 | `SERVICE=format ./backend/scripts/test.sh` |
-| `sandbox-tests` | 실제 nsjail로 샌드박스 격리 검증 ([아래 절](#샌드박스nsjail-실검증)) | `docker compose -f docker-compose.test.yml run --rm --build sandbox-tests` |
+| 서비스          | 용도                                                                  | 실행                                                                       |
+| --------------- | --------------------------------------------------------------------- | -------------------------------------------------------------------------- |
+| `tests`         | 이미지에 구워진 소스로 전체 테스트 실행 (기본 검증 대상)              | `./backend/scripts/test.sh`                                                |
+| `tests-live`    | 재빌드 없이 호스트의 `app/`·`tests/`를 읽기 전용 마운트하여 반복 실행 | `SERVICE=tests-live ./backend/scripts/test.sh`                             |
+| `coverage`      | 커버리지 측정 후 `backend/.reports/`에 HTML·XML 리포트 생성           | `SERVICE=coverage ./backend/scripts/test.sh`                               |
+| `format`        | `black --check --diff`로 포매팅 위반 검사                             | `SERVICE=format ./backend/scripts/test.sh`                                 |
+| `sandbox-tests` | 실제 nsjail로 샌드박스 격리 검증 ([아래 절](#샌드박스nsjail-실검증))  | `docker compose -f docker-compose.test.yml run --rm --build sandbox-tests` |
 
 PowerShell에는 `SERVICE=...` 접두사 문법이 없으므로 `-Service` 파라미터를 씁니다.
 
@@ -192,10 +192,10 @@ docker run --rm --network none neoespa-backend-test
 
 샌드박스 테스트는 두 층으로 나뉩니다.
 
-| 파일 | 방식 | 실행 환경 |
-|---|---|---|
-| `tests/sandbox/test_nsjail_contract.py` | mock (`subprocess.run` 패치) | 모든 OS — 명령 구성·fail-closed 계약만 검증 |
-| `tests/sandbox/test_nsjail_real.py` | **mock 없음** — 실제 nsjail 실행 | `sandbox-tests` 서비스 전용, 그 외 환경에서는 자동 skip |
+| 파일                                    | 방식                             | 실행 환경                                               |
+| --------------------------------------- | -------------------------------- | ------------------------------------------------------- |
+| `tests/sandbox/test_nsjail_contract.py` | mock (`subprocess.run` 패치)     | 모든 OS — 명령 구성·fail-closed 계약만 검증             |
+| `tests/sandbox/test_nsjail_real.py`     | **mock 없음** — 실제 nsjail 실행 | `sandbox-tests` 서비스 전용, 그 외 환경에서는 자동 skip |
 
 mock 테스트는 "정책 파일에 어떤 문자열이 있는가"까지만 보증하고, 그 정책이 실제로 격리를 강제하는지는 증명하지 못합니다. `sandbox-tests`는 운영 judge 이미지(`deploy/Dockerfile.judge`)와 **동일한 nsjail 바이너리**로 감옥을 띄워 다음을 실제로 확인합니다.
 
@@ -259,7 +259,7 @@ SERVICE=coverage ./backend/scripts/test.sh
 uv run pytest --cov=app --cov-report=term-missing
 ```
 
-API를 추가·삭제·변경한 경우 [API.md](./API.md)의 "계약 검증" 절차를 따라 문서와 `openapi.json`을 함께 갱신해야 합니다. `tests/core/test_openapi_contract.py`가 문서와 runtime router의 일치 여부를 검사합니다.
+API를 추가·삭제·변경한 경우 [API.md](./API.md)의 "스펙 검증" 절차를 따라 문서와 `openapi.json`을 함께 갱신해야 합니다. `tests/core/test_openapi_contract.py`가 문서와 runtime router의 일치 여부를 검사합니다.
 
 ### 구현 주의 사항 (FK 제약 조건)
 
@@ -297,8 +297,8 @@ backend/
 
 컨테이너 구성 파일은 저장소 루트에 있습니다.
 
-| 파일 | 용도 |
-|---|---|
-| `docker-compose.yml` | 개발용 백엔드·프론트엔드 (소스 바인드 마운트 + `--reload`) |
-| `docker-compose.test.yml` | 테스트·커버리지·포맷 검사·샌드박스 실검증 |
-| `docker-compose.prod.yml` | 운영 배포 (API + nsjail 채점 워커) |
+| 파일                      | 용도                                                       |
+| ------------------------- | ---------------------------------------------------------- |
+| `docker-compose.yml`      | 개발용 백엔드·프론트엔드 (소스 바인드 마운트 + `--reload`) |
+| `docker-compose.test.yml` | 테스트·커버리지·포맷 검사·샌드박스 실검증                  |
+| `docker-compose.prod.yml` | 운영 배포 (API + nsjail 채점 워커)                         |

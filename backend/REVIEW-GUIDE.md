@@ -8,12 +8,12 @@
 
 ## 1단계 - 진입점과 설정
 
-| 순서 | 파일 | 줄 | 확인할 것 |
-|---|---|---|---|
-| 1 | `app/core/config.py` | 170 | 모든 환경변수의 단일 창구. 기본값이 안전한가 |
-| 2 | `app/main.py` | - | 미들웨어, 예외 핸들러, lifespan |
-| 3 | `app/api/router.py` | 66 | 도메인 라우터 조립 방식 |
-| 4 | `app/api/runtime.py` | 20 | 전역 싱글턴 서비스 인스턴스 |
+| 순서 | 파일                 | 줄  | 확인할 것                                    |
+| ---- | -------------------- | --- | -------------------------------------------- |
+| 1    | `app/core/config.py` | 170 | 모든 환경변수의 단일 창구. 기본값이 안전한가 |
+| 2    | `app/main.py`        | -   | 미들웨어, 예외 핸들러, lifespan              |
+| 3    | `app/api/router.py`  | 66  | 도메인 라우터 조립 방식                      |
+| 4    | `app/api/runtime.py` | 20  | 전역 싱글턴 서비스 인스턴스                  |
 
 1. `config.py:154` `validate_security()` - production에서 `JWT_SECRET` 미설정 또는 32자 미만이면 기동을 거부합니다. 이 검사가 lifespan에서 실제로 호출되는지 `main.py`에서 확인하십시오.
 2. `config.py:137` `SECRET_KEY`는 개발 편의를 위한 하드코딩 fallback을 가집니다. 위 검사가 production을 막아주지만, fallback 값 자체가 저장소에 남아 있는 것이 정책상 허용되는지 판단이 필요합니다.
@@ -22,10 +22,10 @@
 
 ## 2단계 - 데이터 모델과 마이그레이션
 
-| 순서 | 파일 | 줄 |
-|---|---|---|
-| 5 | `app/models/schemas.py` | 1,791 |
-| 6 | `app/migrations/` | 627 (26개) |
+| 순서 | 파일                    | 줄         |
+| ---- | ----------------------- | ---------- |
+| 5    | `app/models/schemas.py` | 1,791      |
+| 6    | `app/migrations/`       | 627 (26개) |
 
 `schemas.py` 하나에 모든 테이블과 요청/응답 스키마가 들어 있습니다. 전부 읽지 마시고 1단계에서 파악한 핵심 엔티티(User, Homework, Submission, Problem, ProblemRevision, JudgeJob)만 먼저 보십시오.
 
@@ -34,21 +34,21 @@
 
 ## 3단계 - 권한과 인증
 
-| 순서 | 파일 | 줄 |
-|---|---|---|
-| 7 | `app/api/dependencies.py` | 145 |
-| 8 | `app/services/user_management.py` | - |
-| 9 | `app/domains/auth/`, `app/domains/admin_auth/` | 197 + 92 |
+| 순서 | 파일                                           | 줄       |
+| ---- | ---------------------------------------------- | -------- |
+| 7    | `app/api/dependencies.py`                      | 145      |
+| 8    | `app/services/user_management.py`              | -        |
+| 9    | `app/domains/auth/`, `app/domains/admin_auth/` | 197 + 92 |
 
 이 단계가 리뷰의 핵심입니다. 145줄짜리 `dependencies.py`가 전체 API의 접근 제어를 결정합니다.
 
-| 의존성 | 용도 |
-|---|---|
-| `get_current_user` / `get_current_active_user` | 인증 |
-| `require_roles(*roles)` | 역할 기반 |
-| `require_capability(capability)` | 세분화된 권한 |
-| `require_staff` | 스태프 전용 |
-| `require_step_up(capability)` | 위험 작업의 재인증 |
+| 의존성                                         | 용도               |
+| ---------------------------------------------- | ------------------ |
+| `get_current_user` / `get_current_active_user` | 인증               |
+| `require_roles(*roles)`                        | 역할 기반          |
+| `require_capability(capability)`               | 세분화된 권한      |
+| `require_staff`                                | 스태프 전용        |
+| `require_step_up(capability)`                  | 위험 작업의 재인증 |
 
 1. 각 게이트가 실패 시 401과 403을 올바르게 구분하는가
 2. `require_capability`가 문제 소유권 범위까지 검사하는가, 아니면 라우터가 별도로 해야 하는가 (`app/domains/problems/router.py`의 `_authorize_problem_scope` 참조)
@@ -56,13 +56,13 @@
 
 ## 4단계 - 핵심 서비스
 
-| 순서 | 파일 | 줄 | 성격 |
-|---|---|---|---|
-| 10 | `app/services/judge_job_service.py` | 687 | 작업 큐, lease, 재시도 |
-| 11 | `app/services/grading_service.py` | 693 | 채점 본체 |
-| 12 | `app/services/code_runner.py` | 360 | 코드 실행 (보안 임계) |
-| 13 | `app/services/lint_pipeline.py` | 395 | 정적 분석 |
-| 14 | `app/services/feedback_service.py` | 183 | 피드백 생성 |
+| 순서 | 파일                                | 줄  | 성격                   |
+| ---- | ----------------------------------- | --- | ---------------------- |
+| 10   | `app/services/judge_job_service.py` | 687 | 작업 큐, lease, 재시도 |
+| 11   | `app/services/grading_service.py`   | 693 | 채점 본체              |
+| 12   | `app/services/code_runner.py`       | 360 | 코드 실행 (보안 임계)  |
+| 13   | `app/services/lint_pipeline.py`     | 395 | 정적 분석              |
+| 14   | `app/services/feedback_service.py`  | 183 | 피드백 생성            |
 
 1. `code_runner.py`는 학생이 제출한 코드를 실행합니다. 샌드박스 경계, 자원 제한, 타임아웃을 가장 꼼꼼히 보셔야 합니다. `config.py`의 `SANDBOX_READY`는 attestation 파일의 `runtime_version`이 `JUDGE_RUNTIME_VERSION`과 일치할 때만 참이 됩니다 - 이 연동이 우회 가능한지 확인하십시오.
 2. `judge_job_service.py:114`에 SQLite 전용 분기가 있습니다 (`dialect.name == "sqlite"`). 트랜잭션 처리 차이가 다른 엔진에서 어떻게 동작할지 확인이 필요합니다.
@@ -70,17 +70,17 @@
 
 ## 5단계 - 도메인 라우터
 
-| 도메인 | 줄 | 비고 |
-|---|---|---|
-| `homework` | 1,246 | 가장 큼. ZIP 임포트/엑스포트 포함 |
-| `problems` | 1,062 | revision 수명주기, 승인, 테스트케이스 |
-| `jobs` | 555 | |
-| `submissions` | 461 | |
-| `contests` | 452 | |
-| `collab` | 442 | WebSocket 포함 |
-| `users` | 370 | |
-| `grading` | 324 | |
-| 나머지 13개 | 각 200줄 미만 | 패턴이 반복됨. 1~2개만 표본 확인 |
+| 도메인        | 줄            | 비고                                  |
+| ------------- | ------------- | ------------------------------------- |
+| `homework`    | 1,246         | 가장 큼. ZIP 임포트/엑스포트 포함     |
+| `problems`    | 1,062         | revision 수명주기, 승인, 테스트케이스 |
+| `jobs`        | 555           |                                       |
+| `submissions` | 461           |                                       |
+| `contests`    | 452           |                                       |
+| `collab`      | 442           | WebSocket 포함                        |
+| `users`       | 370           |                                       |
+| `grading`     | 324           |                                       |
+| 나머지 13개   | 각 200줄 미만 | 패턴이 반복됨. 1~2개만 표본 확인      |
 
 1. `homework`의 ZIP 파싱 - 업로드 파일을 다루므로 zip slip, 압축 폭탄, 경로 탈출을 확인하십시오.
 2. `problems`의 revision 상태 전이 - draft에서만 테스트 데이터가 바뀌어야 합니다.
@@ -88,11 +88,11 @@
 
 ## 6단계 - 운영 도구
 
-| 파일 | 줄 |
-|---|---|
-| `app/cli.py` | 320 |
-| `deploy/nsjail.cfg`, `deploy/Dockerfile.judge` | - |
-| `Dockerfile`, `../docker-compose.prod.yml` | - |
+| 파일                                           | 줄  |
+| ---------------------------------------------- | --- |
+| `app/cli.py`                                   | 320 |
+| `deploy/nsjail.cfg`, `deploy/Dockerfile.judge` | -   |
+| `Dockerfile`, `../docker-compose.prod.yml`     | -   |
 
 CLI 14개 명령의 목록과 용도는 [README.md](./README.md)의 표에 있습니다. 운영자가 직접 실행하므로 파괴적 명령(`restore-course-bundle`)의 안전장치를 확인하십시오.
 
@@ -101,7 +101,7 @@ CLI 14개 명령의 목록과 용도는 [README.md](./README.md)의 표에 있�
 카테고리별 구성은 [README.md](./README.md)에 정리돼 있습니다. 전부 읽기보다 커버리지가 낮은 영역과 아래 두 파일을 보십시오.
 
 - `tests/core/test_openapi_contract.py` - 문서와 runtime router의 일치를 강제합니다
-- `tests/sandbox/test_nsjail_contract.py` - mock 기반 계약 검증 (모든 OS에서 실행)
+- `tests/sandbox/test_nsjail_contract.py` - mock 기반 스펙 검증 (모든 OS에서 실행)
 - `tests/sandbox/test_nsjail_real.py` - 실제 nsjail로 격리를 실행 검증 (`sandbox-tests` 서비스 전용, 그 외 환경에서는 skip)
 
 샌드박스 정책(`deploy/nsjail.cfg`)은 이제 mock 없이 실제로 실행되며, 그 과정에서 드러난 결함을 수정했습니다. 상세는 [README.md](./README.md)의 "샌드박스(nsjail) 실검증"을 참고하십시오.
@@ -110,9 +110,9 @@ CLI 14개 명령의 목록과 용도는 [README.md](./README.md)의 표에 있�
 
 ## 이번 변경에서 특히 봐주셨으면 하는 것
 
-### 1. 계약 검증 절차의 순서
+### 1. 스펙 검증 절차의 순서
 
-[API.md](./API.md)의 "계약 검증"에서 `export-openapi`가 검증 시퀀스에서 빠졌습니다. 이전 문서는 `export` 다음에 `check`를 실행하도록 안내했는데, `export`가 git에 추적되는 기준선을 현재 스키마로 덮어쓰므로 `check`가 현재 스키마를 자기 자신과 비교하게 되어 항상 통과했습니다. 기준선 갱신은 이제 별도 단계입니다. 이 절차를 CI에 넣을 때 순서가 다시 뒤집히지 않도록 강제할 방법이 필요한지 확인해야 합니다.
+[API.md](./API.md)의 "스펙 검증"에서 `export-openapi`가 검증 시퀀스에서 빠졌습니다. 이전 문서는 `export` 다음에 `check`를 실행하도록 안내했는데, `export`가 git에 추적되는 기준선을 현재 스키마로 덮어쓰므로 `check`가 현재 스키마를 자기 자신과 비교하게 되어 항상 통과했습니다. 기준선 갱신은 이제 별도 단계입니다. 이 절차를 CI에 넣을 때 순서가 다시 뒤집히지 않도록 강제할 방법이 필요한지 확인해야 합니다.
 
 ### 2. 하위호환 별칭 route 2개 제거
 
@@ -133,12 +133,12 @@ _editable_revision_or_409(session, ...)       # problems/router.py:441
 
 ## 판단이 필요한 사항
 
-| 항목 | 현황 |
-|---|---|
-| PostgreSQL 호환성 검증 제거 | `testcontainers` 기반 마이그레이션 호환성 테스트를 삭제했습니다. `DATABASE_URL`로 Postgres 연결은 여전히 가능하지만 검증 수단이 없습니다. 운영에서 Postgres를 쓸 계획이 있다면 복구가 필요합니다 |
-| LICENSE 파일 부재 | README는 MIT라고 명시하는데 `LICENSE` 파일이 없습니다 |
-| `env_example`의 `APP_VERSION` | 코드가 읽지 않는 변수입니다. 실제 버전은 `config.py`의 `PROJECT_VERSION`(하드코딩)이 담당합니다 |
-| `pyproject.toml`의 `name = "backend"` | 일반적인 이름이나, 변경 시 `uv.lock`과 Docker 빌드에 영향이 있어 손대지 않았습니다 |
+| 항목                                  | 현황                                                                                                                                                                                             |
+| ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| PostgreSQL 호환성 검증 제거           | `testcontainers` 기반 마이그레이션 호환성 테스트를 삭제했습니다. `DATABASE_URL`로 Postgres 연결은 여전히 가능하지만 검증 수단이 없습니다. 운영에서 Postgres를 쓸 계획이 있다면 복구가 필요합니다 |
+| LICENSE 파일 부재                     | README는 MIT라고 명시하는데 `LICENSE` 파일이 없습니다                                                                                                                                            |
+| `env_example`의 `APP_VERSION`         | 코드가 읽지 않는 변수입니다. 실제 버전은 `config.py`의 `PROJECT_VERSION`(하드코딩)이 담당합니다                                                                                                  |
+| `pyproject.toml`의 `name = "backend"` | 일반적인 이름이나, 변경 시 `uv.lock`과 Docker 빌드에 영향이 있어 손대지 않았습니다                                                                                                               |
 
 ## 리뷰 중 실행할 검증 명령
 
@@ -165,10 +165,10 @@ uvx ruff check --select F401,F811,F841 app/ tests/
 
 ## 시간 배분 제안
 
-| 범위 | 소요 | 커버되는 위험 |
-|---|---|---|
-| 0~3단계 | 약 4시간 | 인증·권한·데이터 모델 - 위험의 대부분 |
-| 0~5단계 | 약 9시간 | 위 + 코드 실행 샌드박스 + 업로드 처리 |
-| 전체 | 약 11시간 | 운영 도구와 테스트 포함 |
+| 범위    | 소요      | 커버되는 위험                         |
+| ------- | --------- | ------------------------------------- |
+| 0~3단계 | 약 4시간  | 인증·권한·데이터 모델 - 위험의 대부분 |
+| 0~5단계 | 약 9시간  | 위 + 코드 실행 샌드박스 + 업로드 처리 |
+| 전체    | 약 11시간 | 운영 도구와 테스트 포함               |
 
 시간이 하루뿐이라면 3단계(권한)와 4단계의 `code_runner.py` 에 집중하시기를 권합니다. 학생 코드를 실행하는 시스템에서 가장 큰 위험이 그곳에 있습니다.
