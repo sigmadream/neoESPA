@@ -7,6 +7,7 @@ from sqlmodel import Session, select
 from ...models.schemas import (
     GradingRule,
     Homework,
+    HomeworkTestCaseRecord,
     HomeworkAdminRead,
     HomeworkAdminWrite,
     HomeworkRead,
@@ -79,6 +80,23 @@ def load_homework_testcases(
     session: Session,
     homework_num: int,
 ) -> list[HomeworkTestCaseWrite]:
+    records = session.exec(
+        select(HomeworkTestCaseRecord)
+        .where(HomeworkTestCaseRecord.homework_num == homework_num)
+        .order_by(HomeworkTestCaseRecord.position)
+    ).all()
+    if records:
+        return [
+            HomeworkTestCaseWrite(
+                name=record.case_name,
+                input=record.input_text,
+                expected_output=record.expected_output,
+                score=record.score,
+                is_hidden=record.is_hidden,
+            )
+            for record in records
+        ]
+
     rule = get_grading_rule(session, homework_num, "testcases")
     if rule is None or not rule.is_active:
         return []
@@ -271,26 +289,28 @@ def sync_homework_rules(
         description="Allowed submission languages for the homework.",
     )
 
-    if payload.testcases:
-        serialized_cases = [
-            {
-                "name": testcase.name,
-                "input": testcase.input,
-                "expected_output": testcase.expected_output,
-                "score": testcase.score,
-                "is_hidden": testcase.is_hidden,
-            }
-            for testcase in payload.testcases
-        ]
-        upsert_homework_rule(
-            session,
-            homework_num,
-            "testcases",
-            json.dumps({"cases": serialized_cases}),
-            description="Homework testcase policy.",
+    existing_testcases = session.exec(
+        select(HomeworkTestCaseRecord).where(
+            HomeworkTestCaseRecord.homework_num == homework_num
         )
-    else:
-        delete_homework_rule(session, homework_num, "testcases")
+    ).all()
+    for testcase in existing_testcases:
+        session.delete(testcase)
+    if existing_testcases:
+        session.flush()
+    for position, testcase in enumerate(payload.testcases, start=1):
+        session.add(
+            HomeworkTestCaseRecord(
+                homework_num=homework_num,
+                case_name=testcase.name,
+                position=position,
+                input_text=testcase.input,
+                expected_output=testcase.expected_output,
+                score=testcase.score,
+                is_hidden=testcase.is_hidden,
+            )
+        )
+    delete_homework_rule(session, homework_num, "testcases")
 
     if payload.lint_week is not None and payload.lint_week.strip():
         upsert_homework_rule(

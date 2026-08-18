@@ -3,21 +3,23 @@
 import {
   createContext,
   startTransition,
+  useCallback,
   useContext,
   useEffect,
+  useRef,
   useState,
 } from 'react';
 
 import {
   getCurrentUser,
+  COOKIE_SESSION_TOKEN,
   loginRequest,
+  logoutRequest,
   registerRequest,
   stepUpRequest,
   updateCurrentUserProfile,
   type AuthUser,
 } from '@/lib/api';
-
-const STORAGE_KEY = 'neoespa.auth.session';
 
 type AuthContextValue = {
   user: AuthUser | null;
@@ -40,91 +42,74 @@ type AuthContextValue = {
   }) => Promise<AuthUser>;
   logout: () => void;
   refreshSession: () => Promise<AuthUser | null>;
-  /** 민감한 관리 작업 전 재인증. 성공하면 step-up 토큰으로 세션을 교체한다. */
-  stepUp: (password: string) => Promise<void>;
+  /** 민감한 관리 작업에만 사용할 단기 step-up 토큰을 발급한다. */
+  stepUp: (password: string) => Promise<string>;
 };
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
-type StoredSession = {
-  token: string;
-  user: AuthUser;
-};
-
-function readStoredSession(): StoredSession | null {
-  if (typeof window === 'undefined') {
-    return null;
-  }
-
-  const raw = window.localStorage.getItem(STORAGE_KEY);
-  if (!raw) {
-    return null;
-  }
-
-  try {
-    return JSON.parse(raw) as StoredSession;
-  } catch {
-    window.localStorage.removeItem(STORAGE_KEY);
-    return null;
-  }
-}
-
-function writeStoredSession(session: StoredSession | null) {
-  if (typeof window === 'undefined') {
-    return;
-  }
-
-  if (!session) {
-    window.localStorage.removeItem(STORAGE_KEY);
-    return;
-  }
-
-  window.localStorage.setItem(STORAGE_KEY, JSON.stringify(session));
-}
-
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [token, setToken] = useState<string | null>(null);
+  const [baseToken, setBaseToken] = useState<string | null>(null);
+  const [elevatedToken, setElevatedToken] = useState<string | null>(null);
   const [user, setUser] = useState<AuthUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const elevationTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const token = elevatedToken ?? baseToken;
 
-  async function refreshSession() {
-    const storedSession = readStoredSession();
-    if (!storedSession?.token) {
-      setToken(null);
-      setUser(null);
-      setIsLoading(false);
-      return null;
+  const clearElevation = useCallback(() => {
+    if (elevationTimer.current) {
+      clearTimeout(elevationTimer.current);
+      elevationTimer.current = null;
     }
+    setElevatedToken(null);
+  }, []);
 
+  const refreshSession = useCallback(async () => {
     try {
-      const currentUser = await getCurrentUser(storedSession.token);
-      setToken(storedSession.token);
+      const currentUser = await getCurrentUser(COOKIE_SESSION_TOKEN);
+      setBaseToken(COOKIE_SESSION_TOKEN);
+      clearElevation();
       setUser(currentUser);
-      writeStoredSession({ token: storedSession.token, user: currentUser });
       return currentUser;
     } catch {
-      writeStoredSession(null);
-      setToken(null);
+      setBaseToken(null);
+      clearElevation();
       setUser(null);
       return null;
     } finally {
       setIsLoading(false);
     }
-  }
+  }, [clearElevation]);
+
+  const logout = useCallback(() => {
+    void logoutRequest();
+    if (elevationTimer.current) clearTimeout(elevationTimer.current);
+    startTransition(() => {
+      setBaseToken(null);
+      setElevatedToken(null);
+      setUser(null);
+    });
+  }, []);
 
   useEffect(() => {
     void refreshSession();
-  }, []);
+    const handleUnauthorized = () => logout();
+    window.addEventListener('neoespa:unauthorized', handleUnauthorized);
+    return () => {
+      window.removeEventListener('neoespa:unauthorized', handleUnauthorized);
+      if (elevationTimer.current) clearTimeout(elevationTimer.current);
+    };
+  }, [logout, refreshSession]);
 
   async function login(credentials: { id: string; password: string }) {
     setIsLoading(true);
 
     try {
-      const authToken = await loginRequest(credentials.id, credentials.password);
-      const currentUser = await getCurrentUser(authToken.access_token);
-      writeStoredSession({ token: authToken.access_token, user: currentUser });
+      await loginRequest(credentials.id, credentials.password);
+      const currentUser = await getCurrentUser(COOKIE_SESSION_TOKEN);
       startTransition(() => {
-        setToken(authToken.access_token);
+        setBaseToken(COOKIE_SESSION_TOKEN);
+        setElevatedToken(null);
         setUser(currentUser);
       });
       return currentUser;
@@ -163,7 +148,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     phone: string;
     email: string;
   }) {
-    if (!token) {
+    if (!baseToken || !token) {
       throw new Error('Authentication is required');
     }
 
@@ -171,7 +156,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     try {
       const updatedUser = await updateCurrentUserProfile(payload, token);
-      writeStoredSession({ token, user: updatedUser });
       startTransition(() => {
         setUser(updatedUser);
       });
@@ -182,23 +166,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   async function stepUp(password: string) {
-    if (!token || !user) {
+    if (!baseToken || !user) {
       throw new Error('Authentication is required');
     }
 
-    const elevated = await stepUpRequest(password, token);
-    writeStoredSession({ token: elevated.access_token, user });
+    const elevated = await stepUpRequest(password, baseToken);
+    if (elevationTimer.current) clearTimeout(elevationTimer.current);
     startTransition(() => {
-      setToken(elevated.access_token);
+      setElevatedToken(elevated.access_token);
     });
-  }
-
-  function logout() {
-    writeStoredSession(null);
-    startTransition(() => {
-      setToken(null);
-      setUser(null);
-    });
+    elevationTimer.current = setTimeout(
+      () => setElevatedToken(null),
+      10 * 60 * 1000,
+    );
+    return elevated.access_token;
   }
 
   return (
@@ -207,7 +188,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         user,
         token,
         isLoading,
-        isAuthenticated: Boolean(user && token),
+        isAuthenticated: Boolean(user && baseToken),
         login,
         register,
         updateProfile,

@@ -12,6 +12,7 @@ from app.models.schemas import (
 )
 from app.services.auth_service import AuthService
 from app.services.plagiarism_service import PlagiarismService
+import app.services.plagiarism_service as plagiarism_module
 
 engine = create_engine(
     "sqlite://", connect_args={"check_same_thread": False}, poolclass=StaticPool
@@ -97,3 +98,39 @@ def test_identical_submissions_are_flagged():
     assert len(stored_pairs) == 1
     assert stored_pairs[0].similarity_score == 1.0
     assert all(result.plagiarism_flag is True for result in stored_results)
+
+
+def test_each_submission_is_decompressed_once(monkeypatch):
+    with Session(engine) as session:
+        session.add(
+            Homework(
+                num=2,
+                title="Cached Plagiarism Homework",
+                intro="Compare code",
+                starttime=_dt_string(-1),
+                deadline=_dt_string(2),
+                codeName="main",
+            )
+        )
+        session.commit()
+        for index in range(5):
+            user_id = f"cache-{index}"
+            _create_user(session, user_id, 20250100 + index)
+            _create_submission(session, 2, user_id, f"print({index})\n")
+
+        original = plagiarism_module.decompress_text
+        calls = 0
+
+        def count_decompression(value):
+            nonlocal calls
+            calls += 1
+            return original(value)
+
+        monkeypatch.setattr(
+            plagiarism_module, "decompress_text", count_decompression
+        )
+        PlagiarismService().run_for_homework(
+            session, homework_num=2, created_by="cache-0"
+        )
+
+    assert calls == 5

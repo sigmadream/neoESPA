@@ -1,3 +1,5 @@
+from datetime import UTC, datetime, timedelta
+
 from fastapi import HTTPException, status
 from sqlmodel import Session, select
 
@@ -113,7 +115,26 @@ def ensure_collab_snapshot(
     collab_session: CollabSession,
     *,
     user_id: str | None,
+    min_interval_seconds: int = 0,
 ) -> None:
+    if min_interval_seconds > 0:
+        latest = session.exec(
+            select(CollabCodeSnapshot)
+            .where(CollabCodeSnapshot.session_id == (collab_session.id or 0))
+            .order_by(CollabCodeSnapshot.created_at.desc())
+        ).first()
+        if latest is not None:
+            created_at = latest.created_at
+            if created_at.tzinfo is None:
+                created_at = created_at.replace(tzinfo=UTC)
+            if datetime.now(UTC) - created_at < timedelta(
+                seconds=min_interval_seconds
+            ):
+                latest.user_id = user_id
+                latest.code_text = compress_text(collab_session.current_code)
+                latest.created_at = datetime.now(UTC)
+                session.add(latest)
+                return
     session.add(
         CollabCodeSnapshot(
             session_id=collab_session.id or 0,

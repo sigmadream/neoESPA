@@ -5,7 +5,12 @@ from sqlmodel.pool import StaticPool
 
 from app.core.db import get_session
 from app.main import app
-from app.models.schemas import CollabCodeSnapshot, CollabParticipant, User
+from app.models.schemas import (
+    CollabCodeSnapshot,
+    CollabParticipant,
+    SystemSetting,
+    User,
+)
 from app.services.auth_service import AuthService
 from app.core.compression import decompress_text
 
@@ -45,7 +50,7 @@ def teardown_function():
     SQLModel.metadata.drop_all(engine)
 
 
-def test_user_can_join_live_session():
+def test_uninvited_user_cannot_join_live_session():
     with Session(engine) as session:
         _create_user(session, "mentor", 10051001, "admin")
         _create_user(session, "student-member", 20251001, "student")
@@ -76,12 +81,36 @@ def test_user_can_join_live_session():
         app.dependency_overrides.clear()
 
     assert create_response.status_code == 200
-    assert join_response.status_code == 200
-    participants = join_response.json()["participants"]
-    assert {participant["user_id"] for participant in participants} == {
-        "mentor",
-        "student-member",
-    }
+    assert join_response.status_code == 403
+    assert "invitation" in join_response.json()["detail"]
+
+
+def test_collaboration_session_rejects_oversized_initial_code():
+    with Session(engine) as session:
+        _create_user(session, "size-mentor", 10051010, "admin")
+        session.add(
+            SystemSetting(
+                key="submission_max_source_bytes",
+                value="8",
+                value_type="number",
+            )
+        )
+        session.commit()
+
+        def get_session_override():
+            return session
+
+        app.dependency_overrides[get_session] = get_session_override
+        client = TestClient(app)
+        token = _login(client, "size-mentor")
+        response = client.post(
+            "/api/collab/sessions",
+            json={"title": "Too large", "initial_code": "print('large')"},
+            headers={"Authorization": f"Bearer {token}"},
+        )
+        app.dependency_overrides.clear()
+
+    assert response.status_code == 413
 
 
 def test_non_member_cannot_edit_session():
@@ -242,7 +271,7 @@ def test_closed_session_is_hidden_from_students_but_visible_to_staff():
     assert student_list_response.status_code == 200
     assert staff_list_response.status_code == 200
     assert student_list_response.json() == []
-    assert [item["id"] for item in staff_list_response.json()] == [session_id]
+    assert staff_list_response.json() == []
 
 
 def test_student_can_rejoin_after_leaving_session():

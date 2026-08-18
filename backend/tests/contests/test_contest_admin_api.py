@@ -1,5 +1,8 @@
+import hashlib
 from datetime import UTC, datetime, timedelta
 
+from app.core.config import settings
+from app.domains.contests.router import contest_access_rate_limiter
 from app.models.schemas import (
     Contest,
     ContestParticipation,
@@ -124,6 +127,57 @@ def test_participant_can_join_and_use_clarifications_and_announcements(
     assert asked.status_code == 201
     assert answered.json()["status"] == "answered"
     assert visible.json()[0]["title"] == "Correction"
+
+
+def test_contest_access_code_attempts_are_rate_limited(
+    client,
+    session,
+    create_user,
+    login_user,
+    auth_headers,
+    monkeypatch,
+):
+    create_user("rate-contest-admin", 20259820, "password", role="admin")
+    create_user("rate-contest-student", 20259821, "password", role="student")
+    now = datetime.now(UTC)
+    contest = Contest(
+        code="rate-limited-cup",
+        title="Rate Limited Cup",
+        starts_at=now - timedelta(hours=1),
+        ends_at=now + timedelta(hours=2),
+        status="published",
+        visibility="private",
+        scoring_format="icpc",
+        allow_virtual=False,
+        access_code_hash=hashlib.sha256(b"correct-code").hexdigest(),
+        created_by="rate-contest-admin",
+    )
+    session.add(contest)
+    session.commit()
+    session.refresh(contest)
+    monkeypatch.setattr(settings, "CONTEST_ACCESS_RATE_LIMIT_COUNT", 2)
+    monkeypatch.setattr(
+        settings, "CONTEST_ACCESS_RATE_LIMIT_WINDOW_SECONDS", 60
+    )
+    key = (f"contest:{contest.id}:user:rate-contest-student",)
+    contest_access_rate_limiter.clear(key)
+    headers = auth_headers(login_user("rate-contest-student"))
+    try:
+        responses = [
+            client.post(
+                f"/api/contests/{contest.id}/participations",
+                json={
+                    "participation_type": "official",
+                    "access_code": "wrong-code",
+                },
+                headers=headers,
+            )
+            for _ in range(3)
+        ]
+    finally:
+        contest_access_rate_limiter.clear(key)
+
+    assert [response.status_code for response in responses] == [403, 403, 429]
 
 
 def test_scoreboard_can_replay_live_and_system_testing_results(

@@ -1,9 +1,14 @@
 from datetime import UTC, datetime
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
+from sqlalchemy import String, cast, func, or_
 from sqlmodel import Session, select
 
-from ...api.dependencies import get_current_active_user, require_step_up
+from ...api.dependencies import (
+    get_current_active_user,
+    require_capability,
+    require_step_up,
+)
 from ...api.runtime import observability_service
 from ...core.db import get_session
 from ...models.schemas import (
@@ -35,8 +40,11 @@ router = APIRouter()
 
 
 @router.get("/users/me", response_model=UserRead)
-async def read_users_me(current_user: User = Depends(get_current_active_user)):
-    return to_user_read(current_user)
+async def read_users_me(
+    current_user: User = Depends(get_current_active_user),
+    session: Session = Depends(get_session),
+):
+    return to_user_read(current_user, session)
 
 
 @router.patch("/users/me", response_model=UserRead)
@@ -65,7 +73,7 @@ async def update_my_profile(
     )
     session.commit()
     session.refresh(current_user)
-    return to_user_read(current_user)
+    return to_user_read(current_user, session)
 
 
 @router.get("/admin/users", response_model=list[UserRead])
@@ -73,38 +81,37 @@ async def list_admin_users(
     search: str | None = Query(default=None),
     role: str | None = Query(default=None),
     is_active: bool | None = Query(default=None),
-    _: User = Depends(require_step_up("user:manage")),
+    limit: int = Query(default=100, ge=1, le=500),
+    offset: int = Query(default=0, ge=0),
+    _: User = Depends(require_capability("user:manage")),
     session: Session = Depends(get_session),
 ):
-    users = session.exec(select(User).order_by(User.sid, User.id)).all()
-
     normalized_search = (search or "").strip().lower()
     try:
         normalized_role = normalize_user_group(role) if role else None
     except UserManagementError as error:
         raise user_management_bad_request(error) from error
 
-    visible_users: list[User] = []
-    for user in users:
-        if normalized_role is not None and user.user_group != normalized_role:
-            continue
-        if is_active is not None and user.is_active != is_active:
-            continue
-        if normalized_search:
-            haystack = " ".join(
-                [
-                    user.id.lower(),
-                    user.name.lower(),
-                    user.email.lower(),
-                    user.phone.lower(),
-                    str(user.sid),
-                ]
+    statement = select(User)
+    if normalized_role is not None:
+        statement = statement.where(User.user_group == normalized_role)
+    if is_active is not None:
+        statement = statement.where(User.is_active == is_active)
+    if normalized_search:
+        pattern = f"%{normalized_search}%"
+        statement = statement.where(
+            or_(
+                func.lower(User.id).like(pattern),
+                func.lower(User.name).like(pattern),
+                func.lower(User.email).like(pattern),
+                func.lower(User.phone).like(pattern),
+                cast(User.sid, String).like(pattern),
             )
-            if normalized_search not in haystack:
-                continue
-        visible_users.append(user)
-
-    return [to_user_read(user) for user in visible_users]
+        )
+    users = session.exec(
+        statement.order_by(User.sid, User.id).limit(limit).offset(offset)
+    ).all()
+    return [to_user_read(user) for user in users]
 
 
 @router.patch("/admin/users/{user_id}/role", response_model=UserRead)
@@ -281,6 +288,7 @@ async def reset_user_password(
         )
 
     user.ps = AuthService.get_password_hash(payload.new_password)
+    user.token_version += 1
     user.updated_at = datetime.now(UTC)
     session.add(user)
     observability_service.record_audit(
@@ -300,7 +308,7 @@ async def reset_user_password(
 )
 async def get_role_capabilities(
     role_name: str,
-    _: User = Depends(require_step_up("user:manage")),
+    _: User = Depends(require_capability("user:manage")),
     session: Session = Depends(get_session),
 ):
     if role_name not in MANAGEABLE_USER_ROLES:
@@ -324,14 +332,22 @@ async def replace_role_capabilities(
     current_user: User = Depends(require_step_up("user:manage")),
     session: Session = Depends(get_session),
 ):
-    if role_name not in MANAGEABLE_USER_ROLES or role_name == "super_admin":
+    if role_name not in MANAGEABLE_USER_ROLES or role_name in {
+        "admin",
+        "super_admin",
+    }:
         raise HTTPException(
             status_code=400, detail="Role capabilities cannot be changed"
         )
     requested = {item.strip() for item in payload.capabilities if item.strip()}
-    if "*" in requested or requested - KNOWN_CAPABILITIES:
+    rejected = requested - KNOWN_CAPABILITIES
+    if "*" in requested or rejected:
         raise HTTPException(
-            status_code=400, detail="Unknown or unsafe capability"
+            status_code=400,
+            detail=(
+                "Unknown or unsafe capabilities: "
+                + ", ".join(sorted(rejected or {"*"}))
+            ),
         )
     existing = session.exec(
         select(RoleCapability).where(RoleCapability.role_name == role_name)

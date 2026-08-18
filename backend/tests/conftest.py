@@ -7,6 +7,8 @@ from sqlmodel.pool import StaticPool
 
 from app.core.db import configure_sqlite_foreign_keys, get_session
 from app.main import app
+from app.services.login_rate_limiter import login_rate_limiter
+from app.domains.contests.router import contest_access_rate_limiter
 from tests.factories import (
     create_homework as build_homework,
     create_submission as build_submission,
@@ -20,6 +22,8 @@ def isolated_test_environment(monkeypatch):
     """Keep process-wide environment mutations from leaking between tests."""
     monkeypatch.setenv("APP_ENV", "test")
     monkeypatch.setenv("AUTO_GRADING_ENABLED", "true")
+    login_rate_limiter.reset()
+    contest_access_rate_limiter.reset()
 
 
 @pytest.fixture(name="engine")

@@ -1,7 +1,7 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { Settings, Save, RefreshCw, Sliders, CheckCircle2, AlertCircle, Undo2 } from 'lucide-react';
+import { useCallback, useEffect, useState } from 'react';
+import { Settings, Save, RefreshCw, Sliders, CheckCircle2, Undo2 } from 'lucide-react';
 
 import { useAuth } from '@/components/AuthProvider';
 import {
@@ -67,9 +67,12 @@ export default function AdminSettingsManager() {
   const [isSaving, setIsSaving] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
+  const canManageSettings = Boolean(
+    user?.capabilities.includes('*') || user?.capabilities.includes('settings:manage'),
+  );
 
-  const loadSettings = async () => {
-    if (!token || user?.user_group !== 'admin') return;
+  const loadSettings = useCallback(async () => {
+    if (!token || !canManageSettings) return;
     setIsLoading(true);
     try {
       const response = await getAdminSettings(token, { prefix: 'lint_' });
@@ -81,9 +84,9 @@ export default function AdminSettingsManager() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [canManageSettings, token]);
 
-  useEffect(() => { void loadSettings(); }, [token, user?.user_group]);
+  useEffect(() => { void loadSettings(); }, [loadSettings]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -118,7 +121,7 @@ export default function AdminSettingsManager() {
     }
   };
 
-  if (user?.user_group !== 'admin') return <div className="card-simple bg-slate-50 dark:bg-slate-900/20 border-dashed text-center py-12"><p className="text-slate-500 font-medium">최고 관리자(System Administrator) 권한 전용 메뉴입니다.</p></div>;
+  if (!canManageSettings) return <div className="card-simple bg-slate-50 dark:bg-slate-900/20 border-dashed text-center py-12"><p className="text-slate-500 font-medium">시스템 설정 관리 권한이 필요합니다.</p></div>;
 
   return (
     <div className="space-y-8">

@@ -1,22 +1,12 @@
 # syntax=docker/dockerfile:1
 
 # ---------------------------------------------------------------------------
-# base: 런타임/테스트 이미지가 공유하는 OS 레벨 툴체인
+# base: 런타임과 검증 이미지가 공유하는 최소 Python/uv 환경
 # ---------------------------------------------------------------------------
 FROM python:3.14-slim AS base
 
-# Install C/C++ compilers for code grading
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    gcc \
-    g++ \
-    make \
-    libc6-dev \
-    && rm -rf /var/lib/apt/lists/*
-
-# Install uv
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
-# 실행 결과가 호스트 OS(로케일/타임존/줄바꿈)에 좌우되지 않도록 고정한다.
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
     LANG=C.UTF-8 \
@@ -26,8 +16,20 @@ ENV PYTHONUNBUFFERED=1 \
 
 WORKDIR /app
 
-# Copy dependency files first for layer caching
 COPY pyproject.toml uv.lock ./
+
+# 개발/테스트 호스트 러너에만 컴파일러를 제공한다. 운영 API 이미지는
+# 격리된 judge-worker가 실행을 담당하므로 툴체인을 포함하지 않는다.
+FROM base AS toolchain
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    gcc \
+    g++ \
+    make \
+    libc6-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+FROM toolchain AS development
 
 # ---------------------------------------------------------------------------
 # test: dev 의존성 + 테스트 코드를 포함한 검증 전용 이미지
@@ -41,7 +43,7 @@ COPY pyproject.toml uv.lock ./
 # supportFiles 는 backend/ 바깥에 있으므로 named build context 로 주입한다.
 #   docker build --target test --build-context supportfiles=./supportFiles ./backend
 # ---------------------------------------------------------------------------
-FROM base AS test
+FROM toolchain AS test
 
 # Install dependencies including the dev group (pytest, black, ...)
 RUN uv sync --frozen
@@ -75,6 +77,13 @@ RUN uv sync --frozen --no-dev
 COPY app ./app
 COPY deploy ./deploy
 COPY openapi.json create_sample_data.py ./
+
+RUN groupadd --system neoespa \
+    && useradd --system --gid neoespa --home-dir /nonexistent neoespa \
+    && mkdir -p /database /supportFiles \
+    && chown -R neoespa:neoespa /app /database /supportFiles
+
+USER neoespa
 
 EXPOSE 8000
 

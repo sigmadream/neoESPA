@@ -45,8 +45,9 @@ export default function AdminInvitationManager() {
     void loadAssurance();
   }, [loadAssurance]);
 
-  const issueInvitation = useCallback(async () => {
-    if (!token) return;
+  const issueInvitation = useCallback(async (tokenOverride?: string) => {
+    const requestToken = tokenOverride ?? token;
+    if (!requestToken) return;
     setIsWorking(true);
     setErrorMessage('');
     setSuccessMessage('');
@@ -57,7 +58,7 @@ export default function AdminInvitationManager() {
           role_name: roleName,
           ttl_minutes: Number(ttlMinutes) || 1440,
         },
-        token,
+        requestToken,
       );
       setIssued(invitation);
       setSuccessMessage(
@@ -91,7 +92,7 @@ export default function AdminInvitationManager() {
       <StepUpDialog
         open={isStepUpOpen}
         onClose={() => setIsStepUpOpen(false)}
-        onSuccess={() => void issueInvitation()}
+        onSuccess={(elevatedToken) => void issueInvitation(elevatedToken)}
         description="관리자 초대 발급은 재인증이 필요한 작업입니다."
       />
 

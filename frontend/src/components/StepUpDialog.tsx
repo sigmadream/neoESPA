@@ -8,7 +8,7 @@ import { useAuth } from '@/components/AuthProvider';
 type StepUpDialogProps = {
   open: boolean;
   onClose: () => void;
-  onSuccess: () => void;
+  onSuccess: (elevatedToken: string) => void;
   description?: string;
 };
 
@@ -34,9 +34,9 @@ export default function StepUpDialog({
     setIsSubmitting(true);
     setErrorMessage('');
     try {
-      await stepUp(password);
+      const elevatedToken = await stepUp(password);
       setPassword('');
-      onSuccess();
+      onSuccess(elevatedToken);
       onClose();
     } catch (error) {
       setErrorMessage(

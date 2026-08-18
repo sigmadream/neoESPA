@@ -1,7 +1,7 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { Megaphone, Pin, Plus, Save, Trash2, RefreshCw, X, Calendar, User, Eye, EyeOff, LayoutList } from 'lucide-react';
+import { useCallback, useEffect, useState } from 'react';
+import { Megaphone, Pin, Plus, Save, Trash2, RefreshCw, X, Calendar, User, Eye, LayoutList } from 'lucide-react';
 
 import { useAuth } from '@/components/AuthProvider';
 import {
@@ -40,7 +40,7 @@ export default function AdminNoticeManager() {
     }
   }, [editingNoticeNum, user]);
 
-  const loadNotices = async () => {
+  const loadNotices = useCallback(async () => {
     if (!token) return;
     setIsLoading(true);
     try {
@@ -51,9 +51,9 @@ export default function AdminNoticeManager() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [token]);
 
-  useEffect(() => { void loadNotices(); }, [token]);
+  useEffect(() => { void loadNotices(); }, [loadNotices]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

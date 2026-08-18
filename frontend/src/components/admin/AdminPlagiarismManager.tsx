@@ -1,7 +1,7 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { ShieldAlert, Search, Play, FileCode, Users, ArrowRightLeft, RefreshCw, ChevronRight, History } from 'lucide-react';
+import { useCallback, useEffect, useState } from 'react';
+import { ShieldAlert, Play, FileCode, ArrowRightLeft, RefreshCw, ChevronRight, History } from 'lucide-react';
 import Link from 'next/link';
 
 import { useAuth } from '@/components/AuthProvider';
@@ -28,7 +28,7 @@ export default function AdminPlagiarismManager() {
   const [errorMessage, setErrorMessage] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
 
-  const loadInitialData = async () => {
+  const loadInitialData = useCallback(async () => {
     if (!token) return;
     setIsLoading(true);
     try {
@@ -45,9 +45,9 @@ export default function AdminPlagiarismManager() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [token]);
 
-  useEffect(() => { void loadInitialData(); }, [token]);
+  useEffect(() => { void loadInitialData(); }, [loadInitialData]);
 
   const handleRunScan = async () => {
     if (!token || !selectedHomeworkNum) return;
@@ -61,7 +61,11 @@ export default function AdminPlagiarismManager() {
       ]);
       setPairs(updatedPairs);
       setRuns(updatedRuns);
-      setSuccessMessage(`Scan complete: ${run.flagged_pair_count} pairs flagged.`);
+      setSuccessMessage(
+        run.status === 'queued'
+          ? 'Scan queued. Refresh shortly to view results.'
+          : `Scan complete: ${run.flagged_pair_count} pairs flagged.`,
+      );
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : 'Scan failed.');
     } finally {

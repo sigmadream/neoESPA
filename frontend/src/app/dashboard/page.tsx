@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import { LayoutDashboard, CheckCircle2, Clock, BarChart3, AlertCircle, ChevronRight, ArrowUpRight } from 'lucide-react';
+import { LayoutDashboard, CheckCircle2, Clock, BarChart3, ChevronRight, ArrowUpRight } from 'lucide-react';
 
 import AuthGate from '@/components/AuthGate';
 import { useAuth } from '@/components/AuthProvider';

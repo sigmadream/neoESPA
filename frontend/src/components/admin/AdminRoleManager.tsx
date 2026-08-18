@@ -43,6 +43,7 @@ const CAPABILITY_LABELS: Record<string, string> = {
   'collaboration:manage': '협업 세션 관리',
   'audit:read': '감사 로그 열람',
   'user:manage': '사용자 관리',
+  'settings:manage': '시스템 설정 관리',
 };
 
 export default function AdminRoleManager() {
@@ -99,8 +100,9 @@ export default function AdminRoleManager() {
     );
   };
 
-  const handleSave = async () => {
-    if (!token) return;
+  const handleSave = async (tokenOverride?: string) => {
+    const requestToken = tokenOverride ?? token;
+    if (!requestToken) return;
     setIsSaving(true);
     setErrorMessage('');
     setSuccessMessage('');
@@ -108,7 +110,7 @@ export default function AdminRoleManager() {
       const response = await updateRoleCapabilities(
         roleName,
         [...capabilities].sort(),
-        token,
+        requestToken,
       );
       setCapabilities(response.capabilities);
       setServerCapabilities(response.capabilities);
@@ -134,7 +136,7 @@ export default function AdminRoleManager() {
       <StepUpDialog
         open={isStepUpOpen}
         onClose={() => setIsStepUpOpen(false)}
-        onSuccess={() => void handleSave()}
+        onSuccess={(elevatedToken) => void handleSave(elevatedToken)}
         description="역할 권한 변경은 재인증이 필요한 작업입니다."
       />
       <section className="card-simple">

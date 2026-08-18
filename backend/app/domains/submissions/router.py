@@ -27,13 +27,14 @@ from ...models.schemas import (
     User,
 )
 from ...services.code_runner import SUPPORTED_LANGUAGES
-from ...services.user_management import ADMIN_ROLES
+from ...services.authorization_service import AuthorizationService
 from ..homework.helpers import load_allowed_languages
 from ..shared.schedules import compute_schedule_window
 from ..submissions.helpers import to_submission_read
 from ..settings.helpers import get_system_setting_value
 
 router = APIRouter()
+authorization_service = AuthorizationService()
 
 
 def to_code_snapshot_read(snapshot):
@@ -119,7 +120,7 @@ def create_submission(
     )
     if len(payload.code_text.encode("utf-8")) > max_source_bytes:
         raise HTTPException(
-            status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+            status_code=status.HTTP_413_CONTENT_TOO_LARGE,
             detail=f"Submission source exceeds {max_source_bytes} byte limit",
         )
     rate_limit = int(
@@ -270,8 +271,10 @@ def get_submission_detail(
             status_code=status.HTTP_404_NOT_FOUND, detail="Submission not found"
         )
 
-    is_staff_user = current_user.user_group in ADMIN_ROLES
-    if submission.user_id != current_user.id and not is_staff_user:
+    can_read_any = authorization_service.has_capability(
+        session, current_user, "grading:manual"
+    )
+    if submission.user_id != current_user.id and not can_read_any:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="You cannot access this submission",
@@ -294,8 +297,10 @@ def get_submission_feedback(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Submission not found"
         )
-    is_staff_user = current_user.user_group in ADMIN_ROLES
-    if submission.user_id != current_user.id and not is_staff_user:
+    can_read_any = authorization_service.has_capability(
+        session, current_user, "grading:manual"
+    )
+    if submission.user_id != current_user.id and not can_read_any:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="You cannot access this submission",
@@ -330,6 +335,14 @@ def save_code_snapshot(
     if homework is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Homework not found"
+        )
+    max_source_bytes = int(
+        float(get_system_setting_value(session, "submission_max_source_bytes"))
+    )
+    if len(payload.code_text.encode("utf-8")) > max_source_bytes:
+        raise HTTPException(
+            status_code=status.HTTP_413_CONTENT_TOO_LARGE,
+            detail=f"Snapshot source exceeds {max_source_bytes} byte limit",
         )
 
     last_snapshot = session.exec(

@@ -3,6 +3,7 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
+      target: development
     ports:
       - "8000:8000"
     volumes:
@@ -29,6 +30,7 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
+      target: development
     volumes:
       - ./backend:/app
       - ./supportFiles:/supportFiles:ro

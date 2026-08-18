@@ -10,6 +10,7 @@ const configuredApiBaseUrl =
   process.env.NEXT_PUBLIC_API_BASE_URL ?? process.env.NEXT_PUBLIC_API_URL;
 
 export const API_BASE_URL = normalizeBaseUrl(configuredApiBaseUrl);
+export const COOKIE_SESSION_TOKEN = '__neoespa_cookie_session__';
 
 export function getRealtimeBaseUrl() {
   if (API_BASE_URL) {
@@ -33,9 +34,20 @@ export type AuthUser = {
   is_active: boolean;
   created_at: string;
   updated_at: string;
+  capabilities: string[];
 };
 
-export type UserRole = 'student' | 'ta' | 'instructor' | 'admin';
+export type UserRole =
+  | 'student'
+  | 'viewer'
+  | 'support'
+  | 'judge_operator'
+  | 'reviewer'
+  | 'problem_setter'
+  | 'ta'
+  | 'instructor'
+  | 'admin'
+  | 'super_admin';
 
 export type AdminUserApi = AuthUser;
 
@@ -422,6 +434,25 @@ type ApiRequestOptions = RequestInit & {
   allowNotFound?: boolean;
 };
 
+export type ApiFieldError = {
+  field: string;
+  message: string;
+  type?: string;
+};
+
+export class ApiError extends Error {
+  constructor(
+    message: string,
+    readonly status: number,
+    readonly code: string | null,
+    readonly fieldErrors: ApiFieldError[],
+    readonly requestId: string | null,
+  ) {
+    super(message);
+    this.name = 'ApiError';
+  }
+}
+
 async function apiRequest<T>(path: string, options: ApiRequestOptions = {}) {
   const { token, headers, body, allowNotFound, ...rest } = options;
   const requestHeaders = new Headers(headers);
@@ -431,11 +462,14 @@ async function apiRequest<T>(path: string, options: ApiRequestOptions = {}) {
   }
 
   if (token) {
-    requestHeaders.set("Authorization", `Bearer ${token}`);
+    if (token !== COOKIE_SESSION_TOKEN) {
+      requestHeaders.set("Authorization", `Bearer ${token}`);
+    }
   }
 
   const response = await fetch(`${API_BASE_URL}${path}`, {
     ...rest,
+    credentials: 'include',
     headers: requestHeaders,
     body,
   });
@@ -450,12 +484,37 @@ async function apiRequest<T>(path: string, options: ApiRequestOptions = {}) {
       return null as T;
     }
 
-    const detail =
-      typeof payload === "object" && payload !== null && "detail" in payload
-        ? String(payload.detail)
-        : "Request failed";
+    const envelope =
+      typeof payload === 'object' && payload !== null
+        ? (payload as Record<string, unknown>)
+        : null;
+    const fieldErrors = Array.isArray(envelope?.field_errors)
+      ? (envelope.field_errors as ApiFieldError[])
+      : [];
+    const message =
+      typeof envelope?.message === 'string'
+        ? envelope.message
+        : typeof envelope?.detail === 'string'
+          ? envelope.detail
+          : typeof payload === 'string' && payload
+            ? payload
+            : 'Request failed';
+    const displayMessage =
+      fieldErrors.length > 0
+        ? `${message}: ${fieldErrors.map((item) => `${item.field} ${item.message}`).join(', ')}`
+        : message;
 
-    throw new Error(detail);
+    if (response.status === 401 && token && typeof window !== 'undefined') {
+      window.dispatchEvent(new Event('neoespa:unauthorized'));
+    }
+
+    throw new ApiError(
+      displayMessage,
+      response.status,
+      typeof envelope?.code === 'string' ? envelope.code : null,
+      fieldErrors,
+      typeof envelope?.request_id === 'string' ? envelope.request_id : null,
+    );
   }
 
   return payload as T;
@@ -469,6 +528,10 @@ export async function loginRequest(id: string, ps: string) {
       body: JSON.stringify({ id, ps }),
     },
   );
+}
+
+export async function logoutRequest() {
+  return apiRequest<void>("/api/auth/logout", { method: "POST" });
 }
 
 export async function registerRequest(payload: {
@@ -1468,6 +1531,7 @@ export const KNOWN_CAPABILITIES = [
   'collaboration:manage',
   'audit:read',
   'user:manage',
+  'settings:manage',
 ] as const;
 
 /**

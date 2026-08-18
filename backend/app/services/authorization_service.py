@@ -4,6 +4,39 @@ from sqlmodel import Session, select
 
 from ..models.schemas import Problem, ProblemCollaborator, RoleCapability, User
 
+KNOWN_CAPABILITIES = {
+    "audit:read",
+    "collaboration:manage",
+    "content:manage",
+    "exam:manage",
+    "grading:manual",
+    "homework:manage",
+    "judge:operate",
+    "observability:read",
+    "plagiarism:operate",
+    "problem:create",
+    "problem:data.read",
+    "problem:edit",
+    "problem:publish",
+    "problem:review",
+    "settings:manage",
+    "submission:rejudge",
+    "user:manage",
+}
+
+
+def reset_role_capabilities(session: Session, role_name: str) -> set[str]:
+    if role_name not in DEFAULT_ROLE_CAPABILITIES:
+        raise ValueError(f"Unknown role: {role_name}")
+    configured = session.exec(
+        select(RoleCapability).where(RoleCapability.role_name == role_name)
+    ).all()
+    for item in configured:
+        session.delete(item)
+    session.commit()
+    return DEFAULT_ROLE_CAPABILITIES[role_name]
+
+
 DEFAULT_ROLE_CAPABILITIES: dict[str, set[str]] = {
     "admin": {"*"},
     "super_admin": {"*"},
@@ -45,7 +78,6 @@ DEFAULT_ROLE_CAPABILITIES: dict[str, set[str]] = {
     "viewer": set(),
     "student": set(),
 }
-KNOWN_CAPABILITIES = set().union(*DEFAULT_ROLE_CAPABILITIES.values()) - {"*"}
 
 
 class AuthorizationService:

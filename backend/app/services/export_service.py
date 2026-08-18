@@ -16,9 +16,20 @@ DEFAULT_SOURCE_NAMES = {
     "python": "main.py",
     "java": "Main.java",
 }
+CSV_FORMULA_PREFIXES = ("=", "+", "-", "@", "\t", "\r")
+
+
+def sanitize_csv_cell(value):
+    if isinstance(value, str) and value.startswith(CSV_FORMULA_PREFIXES):
+        return f"'{value}"
+    return value
 
 
 class ExportService:
+    @staticmethod
+    def _write_csv_row(writer: csv.writer, values: list) -> None:
+        writer.writerow([sanitize_csv_cell(value) for value in values])
+
     def build_grade_csv(self, session: Session, homework: Homework) -> bytes:
         students = session.exec(select(User).order_by(User.sid, User.id)).all()
         latest_submissions = self._latest_submission_by_user(
@@ -32,7 +43,8 @@ class ExportService:
 
         output = io.StringIO()
         writer = csv.writer(output)
-        writer.writerow(
+        self._write_csv_row(
+            writer,
             [
                 "sid",
                 "user_id",
@@ -50,7 +62,7 @@ class ExportService:
                 "compile_status",
                 "run_status",
                 "submitted_at",
-            ]
+            ],
         )
 
         included_user_ids: set[str] = set()
@@ -67,7 +79,8 @@ class ExportService:
                 if submission is not None
                 else None
             )
-            writer.writerow(
+            self._write_csv_row(
+                writer,
                 [
                     user.sid,
                     user.id,
@@ -94,7 +107,7 @@ class ExportService:
                         if submission is not None
                         else ""
                     ),
-                ]
+                ],
             )
             included_user_ids.add(user.id)
 
@@ -105,7 +118,8 @@ class ExportService:
             if user is None:
                 continue
             result = submission_results.get(submission.id or 0)
-            writer.writerow(
+            self._write_csv_row(
+                writer,
                 [
                     user.sid,
                     user.id,
@@ -128,7 +142,7 @@ class ExportService:
                     result.compile_status if result is not None else "",
                     result.run_status if result is not None else "",
                     submission.submitted_at.isoformat(),
-                ]
+                ],
             )
 
         return output.getvalue().encode("utf-8")

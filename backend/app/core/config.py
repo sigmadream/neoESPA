@@ -26,6 +26,18 @@ class Settings:
         self.SNAPSHOT_RATE_LIMIT_WINDOW_SECONDS = int(
             os.getenv("SNAPSHOT_RATE_LIMIT_WINDOW_SECONDS", "60")
         )
+        self.LOGIN_RATE_LIMIT_COUNT = int(
+            os.getenv("LOGIN_RATE_LIMIT_COUNT", "5")
+        )
+        self.LOGIN_RATE_LIMIT_WINDOW_SECONDS = int(
+            os.getenv("LOGIN_RATE_LIMIT_WINDOW_SECONDS", "300")
+        )
+        self.CONTEST_ACCESS_RATE_LIMIT_COUNT = int(
+            os.getenv("CONTEST_ACCESS_RATE_LIMIT_COUNT", "5")
+        )
+        self.CONTEST_ACCESS_RATE_LIMIT_WINDOW_SECONDS = int(
+            os.getenv("CONTEST_ACCESS_RATE_LIMIT_WINDOW_SECONDS", "300")
+        )
 
     @staticmethod
     def _env_bool(name: str, default: bool) -> bool:
@@ -177,11 +189,16 @@ class Settings:
 
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24  # 1 day
+    AUTH_COOKIE_NAME: str = "neoespa_session"
 
     def validate_security(self):
         is_dev_or_test = self.ENVIRONMENT in ("development", "test")
         raw_secret = os.getenv("JWT_SECRET")
         secret_len = len(self.SECRET_KEY)
+        placeholder_secrets = {
+            "your-secret-key-here-must-be-32-bytes",
+            "super-secret-key-that-is-at-least-32-characters-long",
+        }
 
         if not raw_secret and not is_dev_or_test:
             raise RuntimeError(
@@ -190,6 +207,11 @@ class Settings:
 
         if secret_len < 32:
             msg = f"JWT_SECRET is too short ({secret_len} chars). Minimum recommended is 32."
+            if not is_dev_or_test:
+                raise RuntimeError(f"CRITICAL SECURITY ERROR: {msg}")
+            logging.warning(f"SECURITY WARNING: {msg}")
+        if raw_secret in placeholder_secrets:
+            msg = "JWT_SECRET is a documented placeholder and must be replaced"
             if not is_dev_or_test:
                 raise RuntimeError(f"CRITICAL SECURITY ERROR: {msg}")
             logging.warning(f"SECURITY WARNING: {msg}")

@@ -1,6 +1,8 @@
 from sqlmodel import select
 
+from app.main import app
 from app.models.schemas import Problem
+from app.services.authorization_service import KNOWN_CAPABILITIES
 
 
 def test_problem_setter_can_only_see_owned_problem(
@@ -71,7 +73,13 @@ def test_role_capabilities_can_be_replaced_with_overlapping_set(
     위반해 500 이 발생했다.
     """
     create_user("role-admin", 10259401, "password", role="admin")
-    headers = auth_headers(login_user("role-admin"))
+    token = login_user("role-admin")
+    elevated = client.post(
+        "/api/auth/step-up",
+        json={"password": "password"},
+        headers=auth_headers(token),
+    ).json()["access_token"]
+    headers = auth_headers(elevated)
 
     first = client.put(
         "/api/admin/roles/ta/capabilities",
@@ -98,3 +106,42 @@ def test_role_capabilities_can_be_replaced_with_overlapping_set(
         "homework:manage",
         "observability:read",
     ]
+
+
+def test_every_route_capability_is_known():
+    required: set[str] = set()
+
+    def collect(dependant):
+        capability = getattr(dependant.call, "required_capability", None)
+        if capability:
+            required.add(capability)
+        for child in dependant.dependencies:
+            collect(child)
+
+    for route in app.routes:
+        dependant = getattr(route, "dependant", None)
+        if dependant is not None:
+            collect(dependant)
+
+    assert required <= KNOWN_CAPABILITIES
+    assert {"user:manage", "settings:manage"} <= KNOWN_CAPABILITIES
+
+
+def test_admin_role_capabilities_cannot_be_replaced(
+    client, create_user, login_user, auth_headers
+):
+    create_user("immutable-admin", 10259402, "password", role="admin")
+    token = login_user("immutable-admin")
+    elevated = client.post(
+        "/api/auth/step-up",
+        json={"password": "password"},
+        headers=auth_headers(token),
+    ).json()["access_token"]
+
+    response = client.put(
+        "/api/admin/roles/admin/capabilities",
+        json={"capabilities": ["homework:manage"]},
+        headers=auth_headers(elevated),
+    )
+
+    assert response.status_code == 400

@@ -41,7 +41,16 @@ def _login(client: TestClient, user_id: str, password: str) -> str:
         "/api/auth/login", json={"id": user_id, "ps": password}
     )
     assert response.status_code == 200
-    return response.json()["access_token"]
+    token = response.json()["access_token"]
+    if user_id.endswith("admin") or "admin" in user_id:
+        step_up = client.post(
+            "/api/auth/step-up",
+            json={"password": password},
+            headers={"Authorization": f"Bearer {token}"},
+        )
+        assert step_up.status_code == 200
+        return step_up.json()["access_token"]
+    return token
 
 
 def setup_function():
@@ -414,7 +423,7 @@ def test_admin_user_management_returns_404_for_missing_user():
         )
         reset_response = client.post(
             "/api/admin/users/ghost/reset-password",
-            json={"new_password": "next-pass"},
+            json={"new_password": "next-password"},
             headers=headers,
         )
 
@@ -586,10 +595,9 @@ def test_admin_bulk_user_creation_requires_non_empty_password_and_valid_role():
 
         app.dependency_overrides.clear()
 
-    assert empty_password_response.status_code == 400
-    assert (
-        empty_password_response.json()["detail"]
-        == "Default password must not be empty"
+    assert empty_password_response.status_code == 422
+    assert empty_password_response.json()["field_errors"][0]["field"] == (
+        "default_password"
     )
     assert invalid_role_response.status_code == 400
     assert invalid_role_response.json()["detail"] == "Unsupported user role"
@@ -612,7 +620,7 @@ def test_admin_can_reset_password_and_old_password_stops_working():
 
         reset_response = client.post(
             "/api/admin/users/reset-user/reset-password",
-            json={"new_password": "new-pass"},
+            json={"new_password": "new-password"},
             headers=headers,
         )
         old_login_response = client.post(
@@ -621,7 +629,7 @@ def test_admin_can_reset_password_and_old_password_stops_working():
         )
         new_login_response = client.post(
             "/api/auth/login",
-            json={"id": "reset-user", "ps": "new-pass"},
+            json={"id": "reset-user", "ps": "new-password"},
         )
 
         app.dependency_overrides.clear()

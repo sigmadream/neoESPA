@@ -53,6 +53,8 @@ docker compose exec backend uv run python -m app.cli --help
 
 프로덕션 구성은 저장소 루트의 `docker-compose.prod.yml`을 사용합니다. 이 구성은 API 이미지와 함께 nsjail 샌드박스가 포함된 채점 워커(`deploy/Dockerfile.judge`)를 별도로 띄우며, 워커는 기동 전에 샌드박스 자체 점검을 통과해야 채점을 시작합니다.
 
+협업 WebSocket 브로드캐스트는 현재 API 프로세스 메모리 안에서 관리되므로 API는 `--workers 1`로 실행해야 합니다. 다중 워커나 여러 API 레플리카로 확장하기 전에는 Redis pub/sub 같은 외부 브로커로 연결 관리 계층을 교체해야 합니다.
+
 ### 호스트에서 직접 실행 (uv)
 
 ```bash

@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from 'react';
 import AuthGate from '@/components/AuthGate';
 import { useAuth } from '@/components/AuthProvider';
 import {
+  COOKIE_SESSION_TOKEN,
   createCollabSession,
   getRealtimeBaseUrl,
   getCollabSessions,
@@ -88,7 +89,7 @@ function CollabPageContent() {
 
     const realtimeBaseUrl = getRealtimeBaseUrl();
     const ws = new WebSocket(
-      `${toWebSocketUrl(realtimeBaseUrl)}/ws/collab/sessions/${selectedSessionId}?token=${token}`,
+      `${toWebSocketUrl(realtimeBaseUrl)}/ws/collab/sessions/${selectedSessionId}${token === COOKIE_SESSION_TOKEN ? '' : `?token=${token}`}`,
     );
     socketRef.current = ws;
 

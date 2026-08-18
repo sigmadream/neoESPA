@@ -4,13 +4,15 @@ import json
 from datetime import UTC, datetime
 from typing import Literal
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.exc import IntegrityError
 from sqlmodel import Session, select
 
 from ...api.dependencies import get_current_active_user, require_capability
 from ...api.runtime import observability_service
 from ...core.db import get_session
+from ...core.config import settings
+from ...services.login_rate_limiter import LoginRateLimiter
 from ...models.schemas import (
     Contest,
     ContestCreate,
@@ -42,6 +44,7 @@ from ...models.schemas import (
 
 router = APIRouter(prefix="/admin/contests")
 public_router = APIRouter(prefix="/contests")
+contest_access_rate_limiter = LoginRateLimiter()
 
 
 def _contest_read(contest: Contest) -> ContestRead:
@@ -372,13 +375,30 @@ def join_contest(
             status_code=409, detail="Virtual participation is disabled"
         )
     if contest.access_code_hash:
+        rate_limit_keys = (f"contest:{contest_id}:user:{current_user.id}",)
+        if contest_access_rate_limiter.is_blocked(
+            rate_limit_keys,
+            limit=settings.CONTEST_ACCESS_RATE_LIMIT_COUNT,
+            window_seconds=settings.CONTEST_ACCESS_RATE_LIMIT_WINDOW_SECONDS,
+        ):
+            raise HTTPException(
+                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                detail="Too many invalid contest access code attempts",
+                headers={
+                    "Retry-After": str(
+                        settings.CONTEST_ACCESS_RATE_LIMIT_WINDOW_SECONDS
+                    )
+                },
+            )
         supplied = hashlib.sha256(
             (payload.access_code or "").encode()
         ).hexdigest()
         if not hmac.compare_digest(supplied, contest.access_code_hash):
+            contest_access_rate_limiter.record_failure(rate_limit_keys)
             raise HTTPException(
                 status_code=403, detail="Contest access code is invalid"
             )
+        contest_access_rate_limiter.clear(rate_limit_keys)
     allowed_organizations = json.loads(contest.allowed_organizations_json)
     if (
         allowed_organizations

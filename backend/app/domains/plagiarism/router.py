@@ -2,7 +2,11 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlmodel import Session
 
 from ...api.dependencies import require_capability
-from ...api.runtime import observability_service, plagiarism_service
+from ...api.runtime import (
+    judge_job_service,
+    observability_service,
+    plagiarism_service,
+)
 from ...core.db import get_session
 from ...models.schemas import (
     Homework,
@@ -28,10 +32,17 @@ def run_plagiarism_scan(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Homework not found"
         )
-    run = plagiarism_service.run_for_homework(
+    run = plagiarism_service.queue_run(
         session,
         homework_num=homework_num,
         created_by=current_user.id,
+    )
+    job = judge_job_service.enqueue(
+        session,
+        job_type="plagiarism_scan",
+        payload={"run_id": run.id, "homework_num": homework_num},
+        idempotency_key=f"plagiarism-run:{run.id}",
+        priority=120,
     )
     observability_service.record_audit(
         session,
@@ -39,7 +50,7 @@ def run_plagiarism_scan(
         action_type="run_plagiarism_scan",
         target_type="homework",
         target_id=str(homework_num),
-        payload={"run_id": run.id},
+        payload={"run_id": run.id, "job_id": job.id},
     )
     session.commit()
     return plagiarism_service.to_run_read(run)

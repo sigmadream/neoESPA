@@ -8,6 +8,7 @@ from app.core.db import get_session
 from app.main import app
 from app.models.schemas import Homework, Submission, SubmissionResult, User
 from app.services.auth_service import AuthService
+from app.services.judge_job_service import JudgeJobService
 
 engine = create_engine(
     "sqlite://", connect_args={"check_same_thread": False}, poolclass=StaticPool
@@ -102,6 +103,15 @@ def test_admin_can_list_plagiarism_results():
             "/api/admin/homeworks/1/plagiarism/run",
             headers={"Authorization": f"Bearer {admin_token}"},
         )
+        assert run_response.json()["status"] == "queued"
+        job_service = JudgeJobService()
+        job = job_service.claim_next(
+            session, "plagiarism-test-worker", job_types=["plagiarism_scan"]
+        )
+        assert job is not None
+        job_service.process_plagiarism_job(
+            session, job, "plagiarism-test-worker"
+        )
         list_response = client.get(
             "/api/admin/plagiarism/pairs",
             headers={"Authorization": f"Bearer {admin_token}"},
@@ -114,7 +124,7 @@ def test_admin_can_list_plagiarism_results():
         app.dependency_overrides.clear()
 
     assert run_response.status_code == 200
-    assert run_response.json()["flagged_pair_count"] == 1
+    assert run_response.json()["flagged_pair_count"] == 0
     assert list_response.status_code == 200
     assert len(list_response.json()) == 1
     assert list_response.json()[0]["left_user_id"] == "plag-a"

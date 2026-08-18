@@ -2,8 +2,8 @@
 
 이 문서는 현재 FastAPI 애플리케이션의 runtime router와 OpenAPI 스키마를 기준으로 등록된 API를 업무 카테고리별로 정리합니다. OpenAPI에 노출되지 않는 WebSocket route도 포함합니다.
 
-- 기준 계약: [openapi.json](./openapi.json) — **152개** operation
-- 이 문서의 표에 있는 행: **157개**. 차이 5개의 내역은 아래와 같으며 모두 OpenAPI 스키마에 노출되지 않습니다.
+- 기준 계약: [openapi.json](./openapi.json) — **154개** operation
+- 이 문서의 표에 있는 행: **159개**. 차이 5개의 내역은 아래와 같으며 모두 OpenAPI 스키마에 노출되지 않습니다.
   - Swagger UI·ReDoc·OpenAPI 스키마 route 4개 (1번 섹션). FastAPI가 자동 생성하며 API 표면이 아닙니다.
   - WebSocket route 1개 (8번 섹션, `WS` method 표기).
 - 모든 path의 중괄호 표기는 path parameter이며, 이름까지 runtime router와 일치합니다.
@@ -11,7 +11,7 @@
 
 ## API 목록
 
-### 1. 시스템 상태 및 진단 (8개)
+### 1. 시스템 상태 및 진단 (9개)
 
 | Method | Path                    | Description             |
 | ------ | ----------------------- | ----------------------- |
@@ -21,10 +21,11 @@
 | GET    | `/health/judge`         | Health Judge            |
 | GET    | `/health/live`          | Health Live             |
 | GET    | `/health/ready`         | Health Ready            |
+| GET    | `/api/admin/health/judge` | Detailed Judge Health |
 | GET    | `/openapi.json`         | OpenAPI schema          |
 | GET    | `/redoc`                | ReDoc UI                |
 
-### 2. 인증 및 관리자 인증 (8개)
+### 2. 인증 및 관리자 인증 (9개)
 
 | Method | Path                                 | Description             |
 | ------ | ------------------------------------ | ----------------------- |
@@ -34,6 +35,7 @@
 | GET    | `/api/auth/assurance`                | Auth Assurance          |
 | POST   | `/api/auth/change-password`          | Change Password         |
 | POST   | `/api/auth/login`                    | Login                   |
+| POST   | `/api/auth/logout`                   | Logout                  |
 | POST   | `/api/auth/register`                 | Register                |
 | POST   | `/api/auth/step-up`                  | Step Up Authentication  |
 

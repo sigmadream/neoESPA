@@ -92,6 +92,14 @@ from .v0025_contest_result_phase import VERSION as V0025_CONTEST_RESULT_PHASE
 from .v0025_contest_result_phase import (
     upgrade as upgrade_v0025_contest_result_phase,
 )
+from .v0026_user_token_version import VERSION as V0026_USER_TOKEN_VERSION
+from .v0026_user_token_version import (
+    upgrade as upgrade_v0026_user_token_version,
+)
+from .v0027_homework_testcases import VERSION as V0027_HOMEWORK_TESTCASES
+from .v0027_homework_testcases import (
+    upgrade as upgrade_v0027_homework_testcases,
+)
 
 MIGRATIONS = [
     (V0001_SUBMISSION_CORE, upgrade_v0001_submission_core),
@@ -122,4 +130,6 @@ MIGRATIONS = [
     (V0023_OPERATIONAL_CAPABILITIES, upgrade_v0023_operational_capabilities),
     (V0024_INTERACTIVE_PROBLEM_MODE, upgrade_v0024_interactive_problem_mode),
     (V0025_CONTEST_RESULT_PHASE, upgrade_v0025_contest_result_phase),
+    (V0026_USER_TOKEN_VERSION, upgrade_v0026_user_token_version),
+    (V0027_HOMEWORK_TESTCASES, upgrade_v0027_homework_testcases),
 ]

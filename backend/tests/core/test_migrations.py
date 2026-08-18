@@ -20,6 +20,7 @@ EXPECTED_TABLES = {
     "submission_results",
     "submission_case_results",
     "grading_rules",
+    "homework_testcases",
     "system_settings",
     "code_snapshots",
     "exams",

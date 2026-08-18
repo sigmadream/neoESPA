@@ -56,26 +56,32 @@ const ADMIN_TABS = [
   { id: 'audit', label: '운영 로그', icon: ScrollText, description: '감사 로그 및 시스템 이벤트' },
 ] as const;
 
-// 백엔드 권한(authorization_service)과 맞춘 노출 규칙.
-// - users/settings/roles: user:manage 등 관리자 전용
-// - grading: judge:operate (조교에게는 없음)
-// - contests: problem:publish (조교에게는 없음)
-// - exams: exam:manage, invitations: user:manage(+재인증)
-const ADMIN_ONLY_TABS = ['users', 'settings', 'roles', 'invitations'];
-const INSTRUCTOR_TABS = ['grading', 'contests', 'exams'];
+const TAB_CAPABILITIES: Record<(typeof ADMIN_TABS)[number]['id'], string[]> = {
+  overview: ['observability:read'],
+  homeworks: ['homework:manage'],
+  grading: ['judge:operate'],
+  rejudge: ['submission:rejudge'],
+  problems: ['problem:create', 'problem:edit', 'problem:review', 'problem:publish'],
+  contests: ['problem:publish'],
+  exams: ['exam:manage'],
+  notices: ['content:manage'],
+  materials: ['content:manage'],
+  users: ['user:manage'],
+  roles: ['user:manage'],
+  invitations: ['user:manage'],
+  settings: ['settings:manage'],
+  plagiarism: ['plagiarism:operate'],
+  audit: ['audit:read'],
+};
 
 export default function AdminDashboardPage() {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<(typeof ADMIN_TABS)[number]['id']>('overview');
-  
+  const effectiveCapabilities = new Set(user?.capabilities ?? []);
+  const hasAllCapabilities = effectiveCapabilities.has('*');
   const visibleTabs = ADMIN_TABS.filter((tab) => {
-    if (ADMIN_ONLY_TABS.includes(tab.id)) {
-      return user?.user_group === 'admin';
-    }
-    if (INSTRUCTOR_TABS.includes(tab.id)) {
-      return user?.user_group === 'admin' || user?.user_group === 'instructor';
-    }
-    return true;
+    const required = TAB_CAPABILITIES[tab.id];
+    return hasAllCapabilities || required.some((capability) => effectiveCapabilities.has(capability));
   });
   
   const currentTab = visibleTabs.some((tab) => tab.id === activeTab)
@@ -83,7 +89,7 @@ export default function AdminDashboardPage() {
     : (visibleTabs[0]?.id ?? 'overview');
 
   return (
-    <AuthGate roles={['admin', 'instructor', 'ta']}>
+    <AuthGate roles={['super_admin', 'admin', 'instructor', 'ta', 'problem_setter', 'reviewer', 'judge_operator', 'support', 'viewer']}>
       <div className="max-w-7xl mx-auto py-8 px-4 space-y-10">
         <header className="flex flex-col md:flex-row md:items-end justify-between gap-6">
           <div>
@@ -126,7 +132,12 @@ export default function AdminDashboardPage() {
           </aside>
 
           <main className="lg:col-span-3">
-            <div className="space-y-8 animate-in fade-in duration-300">
+            {visibleTabs.length === 0 && (
+              <div className="card-simple py-16 text-center text-sm text-slate-500">
+                현재 역할에 부여된 관리 권한이 없습니다.
+              </div>
+            )}
+            {visibleTabs.length > 0 && <div className="space-y-8 animate-in fade-in duration-300">
               {currentTab === 'overview' && <AdminOverviewManager />}
               {currentTab === 'homeworks' && <AdminHomeworkManager />}
               {currentTab === 'grading' && <AdminGradingManager />}
@@ -142,7 +153,7 @@ export default function AdminDashboardPage() {
               {currentTab === 'settings' && <AdminSettingsManager />}
               {currentTab === 'plagiarism' && <AdminPlagiarismManager />}
               {currentTab === 'audit' && <AdminAuditLogManager />}
-            </div>
+            </div>}
           </main>
         </div>
       </div>

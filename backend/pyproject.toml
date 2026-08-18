@@ -21,6 +21,7 @@ neoespa-admin = "app.cli:main"
 
 [tool.black]
 line-length = 80
+target-version = ["py314"]
 
 [tool.pytest.ini_options]
 markers = [

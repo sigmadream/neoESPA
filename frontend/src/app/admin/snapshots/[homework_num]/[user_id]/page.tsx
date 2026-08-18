@@ -73,7 +73,7 @@ export default function StudentSnapshotHistoryPage({
   };
 
   return (
-    <AuthGate roles={['admin', 'instructor', 'ta']}>
+    <AuthGate roles={['super_admin', 'admin', 'instructor', 'ta']}>
       <div className="max-w-7xl mx-auto py-8 px-4 space-y-6">
         <header className="flex items-center justify-between">
           <div className="flex items-center gap-4">

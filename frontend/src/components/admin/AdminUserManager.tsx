@@ -1,9 +1,10 @@
 'use client';
 
-import { useEffect, startTransition, useState } from 'react';
-import { Search, Filter, RefreshCw, UserPlus, Save, Power, Key, Users, CheckCircle2, Shield } from 'lucide-react';
+import { useCallback, useEffect, useState } from 'react';
+import { Search, RefreshCw, UserPlus, Save, Power, Key, Users, CheckCircle2, Shield } from 'lucide-react';
 
 import { useAuth } from '@/components/AuthProvider';
+import StepUpDialog from '@/components/StepUpDialog';
 import {
   bulkCreateAdminUsers,
   getAdminUsers,
@@ -42,9 +43,16 @@ export default function AdminUserManager() {
   const [isBulkSaving, setIsBulkSaving] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
+  const [isStepUpOpen, setIsStepUpOpen] = useState(false);
+  const [pendingAction, setPendingAction] = useState<
+    ((elevatedToken: string) => Promise<void>) | null
+  >(null);
+  const canManageUsers = Boolean(
+    user?.capabilities.includes('*') || user?.capabilities.includes('user:manage'),
+  );
 
-  const loadUsers = async () => {
-    if (!token || user?.user_group !== 'admin') return;
+  const loadUsers = useCallback(async () => {
+    if (!token || !canManageUsers) return;
     setIsLoading(true);
     setErrorMessage('');
     try {
@@ -60,79 +68,129 @@ export default function AdminUserManager() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [activeFilter, canManageUsers, roleFilter, search, token]);
 
   useEffect(() => {
     void loadUsers();
-  }, [activeFilter, roleFilter, search, token, user?.user_group]);
+  }, [loadUsers]);
 
-  async function handleRoleSave(managedUser: AdminUserApi) {
-    if (!token) return;
+  const requestStepUp = (
+    action: (elevatedToken: string) => Promise<void>,
+  ) => {
+    setPendingAction(() => action);
+    setIsStepUpOpen(true);
+  };
+
+  const isStepUpRequired = (error: unknown) =>
+    error instanceof Error &&
+    error.message.toLowerCase().includes('step-up authentication is required');
+
+  async function handleRoleSave(managedUser: AdminUserApi, tokenOverride?: string) {
+    const requestToken = tokenOverride ?? token;
+    if (!requestToken) return;
     const nextRole = roleDrafts[managedUser.id] ?? (managedUser.user_group as UserRole);
     if (nextRole === managedUser.user_group) return;
     setBusyUserId(managedUser.id);
     try {
-      await updateAdminUserRole(managedUser.id, { user_group: nextRole }, token);
+      await updateAdminUserRole(managedUser.id, { user_group: nextRole }, requestToken);
       setSuccessMessage(`Updated role for ${managedUser.id}.`);
       await loadUsers();
     } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : 'Update failed.');
+      if (isStepUpRequired(error)) {
+        requestStepUp((elevatedToken) => handleRoleSave(managedUser, elevatedToken));
+      } else {
+        setErrorMessage(error instanceof Error ? error.message : 'Update failed.');
+      }
     } finally {
       setBusyUserId(null);
     }
   }
 
-  async function handleStatusToggle(managedUser: AdminUserApi) {
-    if (!token) return;
+  async function handleStatusToggle(managedUser: AdminUserApi, tokenOverride?: string) {
+    const requestToken = tokenOverride ?? token;
+    if (!requestToken) return;
     setBusyUserId(managedUser.id);
     try {
-      await updateAdminUserStatus(managedUser.id, { is_active: !managedUser.is_active }, token);
+      await updateAdminUserStatus(managedUser.id, { is_active: !managedUser.is_active }, requestToken);
       setSuccessMessage(`${managedUser.id} updated.`);
       await loadUsers();
     } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : 'Status update failed.');
+      if (isStepUpRequired(error)) {
+        requestStepUp((elevatedToken) => handleStatusToggle(managedUser, elevatedToken));
+      } else {
+        setErrorMessage(error instanceof Error ? error.message : 'Status update failed.');
+      }
     } finally {
       setBusyUserId(null);
     }
   }
 
-  async function handlePasswordReset(managedUser: AdminUserApi) {
-    if (!token) return;
-    const nextPassword = window.prompt(`New password for ${managedUser.id}`, 'welcome1234');
+  async function handlePasswordReset(
+    managedUser: AdminUserApi,
+    tokenOverride?: string,
+    passwordOverride?: string,
+  ) {
+    const requestToken = tokenOverride ?? token;
+    if (!requestToken) return;
+    const nextPassword = passwordOverride ?? window.prompt(`New password for ${managedUser.id}`, 'welcome1234');
     if (!nextPassword?.trim()) return;
     setBusyUserId(managedUser.id);
     try {
-      await resetAdminUserPassword(managedUser.id, { new_password: nextPassword.trim() }, token);
+      await resetAdminUserPassword(managedUser.id, { new_password: nextPassword.trim() }, requestToken);
       setSuccessMessage(`Password reset for ${managedUser.id}.`);
     } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : 'Reset failed.');
+      if (isStepUpRequired(error)) {
+        requestStepUp((elevatedToken) =>
+          handlePasswordReset(managedUser, elevatedToken, nextPassword.trim()),
+        );
+      } else {
+        setErrorMessage(error instanceof Error ? error.message : 'Reset failed.');
+      }
     } finally {
       setBusyUserId(null);
     }
   }
 
-  async function handleBulkCreate(e: React.FormEvent) {
-    e.preventDefault();
-    if (!token) return;
+  async function handleBulkCreate(e?: React.FormEvent, tokenOverride?: string) {
+    e?.preventDefault();
+    const requestToken = tokenOverride ?? token;
+    if (!requestToken) return;
     setIsBulkSaving(true);
     setErrorMessage('');
     try {
       const parsed = parseBulkUsers(bulkText);
-      const response = await bulkCreateAdminUsers({ users: parsed, default_password: defaultPassword.trim(), skip_existing: true }, token);
+      const response = await bulkCreateAdminUsers({ users: parsed, default_password: defaultPassword.trim(), skip_existing: true }, requestToken);
       setSuccessMessage(`Created ${response.created_count} users.`);
       setBulkText('');
       await loadUsers();
     } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : 'Bulk registration failed.');
+      if (isStepUpRequired(error)) {
+        requestStepUp((elevatedToken) => handleBulkCreate(undefined, elevatedToken));
+      } else {
+        setErrorMessage(error instanceof Error ? error.message : 'Bulk registration failed.');
+      }
     } finally {
       setIsBulkSaving(false);
     }
   }
 
-  if (user?.user_group !== 'admin') return <div className="card-simple bg-slate-50 dark:bg-slate-900/20 border-dashed text-center py-12"><p className="text-slate-500 font-medium">최고 관리자(System Administrator) 권한 전용 메뉴입니다.</p></div>;
+  if (!canManageUsers) return <div className="card-simple bg-slate-50 dark:bg-slate-900/20 border-dashed text-center py-12"><p className="text-slate-500 font-medium">사용자 관리 권한이 필요합니다.</p></div>;
 
   return (
     <div className="space-y-8">
+      <StepUpDialog
+        open={isStepUpOpen}
+        onClose={() => {
+          setIsStepUpOpen(false);
+          setPendingAction(null);
+        }}
+        onSuccess={(elevatedToken) => {
+          const action = pendingAction;
+          setPendingAction(null);
+          if (action) void action(elevatedToken);
+        }}
+        description="사용자 계정 변경은 재인증이 필요한 작업입니다."
+      />
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         {[
           { label: '전체 등록 계정', value: `${users.length}명`, icon: Users },

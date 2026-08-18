@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { HelpCircle, Lock, MessageCircle, Plus, Send, User } from 'lucide-react';
 
 import { useAuth } from '@/components/AuthProvider';
@@ -37,7 +37,7 @@ export default function QAPage() {
   const [activePostId, setActivePostId] = useState<number | null>(null);
   const [answerText, setAnswerText] = useState('');
 
-  const fetchPosts = async () => {
+  const fetchPosts = useCallback(async () => {
     setIsLoading(true);
     try {
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL || ''}/api/qa`, {
@@ -52,11 +52,11 @@ export default function QAPage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [token]);
 
   useEffect(() => {
     void fetchPosts();
-  }, [token]);
+  }, [fetchPosts]);
 
   const handleCreatePost = async () => {
     if (!token || !newTitle.trim() || !newContent.trim()) return;

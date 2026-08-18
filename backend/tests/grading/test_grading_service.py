@@ -19,6 +19,7 @@ from app.services.code_runner import (
     CodeRunner,
     PhaseExecutionResult,
     RunnerExecutionResult,
+    SubprocessCodeRunner,
 )
 from app.services.grading_service import GradingService, MISSING_TESTCASES_ERROR
 
@@ -62,6 +63,32 @@ class StubRunner(CodeRunner):
                 duration_ms=2,
             ),
             status="passed",
+        )
+
+
+class CountingPreparedRunner(SubprocessCodeRunner):
+    def __init__(self):
+        self.compile_count = 0
+        self.run_count = 0
+
+    def _execute(
+        self,
+        command,
+        workspace,
+        timeout_seconds,
+        input_data="",
+    ):
+        del workspace, timeout_seconds
+        is_compile = "py_compile" in command
+        if is_compile:
+            self.compile_count += 1
+        else:
+            self.run_count += 1
+        return PhaseExecutionResult(
+            command=command,
+            stdout="" if is_compile else input_data,
+            exit_code=0,
+            duration_ms=1,
         )
 
 
@@ -192,6 +219,32 @@ def test_score_is_calculated_from_test_results():
     assert stored_case_results[0].score_awarded == 40.0
     assert stored_case_results[1].passed is False
     assert stored_case_results[1].score_awarded == 0.0
+
+
+def test_source_is_compiled_once_for_all_test_cases():
+    with Session(engine) as session:
+        _create_user(session)
+        homework = _create_homework(session, 20)
+        submission = _create_submission(session, 20)
+        cases = [
+            {
+                "name": f"case-{index}",
+                "input": f"{index}\n",
+                "expected_output": f"{index}\n",
+                "score": 20,
+            }
+            for index in range(5)
+        ]
+        _create_testcase_rule(session, 20, cases)
+        runner = CountingPreparedRunner()
+
+        result = GradingService(runner=runner).grade_submission(
+            session, submission, homework
+        )
+
+    assert result.passed_case_count == 5
+    assert runner.compile_count == 1
+    assert runner.run_count == 5
 
 
 def test_hidden_cases_do_not_leak_expected_output():

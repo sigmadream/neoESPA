@@ -25,6 +25,7 @@ from .core.config import settings
 from .services.code_runner import NsJailCodeRunner
 from .services.code_runner import SUPPORTED_LANGUAGES
 from .services.grading_service import GradingService
+from .services.authorization_service import reset_role_capabilities
 from .services.legacy_artifact_backfill import LegacyArtifactBackfillService
 from .services.capacity_baseline import record_capacity_baseline
 from .services.sandbox.selftest import run_hostile_selftest
@@ -84,6 +85,12 @@ def build_parser() -> argparse.ArgumentParser:
         help="Issue a one-time token for the first super administrator",
     )
     bootstrap_parser.add_argument("--ttl-minutes", type=int, default=15)
+
+    reset_role_parser = subparsers.add_parser(
+        "reset-role-capabilities",
+        help="Remove role overrides and restore built-in capabilities",
+    )
+    reset_role_parser.add_argument("role", help="Role name to restore")
 
     subparsers.add_parser(
         "verify-course-bundle",
@@ -200,6 +207,7 @@ def _run_validation_worker(args: argparse.Namespace) -> int:
                     "problem_dry_run",
                     "grade_submission",
                     "artifact_reconciliation",
+                    "plagiarism_scan",
                 ],
                 worker_capabilities={
                     "job_types": [
@@ -207,6 +215,7 @@ def _run_validation_worker(args: argparse.Namespace) -> int:
                         "problem_dry_run",
                         "grade_submission",
                         "artifact_reconciliation",
+                        "plagiarism_scan",
                     ],
                     "languages": list(SUPPORTED_LANGUAGES),
                     "runtime_version": settings.JUDGE_RUNTIME_VERSION,
@@ -228,6 +237,8 @@ def _run_validation_worker(args: argparse.Namespace) -> int:
                     service.process_artifact_reconciliation_job(
                         session, job, args.worker_id
                     )
+                elif job.job_type == "plagiarism_scan":
+                    service.process_plagiarism_job(session, job, args.worker_id)
         if args.once:
             return 0
         if job is None:
@@ -239,6 +250,19 @@ def _run_issue_bootstrap_token(args: argparse.Namespace) -> int:
     with Session(engine) as session:
         token = issue_bootstrap_token(session, ttl_minutes=args.ttl_minutes)
     print(token)
+    return 0
+
+
+def _run_reset_role_capabilities(role_name: str) -> int:
+    apply_migrations(engine)
+    with Session(engine) as session:
+        capabilities = reset_role_capabilities(session, role_name)
+    print(
+        json.dumps(
+            {"role": role_name, "capabilities": sorted(capabilities)},
+            ensure_ascii=False,
+        )
+    )
     return 0
 
 
@@ -332,6 +356,8 @@ def main(argv: list[str] | None = None) -> int:
             return _run_validation_worker(args)
         if args.command == "issue-bootstrap-token":
             return _run_issue_bootstrap_token(args)
+        if args.command == "reset-role-capabilities":
+            return _run_reset_role_capabilities(args.role)
         if args.command == "verify-course-bundle":
             return _run_verify_course_bundle()
         if args.command == "restore-course-bundle":
@@ -375,7 +401,12 @@ def main(argv: list[str] | None = None) -> int:
             return _run_check_openapi(args.baseline)
         if args.command == "export-analytics-jsonl":
             return _run_export_analytics(args.purpose, args.policy_version)
-    except (UserManagementError, BootstrapError, AnalyticsExportError) as error:
+    except (
+        UserManagementError,
+        BootstrapError,
+        AnalyticsExportError,
+        ValueError,
+    ) as error:
         parser.exit(1, f"Error: {error}\n")
 
     parser.exit(1, f"Error: unsupported command '{args.command}'\n")
