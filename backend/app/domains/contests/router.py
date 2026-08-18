@@ -4,13 +4,15 @@ import json
 from datetime import UTC, datetime
 from typing import Literal
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.exc import IntegrityError
 from sqlmodel import Session, select
 
 from ...api.dependencies import get_current_active_user, require_capability
 from ...api.runtime import observability_service
 from ...core.db import get_session
+from ...core.config import settings
+from ...services.login_rate_limiter import LoginRateLimiter
 from ...models.schemas import (
     Contest,
     ContestCreate,
@@ -42,6 +44,7 @@ from ...models.schemas import (
 
 router = APIRouter(prefix="/admin/contests")
 public_router = APIRouter(prefix="/contests")
+contest_access_rate_limiter = LoginRateLimiter()
 
 
 def _contest_read(contest: Contest) -> ContestRead:
@@ -86,6 +89,45 @@ def list_contests(
             select(Contest).order_by(Contest.id.desc())
         ).all()
     ]
+
+
+@public_router.get("", response_model=list[ContestRead])
+def list_open_contests(
+    current_user: User = Depends(get_current_active_user),
+    session: Session = Depends(get_session),
+):
+    """참가자가 볼 수 있는 대회 목록.
+
+    게시된 대회만 노출하며, 비공개 대회는 이미 참가한 사람에게만 보인다.
+    조직이 제한된 대회는 해당 조직 소속에게만 보인다. (참가 코드 자체는
+    참가 시점에 검증하므로 목록 노출과 무관하다.)
+    """
+    joined_ids = set(
+        session.exec(
+            select(ContestParticipation.contest_id).where(
+                ContestParticipation.user_id == current_user.id
+            )
+        ).all()
+    )
+    visible: list[ContestRead] = []
+    for contest in session.exec(
+        select(Contest)
+        .where(Contest.status == "published")
+        .order_by(Contest.starts_at.desc(), Contest.id.desc())
+    ).all():
+        if contest.id in joined_ids:
+            visible.append(_contest_read(contest))
+            continue
+        if contest.visibility != "public":
+            continue
+        allowed_organizations = json.loads(contest.allowed_organizations_json)
+        if (
+            allowed_organizations
+            and current_user.organization_id not in allowed_organizations
+        ):
+            continue
+        visible.append(_contest_read(contest))
+    return visible
 
 
 @router.post("", response_model=ContestRead, status_code=201)
@@ -333,13 +375,30 @@ def join_contest(
             status_code=409, detail="Virtual participation is disabled"
         )
     if contest.access_code_hash:
+        rate_limit_keys = (f"contest:{contest_id}:user:{current_user.id}",)
+        if contest_access_rate_limiter.is_blocked(
+            rate_limit_keys,
+            limit=settings.CONTEST_ACCESS_RATE_LIMIT_COUNT,
+            window_seconds=settings.CONTEST_ACCESS_RATE_LIMIT_WINDOW_SECONDS,
+        ):
+            raise HTTPException(
+                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                detail="Too many invalid contest access code attempts",
+                headers={
+                    "Retry-After": str(
+                        settings.CONTEST_ACCESS_RATE_LIMIT_WINDOW_SECONDS
+                    )
+                },
+            )
         supplied = hashlib.sha256(
             (payload.access_code or "").encode()
         ).hexdigest()
         if not hmac.compare_digest(supplied, contest.access_code_hash):
+            contest_access_rate_limiter.record_failure(rate_limit_keys)
             raise HTTPException(
                 status_code=403, detail="Contest access code is invalid"
             )
+        contest_access_rate_limiter.clear(rate_limit_keys)
     allowed_organizations = json.loads(contest.allowed_organizations_json)
     if (
         allowed_organizations
@@ -454,6 +513,29 @@ def create_contest_announcement(
     session.commit()
     session.refresh(item)
     return item
+
+
+@router.get(
+    "/{contest_id}/clarifications", response_model=list[ClarificationRead]
+)
+def list_contest_clarifications(
+    contest_id: int,
+    status_filter: Literal["all", "open", "answered"] = "all",
+    _current_user: User = Depends(require_capability("problem:publish")),
+    session: Session = Depends(get_session),
+):
+    """운영진용 질문 목록. 답변 대상 질문을 찾기 위해 사용한다."""
+    _contest_or_404(session, contest_id)
+    statement = select(Clarification).where(
+        Clarification.contest_id == contest_id
+    )
+    if status_filter == "answered":
+        statement = statement.where(Clarification.status == "answered")
+    elif status_filter == "open":
+        statement = statement.where(Clarification.status != "answered")
+    return session.exec(
+        statement.order_by(Clarification.created_at, Clarification.id)
+    ).all()
 
 
 @router.patch(

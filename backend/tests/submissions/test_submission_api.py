@@ -490,6 +490,43 @@ def test_student_cannot_read_others_feedback():
     assert response.json()["detail"] == "You cannot access this submission"
 
 
+def test_viewer_without_capabilities_cannot_read_submission_source():
+    with Session(engine) as session:
+        _create_homework(session, 13, "Viewer Protected Homework", -1, 2)
+        _create_user(session, "source-owner", 20242017, "student-pass")
+        _create_user(
+            session,
+            "zero-capability-viewer",
+            10002017,
+            "viewer-pass",
+            role="viewer",
+        )
+
+        def get_session_override():
+            return session
+
+        app.dependency_overrides[get_session] = get_session_override
+        client = TestClient(app)
+        owner_token = _login(client, "source-owner", "student-pass")
+        viewer_token = _login(client, "zero-capability-viewer", "viewer-pass")
+        created = client.post(
+            "/api/submissions",
+            json={
+                "homework_num": 13,
+                "language": "python",
+                "code_text": "print('secret source')",
+            },
+            headers=_auth_headers(owner_token),
+        )
+        response = client.get(
+            f"/api/submissions/{created.json()['id']}",
+            headers=_auth_headers(viewer_token),
+        )
+        app.dependency_overrides.clear()
+
+    assert response.status_code == 403
+
+
 def test_student_can_list_own_submissions():
     with Session(engine) as session:
         _create_homework(session, 3, "List Homework", -1, 2)

@@ -7,7 +7,7 @@ from sqlmodel import Session, select
 
 from app.core.compression import compress_text, decompress_text
 from app.core.config import settings as app_settings
-from app.models.schemas import CodeSnapshot, Homework
+from app.models.schemas import CodeSnapshot, Homework, SystemSetting
 
 
 def create_test_homework(session: Session, num: int):
@@ -41,6 +41,34 @@ def test_decompress_text_falls_back_to_plain_text_for_legacy_or_invalid_input():
 
     assert decompress_text(legacy_plain_text) == legacy_plain_text
     assert decompress_text(invalid_payload) == invalid_payload
+
+
+def test_snapshot_rejects_source_over_system_limit(
+    client, session, create_user, login_user, auth_headers
+):
+    create_test_homework(session, 99)
+    create_user("oversized-snapshot", 20249999, "student-pass")
+    session.add(
+        SystemSetting(
+            key="submission_max_source_bytes",
+            value="10",
+            value_type="number",
+        )
+    )
+    session.commit()
+    token = login_user("oversized-snapshot", "student-pass")
+
+    response = client.post(
+        "/api/submissions/snapshots",
+        json={
+            "homework_num": 99,
+            "language": "python",
+            "code_text": "print('too large')",
+        },
+        headers=auth_headers(token),
+    )
+
+    assert response.status_code == 413
 
 
 @settings(max_examples=30, deadline=None)

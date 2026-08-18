@@ -135,6 +135,22 @@ function HomeworkResultContent() {
         ))}
       </div>
 
+      {submission.manual_total_score !== null && (
+        <div className="card-simple border-blue-200/60 bg-blue-50/40 dark:bg-blue-950/10">
+          <h2 className="text-xs font-bold uppercase tracking-widest text-accent mb-2 flex items-center gap-2">
+            <AlertCircle size={14} />
+            운영진 점수 조정 내역
+          </h2>
+          <p className="text-sm font-medium text-slate-700 dark:text-slate-300">
+            자동 채점 결과 대신 운영진이 확정한 점수 <span className="font-bold">{submission.manual_total_score}점</span>이 반영되었습니다.
+          </p>
+          <p className="text-[11px] text-slate-500 font-medium mt-1">
+            사유: {submission.score_adjustment_note || '별도 사유가 기록되지 않았습니다.'}
+            {submission.score_adjusted_by ? ` · 처리자: ${submission.score_adjusted_by}` : ''}
+          </p>
+        </div>
+      )}
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2 space-y-8">
           <section className="card-simple">

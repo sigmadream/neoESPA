@@ -1,7 +1,7 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
-import { FileText, Plus, Save, RefreshCw, ExternalLink, Eye, EyeOff, User, LayoutList, Paperclip } from 'lucide-react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { Plus, RefreshCw, ExternalLink, User, LayoutList } from 'lucide-react';
 
 import { useAuth } from '@/components/AuthProvider';
 import {
@@ -30,7 +30,7 @@ export default function AdminMaterialManager() {
   const [successMessage, setSuccessMessage] = useState('');
   const attachmentInputRef = useRef<HTMLInputElement>(null);
 
-  const loadMaterials = async () => {
+  const loadMaterials = useCallback(async () => {
     if (!token) return;
     setIsLoading(true);
     try {
@@ -41,9 +41,9 @@ export default function AdminMaterialManager() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [token]);
 
-  useEffect(() => { void loadMaterials(); }, [token]);
+  useEffect(() => { void loadMaterials(); }, [loadMaterials]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

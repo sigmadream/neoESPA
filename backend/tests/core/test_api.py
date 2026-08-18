@@ -79,7 +79,7 @@ def test_login_failure(client: TestClient):
     user_data = {
         "id": "failuser",
         "sid": 20240003,
-        "ps": "password",
+        "ps": "password-1",
         "name": "Fail User",
         "phone": "010-1111-1111",
         "email": "fail@example.com",
@@ -98,7 +98,7 @@ def test_protected_route_access(client: TestClient):
     user_data = {
         "id": "protecteduser",
         "sid": 20240004,
-        "ps": "testpassword",
+        "ps": "test-password",
         "name": "Protected User",
         "phone": "010-9999-9999",
         "email": "protected@example.com",
@@ -106,7 +106,8 @@ def test_protected_route_access(client: TestClient):
     client.post("/api/auth/register", json=user_data)
 
     login_response = client.post(
-        "/api/auth/login", json={"id": "protecteduser", "ps": "testpassword"}
+        "/api/auth/login",
+        json={"id": "protecteduser", "ps": "test-password"},
     )
     token = login_response.json()["access_token"]
 
@@ -117,6 +118,7 @@ def test_protected_route_access(client: TestClient):
     assert me_response.json()["id"] == "protecteduser"
 
     # 3. 토큰 없이 접근 (실패)
+    client.cookies.clear()
     no_token_response = client.get("/api/users/me")
     assert no_token_response.status_code == 401
 
@@ -126,3 +128,16 @@ def test_protected_route_access(client: TestClient):
         "/api/users/me", headers=wrong_token_headers
     )
     assert invalid_token_response.status_code == 401
+
+
+def test_public_judge_health_omits_internal_details(client: TestClient):
+    response = client.get("/health/judge")
+
+    assert response.status_code in {200, 503}
+    assert set(response.json()) == {"status"}
+
+
+def test_detailed_judge_health_requires_authentication(client: TestClient):
+    response = client.get("/api/admin/health/judge")
+
+    assert response.status_code == 401

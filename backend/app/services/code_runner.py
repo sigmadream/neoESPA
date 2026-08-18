@@ -5,6 +5,8 @@ import subprocess
 import tempfile
 import time
 from abc import ABC, abstractmethod
+from collections.abc import Iterator
+from contextlib import contextmanager
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -52,6 +54,16 @@ class RunnerExecutionResult:
         ) or (self.run_result is not None and self.run_result.timed_out)
 
 
+@dataclass
+class PreparedProgram:
+    language: str
+    source_name: str
+    workspace: Path
+    run_command: list[str]
+    compile_result: PhaseExecutionResult
+    limits: NsJailLimits | None = None
+
+
 class CodeRunner(ABC):
     @abstractmethod
     def run_code(
@@ -84,34 +96,19 @@ class SubprocessCodeRunner(CodeRunner):
         source_name: str | None = None,
         timeout_seconds: int = 10,
     ) -> RunnerExecutionResult:
-        normalized_language = language.strip().lower()
-        self._ensure_supported_language(normalized_language)
-
-        resolved_source_name = self._resolve_source_name(
-            normalized_language,
-            source_name,
-        )
         normalized_timeout = max(int(timeout_seconds), 1)
-
-        with tempfile.TemporaryDirectory(prefix="neoespa-runner-") as temp_dir:
-            workspace = Path(temp_dir)
-            source_path = workspace / resolved_source_name
-            source_path.write_text(source_code, encoding="utf-8")
-
-            compile_command, run_command = self._build_commands(
-                normalized_language,
-                source_path,
-            )
-            compile_result = self._execute(
-                compile_command,
-                workspace,
-                normalized_timeout,
-            )
+        with self.prepare_code(
+            language,
+            source_code,
+            source_name=source_name,
+            timeout_seconds=normalized_timeout,
+        ) as prepared:
+            compile_result = prepared.compile_result
             if not compile_result.succeeded:
                 return RunnerExecutionResult(
-                    language=normalized_language,
-                    source_name=resolved_source_name,
-                    workspace=str(workspace),
+                    language=prepared.language,
+                    source_name=prepared.source_name,
+                    workspace=str(prepared.workspace),
                     compile_result=compile_result,
                     run_result=None,
                     status=(
@@ -121,27 +118,75 @@ class SubprocessCodeRunner(CodeRunner):
                     ),
                 )
 
-            run_result = self._execute(
-                run_command,
-                workspace,
-                normalized_timeout,
+            return self.execute_prepared(
+                prepared,
                 input_data=input_data,
+                timeout_seconds=normalized_timeout,
             )
-            if run_result.timed_out:
-                status = "timeout"
-            elif run_result.exit_code == 0:
-                status = "passed"
-            else:
-                status = "runtime_error"
 
-            return RunnerExecutionResult(
+    @contextmanager
+    def prepare_code(
+        self,
+        language: str,
+        source_code: str,
+        *,
+        source_name: str | None = None,
+        timeout_seconds: int = 10,
+        limits: NsJailLimits | None = None,
+    ) -> Iterator[PreparedProgram]:
+        del limits
+        normalized_language = language.strip().lower()
+        self._ensure_supported_language(normalized_language)
+        resolved_source_name = self._resolve_source_name(
+            normalized_language, source_name
+        )
+        normalized_timeout = max(int(timeout_seconds), 1)
+
+        with tempfile.TemporaryDirectory(prefix="neoespa-runner-") as temp_dir:
+            workspace = Path(temp_dir)
+            source_path = workspace / resolved_source_name
+            source_path.write_text(source_code, encoding="utf-8")
+            compile_command, run_command = self._build_commands(
+                normalized_language, source_path
+            )
+            yield PreparedProgram(
                 language=normalized_language,
                 source_name=resolved_source_name,
-                workspace=str(workspace),
-                compile_result=compile_result,
-                run_result=run_result,
-                status=status,
+                workspace=workspace,
+                run_command=run_command,
+                compile_result=self._execute(
+                    compile_command, workspace, normalized_timeout
+                ),
             )
+
+    def execute_prepared(
+        self,
+        prepared: PreparedProgram,
+        *,
+        input_data: str = "",
+        timeout_seconds: int = 10,
+    ) -> RunnerExecutionResult:
+        if not prepared.compile_result.succeeded:
+            raise ValueError("Cannot execute a program that did not compile")
+        run_result = self._execute(
+            prepared.run_command,
+            prepared.workspace,
+            max(int(timeout_seconds), 1),
+            input_data=input_data,
+        )
+        status = (
+            "timeout"
+            if run_result.timed_out
+            else "passed" if run_result.exit_code == 0 else "runtime_error"
+        )
+        return RunnerExecutionResult(
+            language=prepared.language,
+            source_name=prepared.source_name,
+            workspace=str(prepared.workspace),
+            compile_result=prepared.compile_result,
+            run_result=run_result,
+            status=status,
+        )
 
     def run_file(
         self,
@@ -287,6 +332,15 @@ class CodeRunnerService(SubprocessCodeRunner):
             timeout_seconds=timeout_seconds,
         )
 
+    @contextmanager
+    def prepare_code(self, *args, **kwargs) -> Iterator[PreparedProgram]:
+        if not settings.HOST_CODE_EXECUTION_ALLOWED:
+            raise UnsafeExecutionDisabledError(
+                "Host code execution is disabled. Configure an isolated judge runner."
+            )
+        with super().prepare_code(*args, **kwargs) as prepared:
+            yield prepared
+
 
 class NsJailCodeRunner(SubprocessCodeRunner):
     """Compile and execute submissions only through the reviewed NsJail policy."""
@@ -324,9 +378,45 @@ class NsJailCodeRunner(SubprocessCodeRunner):
         source_name: str | None = None,
         limits: NsJailLimits,
     ) -> RunnerExecutionResult:
+        with self.prepare_code(
+            language,
+            source_code,
+            source_name=source_name,
+            limits=limits,
+        ) as prepared:
+            compile_result = prepared.compile_result
+            if not compile_result.succeeded:
+                return RunnerExecutionResult(
+                    prepared.language,
+                    prepared.source_name,
+                    str(prepared.workspace),
+                    compile_result,
+                    None,
+                    "timeout" if compile_result.timed_out else "compile_error",
+                )
+            return self.execute_prepared(
+                prepared,
+                input_data=input_data,
+                timeout_seconds=limits.cpu_seconds,
+            )
+
+    @contextmanager
+    def prepare_code(
+        self,
+        language: str,
+        source_code: str,
+        *,
+        source_name: str | None = None,
+        timeout_seconds: int = 10,
+        limits: NsJailLimits | None = None,
+    ) -> Iterator[PreparedProgram]:
         normalized = language.strip().lower()
         self._ensure_supported_language(normalized)
         resolved_name = self._resolve_source_name(normalized, source_name)
+        resolved_limits = limits or NsJailLimits(
+            wall_seconds=max(int(timeout_seconds), 1) + 2,
+            cpu_seconds=max(int(timeout_seconds), 1),
+        )
         with tempfile.TemporaryDirectory(prefix="neoespa-sandbox-") as temp_dir:
             workspace = Path(temp_dir)
             (workspace / resolved_name).write_text(
@@ -336,54 +426,69 @@ class NsJailCodeRunner(SubprocessCodeRunner):
                 normalized, resolved_name
             )
             compile_result = self._sandbox_phase(
-                compile_command, workspace, b"", limits
+                compile_command, workspace, b"", resolved_limits
             )
-            if not compile_result.succeeded:
-                return RunnerExecutionResult(
-                    normalized,
-                    resolved_name,
-                    str(workspace),
-                    compile_result,
-                    None,
-                    "timeout" if compile_result.timed_out else "compile_error",
-                )
-            run_result, output_limited = self._sandbox_phase_with_limit(
-                run_command, workspace, input_data.encode(), limits
+            yield PreparedProgram(
+                language=normalized,
+                source_name=resolved_name,
+                workspace=workspace,
+                run_command=run_command,
+                compile_result=compile_result,
+                limits=resolved_limits,
             )
-            memory_limited = run_result.exit_code not in {None, 0} and any(
-                marker in run_result.stderr.lower()
-                for marker in (
-                    "memoryerror",
-                    "bad_alloc",
-                    "cannot allocate memory",
-                    "rlimit_as",
-                )
+
+    def execute_prepared(
+        self,
+        prepared: PreparedProgram,
+        *,
+        input_data: str = "",
+        timeout_seconds: int = 10,
+    ) -> RunnerExecutionResult:
+        del timeout_seconds
+        if not prepared.compile_result.succeeded:
+            raise ValueError("Cannot execute a program that did not compile")
+        if prepared.limits is None:
+            raise ValueError("Sandbox limits are required")
+        run_result, output_limited = self._sandbox_phase_with_limit(
+            prepared.run_command,
+            prepared.workspace,
+            input_data.encode(),
+            prepared.limits,
+        )
+        memory_limited = run_result.exit_code not in {None, 0} and any(
+            marker in run_result.stderr.lower()
+            for marker in (
+                "memoryerror",
+                "bad_alloc",
+                "cannot allocate memory",
+                "rlimit_as",
             )
-            status = (
-                "output_limit"
-                if output_limited
+        )
+        status = (
+            "output_limit"
+            if output_limited
+            else (
+                "timeout"
+                if run_result.timed_out
                 else (
-                    "timeout"
-                    if run_result.timed_out
+                    "memory_limit"
+                    if memory_limited
                     else (
-                        "memory_limit"
-                        if memory_limited
-                        else (
-                            "passed"
-                            if run_result.exit_code == 0
-                            else "runtime_error"
-                        )
+                        "passed"
+                        if run_result.exit_code == 0
+                        else "runtime_error"
                     )
                 )
             )
-            return RunnerExecutionResult(
-                normalized,
-                resolved_name,
-                str(workspace),
-                compile_result,
-                run_result,
-                status,
-            )
+        )
+        return RunnerExecutionResult(
+            prepared.language,
+            prepared.source_name,
+            str(prepared.workspace),
+            prepared.compile_result,
+            run_result,
+            status,
+        )
 
     def _sandbox_phase(
         self,

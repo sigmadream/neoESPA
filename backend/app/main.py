@@ -7,6 +7,7 @@ from fastapi import FastAPI, HTTPException, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from fastapi.encoders import jsonable_encoder
 from sqlalchemy import text
 from sqlmodel import Session, select
 
@@ -80,12 +81,7 @@ def health_judge():
     available = settings.AUTOMATIC_GRADING_AVAILABLE and bool(online)
     return JSONResponse(
         status_code=200 if available else 503,
-        content={
-            "status": "ready" if available else "not_ready",
-            "automatic_grading_enabled": settings.AUTO_GRADING_ENABLED,
-            "sandbox_ready": settings.SANDBOX_READY,
-            "online_workers": online,
-        },
+        content={"status": "ready" if available else "not_ready"},
     )
 
 
@@ -98,6 +94,16 @@ async def request_id_middleware(request: Request, call_next):
     try:
         response = await call_next(request)
         response.headers["X-Request-ID"] = request_id
+        response.headers["X-Content-Type-Options"] = "nosniff"
+        response.headers["X-Frame-Options"] = "DENY"
+        response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+        response.headers["Permissions-Policy"] = (
+            "camera=(), microphone=(), geolocation=()"
+        )
+        if settings.ENVIRONMENT == "production":
+            response.headers["Strict-Transport-Security"] = (
+                "max-age=31536000; includeSubDomains"
+            )
         return response
     finally:
         request_id_context.reset(context_token)
@@ -140,7 +146,7 @@ async def validation_error_envelope(
     return JSONResponse(
         status_code=422,
         content={
-            "detail": error.errors(),
+            "detail": jsonable_encoder(error.errors()),
             "code": "validation_error",
             "message": "Request validation failed",
             "field_errors": field_errors,

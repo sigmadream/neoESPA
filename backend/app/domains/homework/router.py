@@ -30,7 +30,7 @@ from ...models.schemas import (
     Submission,
     User,
 )
-from ...services.user_management import ADMIN_ROLES
+from ...services.user_management import STAFF_ROLES
 from ..homework.helpers import (
     sync_homework_rules,
     to_homework_admin_read,
@@ -181,18 +181,20 @@ def get_homeworks(
     limit: int = Query(default=100, ge=1, le=1000),
     offset: int = Query(default=0, ge=0),
 ):
+    is_staff_user = current_user and current_user.user_group in STAFF_ROLES
+    statement = select(Homework)
+    if not is_staff_user:
+        now_text = datetime.now(UTC).strftime("%Y-%m-%d %H:%M:%S")
+        statement = statement.where(
+            (Homework.starttime.is_(None)) | (Homework.starttime <= now_text)
+        )
     homeworks = session.exec(
-        select(Homework).order_by(Homework.num).limit(limit).offset(offset)
+        statement.order_by(Homework.num).limit(limit).offset(offset)
     ).all()
     admin_reads = to_homework_admin_read_batch(session, homeworks)
 
-    is_staff_user = current_user and current_user.user_group in ADMIN_ROLES
-
     visible_homeworks: list[HomeworkRead] = []
     for h_admin in admin_reads:
-        if h_admin.schedule_status == "upcoming" and not is_staff_user:
-            continue
-
         visible_homeworks.append(
             HomeworkRead(
                 **h_admin.model_dump(
@@ -226,7 +228,7 @@ def get_homework_detail(
     schedule_status, _ = compute_schedule_window(
         homework.starttime, homework.deadline
     )
-    is_staff_user = current_user and current_user.user_group in ADMIN_ROLES
+    is_staff_user = current_user and current_user.user_group in STAFF_ROLES
 
     if schedule_status == "upcoming" and not is_staff_user:
         raise HTTPException(
@@ -560,7 +562,12 @@ async def delete_homework(
     current_user: User = Depends(require_capability("homework:manage")),
     session: Session = Depends(get_session),
 ):
-    from ...models.schemas import CodeSnapshot, CollabSession, GradingRule
+    from ...models.schemas import (
+        CodeSnapshot,
+        CollabSession,
+        GradingRule,
+        HomeworkTestCaseRecord,
+    )
 
     homework = session.get(Homework, homework_num)
     if homework is None:
@@ -597,6 +604,14 @@ async def delete_homework(
         ).all()
         for grading_rule in remaining_rules:
             session.delete(grading_rule)
+
+        homework_testcases = session.exec(
+            select(HomeworkTestCaseRecord).where(
+                HomeworkTestCaseRecord.homework_num == homework_num
+            )
+        ).all()
+        for testcase in homework_testcases:
+            session.delete(testcase)
 
         # code_snapshots and collab_sessions also reference homework.num; with
         # foreign keys enforced, leaving them behind fails the delete.

@@ -1,12 +1,12 @@
 import { expect, test } from '@playwright/test';
 
-import { loginViaUi, relativeDate } from './helpers';
+import { adminUser, loginViaUi, relativeDate } from './helpers';
 
 test('admin_can_edit_homework_settings', async ({ page }) => {
   const initialTitle = `UI Homework ${Date.now()}`;
   const updatedTitle = `${initialTitle} Updated`;
 
-  await loginViaUi(page, { id: 'admin', password: 'pllab2026' });
+  await loginViaUi(page, adminUser);
   await page.waitForURL('/');
   await page.goto('/admin');
   await page.getByRole('button', { name: 'Homework' }).click();

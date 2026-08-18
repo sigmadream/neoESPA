@@ -23,6 +23,12 @@ class CandidatePair:
     similarity_score: float
 
 
+@dataclass
+class NormalizedSubmission:
+    submission: Submission
+    source: str
+
+
 class PlagiarismService:
     def __init__(self, threshold: float = 0.95):
         self.threshold = threshold
@@ -34,18 +40,46 @@ class PlagiarismService:
         homework_num: int,
         created_by: str,
     ) -> PlagiarismRun:
-        latest_submissions = self._latest_submissions(session, homework_num)
         run = PlagiarismRun(
             homework_num=homework_num,
             created_by=created_by,
-            status="completed",
-            compared_submission_count=len(latest_submissions),
-            flagged_pair_count=0,
+            status="running",
         )
         session.add(run)
         session.flush()
+        return self.process_run(session, run)
 
-        candidate_pairs = self._candidate_pairs(latest_submissions)
+    def queue_run(
+        self,
+        session: Session,
+        *,
+        homework_num: int,
+        created_by: str,
+    ) -> PlagiarismRun:
+        run = PlagiarismRun(
+            homework_num=homework_num,
+            created_by=created_by,
+            status="queued",
+            compared_submission_count=0,
+            flagged_pair_count=0,
+            summary="Plagiarism scan is queued.",
+        )
+        session.add(run)
+        session.flush()
+        return run
+
+    def process_run(
+        self, session: Session, run: PlagiarismRun
+    ) -> PlagiarismRun:
+        run.status = "running"
+        session.add(run)
+        session.flush()
+        homework_num = run.homework_num
+        latest_submissions = self._latest_submissions(session, homework_num)
+        normalized_submissions = self._normalize_submissions(latest_submissions)
+        run.compared_submission_count = len(normalized_submissions)
+
+        candidate_pairs = self._candidate_pairs(normalized_submissions)
         flagged_pairs = [
             pair
             for pair in candidate_pairs
@@ -71,8 +105,9 @@ class PlagiarismService:
             self._mark_submission_result(session, candidate.right.id or 0)
 
         run.flagged_pair_count = len(flagged_pairs)
+        run.status = "completed"
         run.summary = (
-            f"Compared {len(latest_submissions)} latest submissions and flagged "
+            f"Compared {len(normalized_submissions)} latest submissions and flagged "
             f"{len(flagged_pairs)} pairs."
         )
         session.add(run)
@@ -188,32 +223,34 @@ class PlagiarismService:
 
         latest_by_user: dict[str, Submission] = {}
         for submission in submissions:
-            if not decompress_text(submission.code_text or "").strip():
-                continue
             latest_by_user.setdefault(submission.user_id, submission)
         return list(latest_by_user.values())
 
-    def _candidate_pairs(
+    def _normalize_submissions(
         self, submissions: list[Submission]
+    ) -> list[NormalizedSubmission]:
+        normalized: list[NormalizedSubmission] = []
+        for submission in submissions:
+            source = self._normalize_source(
+                decompress_text(submission.code_text or "")
+            )
+            if source:
+                normalized.append(NormalizedSubmission(submission, source))
+        return normalized
+
+    def _candidate_pairs(
+        self, submissions: list[NormalizedSubmission]
     ) -> list[CandidatePair]:
         pairs: list[CandidatePair] = []
-        for index, left_submission in enumerate(submissions):
-            for right_submission in submissions[index + 1 :]:
-                left_code = self._normalize_source(
-                    decompress_text(left_submission.code_text or "")
-                )
-                right_code = self._normalize_source(
-                    decompress_text(right_submission.code_text or "")
-                )
-                if not left_code or not right_code:
-                    continue
+        for index, left in enumerate(submissions):
+            for right in submissions[index + 1 :]:
                 similarity = SequenceMatcher(
-                    None, left_code, right_code
+                    None, left.source, right.source
                 ).ratio()
                 pairs.append(
                     CandidatePair(
-                        left=left_submission,
-                        right=right_submission,
+                        left=left.submission,
+                        right=right.submission,
                         similarity_score=similarity,
                     )
                 )

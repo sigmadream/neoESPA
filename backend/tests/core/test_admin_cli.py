@@ -3,9 +3,9 @@ import subprocess
 import sys
 from pathlib import Path
 
-from sqlmodel import Session, create_engine
+from sqlmodel import Session, create_engine, select
 
-from app.models.schemas import User
+from app.models.schemas import RoleCapability, User
 
 BACKEND_DIR = Path(__file__).resolve().parents[2]
 
@@ -95,3 +95,38 @@ def test_create_admin_cli_rejects_duplicate_user(tmp_path: Path):
     assert (
         "Error: User already exists: duplicate-admin" in second_response.stderr
     )
+
+
+def test_reset_role_capabilities_cli_removes_overrides(tmp_path: Path):
+    created = _run_cli(
+        tmp_path,
+        "create-admin",
+        "--id",
+        "recovery-admin",
+        "--sid",
+        "10050003",
+        "--name",
+        "Recovery Admin",
+        "--phone",
+        "010-5555-0003",
+        "--email",
+        "recovery@example.com",
+        "--password",
+        "change-me-now",
+    )
+    assert created.returncode == 0
+    engine = create_engine(f"sqlite:///{tmp_path / 'cli.sqlite'}")
+    with Session(engine) as session:
+        session.add(RoleCapability(role_name="ta", capability="__none__"))
+        session.commit()
+
+    reset = _run_cli(tmp_path, "reset-role-capabilities", "ta")
+
+    assert reset.returncode == 0
+    with Session(engine) as session:
+        assert (
+            session.exec(
+                select(RoleCapability).where(RoleCapability.role_name == "ta")
+            ).all()
+            == []
+        )

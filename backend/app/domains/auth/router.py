@@ -1,11 +1,12 @@
 from datetime import UTC, datetime, timedelta
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from sqlmodel import Session
 
 from ...api.dependencies import get_current_active_user
 from ...api.runtime import observability_service
 from ...core.db import get_session
+from ...core.config import settings
 from ...models.schemas import (
     PasswordChangeRequest,
     AdminAuthAssurance,
@@ -18,6 +19,7 @@ from ...models.schemas import (
     UserRead,
 )
 from ...services.auth_service import AuthService
+from ...services.login_rate_limiter import login_rate_limiter
 from ...services.user_management import (
     UserManagementError,
     ensure_unique_sid,
@@ -26,6 +28,12 @@ from ...services.user_management import (
 from ..users.serializers import to_user_read, user_management_bad_request
 
 router = APIRouter()
+
+# Always perform one bcrypt verification, including for unknown account IDs, so
+# login timing does not disclose whether an account exists.
+_DUMMY_PASSWORD_HASH = (
+    "$2b$12$JqK85n9lVznxg8X2VfNO8uSeTtdGRiK2sG7g6WGHgBmyYFZy8N2mq"
+)
 
 
 @router.post("/auth/register", response_model=UserRead)
@@ -75,9 +83,35 @@ async def register(
 
 
 @router.post("/auth/login", response_model=TokenResponse)
-async def login(login_data: UserLogin, session: Session = Depends(get_session)):
+async def login(
+    login_data: UserLogin,
+    request: Request,
+    response: Response,
+    session: Session = Depends(get_session),
+):
+    client_host = request.client.host if request.client else "unknown"
+    account_rate_limit_key = f"account:{login_data.id.strip().lower()}"
+    client_rate_limit_key = f"client:{client_host}"
+    rate_limit_keys = (account_rate_limit_key, client_rate_limit_key)
+    if login_rate_limiter.is_blocked(
+        rate_limit_keys,
+        limit=settings.LOGIN_RATE_LIMIT_COUNT,
+        window_seconds=settings.LOGIN_RATE_LIMIT_WINDOW_SECONDS,
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail="Too many failed login attempts. Try again later.",
+            headers={
+                "Retry-After": str(settings.LOGIN_RATE_LIMIT_WINDOW_SECONDS)
+            },
+        )
+
     user = session.get(User, login_data.id)
-    if not user or not AuthService.verify_password(login_data.ps, user.ps):
+    password_matches = AuthService.verify_password(
+        login_data.ps, user.ps if user else _DUMMY_PASSWORD_HASH
+    )
+    if not user or not password_matches:
+        login_rate_limiter.record_failure(rate_limit_keys)
         observability_service.log_event(
             session,
             category="auth",
@@ -109,6 +143,8 @@ async def login(login_data: UserLogin, session: Session = Depends(get_session)):
             detail="Inactive user cannot log in",
         )
 
+    login_rate_limiter.clear((account_rate_limit_key,))
+
     observability_service.log_event(
         session,
         category="auth",
@@ -120,9 +156,33 @@ async def login(login_data: UserLogin, session: Session = Depends(get_session)):
     )
     session.commit()
     access_token = AuthService.create_access_token(
-        data={"sub": user.id, "role": user.user_group}
+        data={
+            "sub": user.id,
+            "role": user.user_group,
+            "ver": user.token_version,
+        }
+    )
+    response.set_cookie(
+        key=settings.AUTH_COOKIE_NAME,
+        value=access_token,
+        max_age=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
+        httponly=True,
+        secure=settings.ENVIRONMENT == "production",
+        samesite="strict",
+        path="/",
     )
     return {"access_token": access_token, "token_type": "bearer"}
+
+
+@router.post("/auth/logout", status_code=status.HTTP_204_NO_CONTENT)
+async def logout(response: Response):
+    response.delete_cookie(
+        settings.AUTH_COOKIE_NAME,
+        path="/",
+        secure=settings.ENVIRONMENT == "production",
+        httponly=True,
+        samesite="strict",
+    )
 
 
 @router.get("/auth/assurance", response_model=AdminAuthAssuranceRead)
@@ -146,19 +206,12 @@ async def step_up_authentication(
         raise HTTPException(
             status_code=401, detail="Password verification failed"
         )
-    assurance = session.get(AdminAuthAssurance, current_user.id)
-    if assurance is not None and assurance.mfa_required:
-        detail = (
-            "MFA verification provider is not configured"
-            if assurance.mfa_enrolled
-            else "Required MFA is not enrolled"
-        )
-        raise HTTPException(status_code=403, detail=detail)
     now = datetime.now(UTC)
     token = AuthService.create_access_token(
         {
             "sub": current_user.id,
             "role": current_user.user_group,
+            "ver": current_user.token_version,
             "auth_time": int(now.timestamp()),
             "step_up_until": int((now + timedelta(minutes=10)).timestamp()),
             "amr": ["pwd"],
@@ -189,6 +242,7 @@ async def change_password(
         )
 
     current_user.ps = AuthService.get_password_hash(payload.new_password)
+    current_user.token_version += 1
     current_user.updated_at = datetime.now(UTC)
     session.add(current_user)
     observability_service.record_audit(

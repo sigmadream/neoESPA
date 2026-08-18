@@ -98,6 +98,36 @@ def test_grade_export_returns_csv(
     assert rows[1]["quality_score"] == "0.0"
 
 
+def test_grade_export_escapes_spreadsheet_formulas(
+    client,
+    session,
+    create_user,
+    create_homework,
+    login_user,
+    auth_headers,
+):
+    homework = create_homework(3, "=Injected Homework")
+    admin = create_user("csv-admin", 10009003, "admin-pass", "admin")
+    student = create_user("csv-student", 20249005, "student-pass", "student")
+    student.name = "=cmd|' /c calc'!A1"
+    student.email = "+formula@example.com"
+    homework.title = "@SUM(1+1)"
+    session.add(student)
+    session.add(homework)
+    session.commit()
+
+    token = login_user(admin.id, "admin-pass")
+    response = client.get(
+        "/api/admin/homeworks/3/grades/export",
+        headers=auth_headers(token),
+    )
+
+    row = list(csv.DictReader(io.StringIO(response.text)))[0]
+    assert row["name"].startswith("'=")
+    assert row["email"].startswith("'+")
+    assert row["homework_title"].startswith("'@")
+
+
 def test_latest_submissions_can_be_downloaded_as_archive(
     client,
     create_user,

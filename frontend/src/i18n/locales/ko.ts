@@ -7,6 +7,7 @@ export const ko: TranslationDictionary = {
     materials: '강의자료',
     qa: 'Q&A 게시판',
     exam: '시험 응시',
+    contest: '대회',
     collab: '실시간 협업',
     profile: '내 프로필',
     admin: '관리자 콘솔',

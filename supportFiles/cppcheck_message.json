@@ -897,7 +897,7 @@
     },
     "containerOutOfBounds": {
         "eng": "Out of bounds access in expression 'container[x]'",
-        "kor": "표현식 'container[x]'에서 경계를 벗어난 액세스입니다."
+        "kor": "표현식 'container[x]'에서 범위를 벗어난 액세스입니다."
     },
     "invalidIterator1": {
         "eng": "Invalid iterator: iterator",
@@ -989,7 +989,7 @@
     },
     "StlMissingComparison": {
         "eng": "Missing bounds check for extra iterator increment in loop.",
-        "kor": "루프에서 추가 반복자 증가에 대한 경계 확인이 누락되었습니다. 반복자가 끝을 넘어가지 않도록 이러한 증가 사이에 비교가 없습니다."
+        "kor": "루프에서 추가 반복자 증가에 대한 범위 확인이 누락되었습니다. 반복자가 끝을 넘어가지 않도록 이러한 증가 사이에 비교가 없습니다."
     },
     "redundantIfRemove": {
         "eng": "Redundant checking of STL container element existence before removing it.",

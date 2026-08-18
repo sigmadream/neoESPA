@@ -1,9 +1,0 @@
-# git blame에서 무시할 커밋 목록 (동작 변경 없는 대규모 포매팅 등)
-#
-# 로컬 설정 방법:
-#   git config blame.ignoreRevsFile .git-blame-ignore-revs
-#
-# GitHub은 이 파일을 자동으로 인식합니다.
-
-# style(backend): black 포매팅 일괄 적용 (line-length 80)
-99057950914a4dc7729ae30ca786fccda68940aa

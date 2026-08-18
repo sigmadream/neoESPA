@@ -1,0 +1,82 @@
+# 운영체제와 무관한 백엔드 검증 환경.
+#
+# 호스트에 Python/uv/컴파일러가 없어도, Windows·macOS·Linux 어디서든 동일한
+# Linux 컨테이너 안에서 테스트 케이스까지 그대로 실행·검증한다.
+#
+#   docker compose -f docker-compose.test.yml run --rm --build tests
+#   docker compose -f docker-compose.test.yml run --rm --build tests tests/grading -k lint
+#   docker compose -f docker-compose.test.yml run --rm --build coverage
+#   docker compose -f docker-compose.test.yml run --rm --build format
+#
+# `backend/scripts/test.ps1`(Windows) / `backend/scripts/test.sh`(bash) 래퍼를
+# 사용하면 위 명령을 그대로 감싸 실행한다.
+
+name: neoespa-test
+
+x-test-image: &test-image
+  build:
+    context: ./backend
+    dockerfile: Dockerfile
+    target: test
+    # supportFiles 는 backend/ 바깥에 있으므로 named context 로 이미지에 굽는다.
+    # 덕분에 실행 시 호스트 경로 바인드 마운트가 전혀 필요 없다.
+    additional_contexts:
+      supportfiles: ./supportFiles
+  image: neoespa-backend-test:local
+  init: true
+  # 테스트는 컨테이너 안에서 완결된다. .env 를 읽지 않고, DB 는 인메모리 SQLite 를
+  # 사용하며, 네트워크도 필요하지 않다.
+  network_mode: none
+
+services:
+  # 기본 검증 대상: 이미지에 구워진 소스로 전체 테스트를 실행한다.
+  # (--build 와 함께 실행하면 항상 현재 작업 트리 기준으로 검증된다.)
+  tests:
+    <<: *test-image
+
+  # 반복 개발용: 재빌드 없이 호스트의 app/ tests/ 를 읽기 전용으로 덮어쓴다.
+  # 바이트코드 캐시는 PYTHONPYCACHEPREFIX 로 컨테이너 내부에 격리되므로
+  # 호스트의 __pycache__ 가 결과에 영향을 주지 않는다.
+  tests-live:
+    <<: *test-image
+    volumes:
+      - ./backend/app:/app/app:ro
+      - ./backend/tests:/app/tests:ro
+      - ./backend/API.md:/app/API.md:ro
+      - ./backend/openapi.json:/app/openapi.json:ro
+
+  # 커버리지 리포트는 backend/.reports/ 로 내보낸다.
+  coverage:
+    <<: *test-image
+    command:
+      - --cov=app
+      - --cov-report=term-missing
+      - --cov-report=html:/reports/htmlcov
+      - --cov-report=xml:/reports/coverage.xml
+    volumes:
+      - ./backend/.reports:/reports
+
+  # 포매팅 검사 (black). 코드 수정 없이 위반 여부만 보고한다.
+  format:
+    <<: *test-image
+    entrypoint: ["/app/.venv/bin/black", "--check", "--diff", "app", "tests"]
+
+  # 샌드박스 검증: 운영 judge 이미지와 동일한 nsjail 바이너리로 격리 정책을
+  # mock 없이 실제 실행한다. (tests/sandbox/test_nsjail_real.py)
+  #
+  # - nsjail 은 user/pid/net 네임스페이스와 cgroup v2 제어를 직접 사용하므로
+  #   운영(docker-compose.prod.yml)과 동일하게 privileged + cgroup: host 가 필요하다.
+  # - 다른 서비스와 달리 네트워크를 차단하지 않는다. 컨테이너에 네트워크가 있어야
+  #   "감옥 안에서만 연결이 끊긴다"는 사실이 증명되기 때문이다.
+  # - nsjail 을 소스에서 빌드하므로 첫 빌드는 수 분이 걸린다.
+  sandbox-tests:
+    build:
+      context: ./backend
+      dockerfile: deploy/Dockerfile.judge
+      target: judge-test
+      additional_contexts:
+        supportfiles: ./supportFiles
+    image: neoespa-judge-test:local
+    init: true
+    privileged: true
+    cgroup: host

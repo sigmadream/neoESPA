@@ -1,18 +1,20 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import { Plus, Trash2, RefreshCw, BookOpen, Clock, ShieldCheck, CheckCircle2, X, LayoutList, History } from 'lucide-react';
-import Link from 'next/link';
+import { Plus, Trash2, RefreshCw, BookOpen, Clock, ShieldCheck, CheckCircle2, X, LayoutList, History, FileSpreadsheet, FileArchive, Upload, Link2 } from 'lucide-react';
 
 import { useAuth } from '@/components/AuthProvider';
 import {
+  attachProblemToHomework,
   createAdminHomework,
   deleteAdminHomework,
+  downloadHomeworkGrades,
+  downloadHomeworkSubmissionArchive,
   getAdminHomeworks,
+  importAdminHomework,
   updateAdminHomework,
   type HomeworkAdminApi,
   type HomeworkAdminPayload,
-  type HomeworkTestCaseApi,
 } from '@/lib/api';
 
 const LANGUAGE_OPTIONS = ['c', 'cpp', 'python', 'java'] as const;
@@ -39,6 +41,8 @@ export default function AdminHomeworkManager() {
   const [editingHomeworkNum, setEditingHomeworkNum] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [isImporting, setIsImporting] = useState(false);
+  const [downloadingKey, setDownloadingKey] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
 
@@ -95,6 +99,104 @@ export default function AdminHomeworkManager() {
     setEditingHomeworkNum(hw.num);
     setForm({ ...hw, deadline: hw.deadline ?? '', starttime: hw.starttime ?? '', filename: hw.filename ?? '', lint_week: hw.lint_week ?? '' });
     window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleDownload = async (
+    homeworkNum: number,
+    kind: 'grades' | 'archive',
+  ) => {
+    if (!token) return;
+    setDownloadingKey(`${homeworkNum}:${kind}`);
+    setErrorMessage('');
+    setSuccessMessage('');
+    try {
+      const filename =
+        kind === 'grades'
+          ? await downloadHomeworkGrades(homeworkNum, token)
+          : await downloadHomeworkSubmissionArchive(homeworkNum, token);
+      setSuccessMessage(`${filename} 파일을 내려받았습니다.`);
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : '내려받기에 실패했습니다.');
+    } finally {
+      setDownloadingKey('');
+    }
+  };
+
+  const handleAttachProblem = async (homeworkNum: number, revisionId: string) => {
+    if (!token) return;
+    const parsed = Number(revisionId);
+    if (!Number.isInteger(parsed) || parsed <= 0) {
+      setErrorMessage('연결할 revision 번호를 정확히 입력하십시오.');
+      return;
+    }
+    setErrorMessage('');
+    setSuccessMessage('');
+    try {
+      const attached = await attachProblemToHomework(
+        homeworkNum,
+        { revision_id: parsed },
+        token,
+      );
+      setSuccessMessage(
+        `과제 #${homeworkNum}에 revision #${attached.revision_id}을(를) 연결했습니다.`,
+      );
+    } catch (error) {
+      setErrorMessage(
+        error instanceof Error ? error.message : '문제를 연결하지 못했습니다.',
+      );
+    }
+  };
+
+  const handleImport = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!token) return;
+    const formElement = event.currentTarget;
+    const data = new FormData(formElement);
+    const problemFile = data.get('problem_file');
+    const inputZip = data.get('input_zip');
+    const outputZip = data.get('output_zip');
+
+    if (
+      !(problemFile instanceof File) ||
+      !(inputZip instanceof File) ||
+      !(outputZip instanceof File)
+    ) {
+      setErrorMessage('문제 파일과 입력/출력 ZIP을 모두 선택하십시오.');
+      return;
+    }
+
+    setIsImporting(true);
+    setErrorMessage('');
+    setSuccessMessage('');
+    try {
+      const created = await importAdminHomework(
+        {
+          title: String(data.get('title') ?? ''),
+          intro: String(data.get('intro') ?? ''),
+          codeName: String(data.get('codeName') ?? ''),
+          isLint: data.get('isLint') === 'on',
+          problemFile,
+          inputZip,
+          outputZip,
+          deadline: String(data.get('deadline') ?? '') || null,
+          starttime: String(data.get('starttime') ?? '') || null,
+          lintWeek: String(data.get('lint_week') ?? '') || null,
+          allowedLanguages: LANGUAGE_OPTIONS.filter(
+            (language) => data.get(`language_${language}`) === 'on',
+          ),
+        },
+        token,
+      );
+      setSuccessMessage(
+        `과제 #${created.num} "${created.title}"을(를) 가져왔습니다. (테스트케이스 ${created.testcases.length}개)`,
+      );
+      formElement.reset();
+      await loadHomeworks();
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : '과제 가져오기에 실패했습니다.');
+    } finally {
+      setIsImporting(false);
+    }
   };
 
   return (
@@ -248,7 +350,52 @@ export default function AdminHomeworkManager() {
                       </div>
                     </div>
                     
-                    <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-3">
+                    <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800 flex flex-wrap items-center gap-2">
+                      <button
+                        onClick={() => void handleDownload(hw.num, 'grades')}
+                        disabled={downloadingKey === `${hw.num}:grades`}
+                        className="text-[10px] font-bold px-2 py-1 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-accent hover:text-white transition-colors flex items-center gap-1.5 disabled:opacity-50"
+                      >
+                        <FileSpreadsheet size={11} />
+                        성적 CSV
+                      </button>
+                      <button
+                        onClick={() => void handleDownload(hw.num, 'archive')}
+                        disabled={downloadingKey === `${hw.num}:archive`}
+                        className="text-[10px] font-bold px-2 py-1 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-accent hover:text-white transition-colors flex items-center gap-1.5 disabled:opacity-50"
+                      >
+                        <FileArchive size={11} />
+                        제출물 ZIP
+                      </button>
+                      <form
+                        onSubmit={(event) => {
+                          event.preventDefault();
+                          const input = event.currentTarget.elements.namedItem('revisionId') as HTMLInputElement;
+                          void handleAttachProblem(hw.num, input.value);
+                          input.value = '';
+                        }}
+                        className="flex items-center gap-1.5 ml-auto"
+                        title="문제 뱅크의 게시된 revision 번호를 과제에 연결합니다."
+                      >
+                        <input
+                          type="text"
+                          name="revisionId"
+                          inputMode="numeric"
+                          required
+                          placeholder="Revision"
+                          className="text-[10px] px-2 py-1 rounded bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 outline-none focus:border-accent w-20"
+                        />
+                        <button
+                          type="submit"
+                          className="text-[10px] font-bold px-2 py-1 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-accent hover:text-white transition-colors flex items-center gap-1.5"
+                        >
+                          <Link2 size={11} />
+                          문제 연결
+                        </button>
+                      </form>
+                    </div>
+
+                    <div className="mt-3 pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-3">
                       <div className="flex items-center gap-2">
                         <History size={12} className="text-slate-400" />
                         <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Snapshots</span>
@@ -282,6 +429,93 @@ export default function AdminHomeworkManager() {
           </div>
         </section>
       </div>
+
+      <section className="card-simple">
+        <header className="mb-6">
+          <h2 className="text-sm font-bold uppercase tracking-widest text-slate-400 flex items-center gap-2 mb-2">
+            <Upload size={14} />
+            기존 과제 자료로 가져오기
+          </h2>
+          <p className="text-slate-500 text-sm font-medium leading-relaxed">
+            문제 설명 파일과 입력/출력 ZIP을 올리면 테스트케이스까지 한 번에 등록됩니다. 두 ZIP의
+            파일 이름이 서로 짝이 맞아야 합니다.
+          </p>
+        </header>
+
+        <form onSubmit={(event) => void handleImport(event)} className="space-y-6">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div>
+              <label htmlFor="import-title" className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">과제 제목</label>
+              <input id="import-title" name="title" required className="block w-full text-xs rounded border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 px-3 py-2 outline-none focus:ring-1 focus:ring-accent" placeholder="예: 2주차 배열 실습" />
+            </div>
+            <div>
+              <label htmlFor="import-code-name" className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">코드 식별자</label>
+              <input id="import-code-name" name="codeName" required className="block w-full text-xs rounded border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 px-3 py-2 outline-none focus:ring-1 focus:ring-accent font-mono" placeholder="array" />
+            </div>
+            <div>
+              <label htmlFor="import-lint-week" className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">Lint Week</label>
+              <input id="import-lint-week" name="lint_week" className="block w-full text-xs rounded border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 px-3 py-2 outline-none" placeholder="예: 2" />
+            </div>
+          </div>
+
+          <div>
+            <label htmlFor="import-intro" className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">과제 설명</label>
+            <textarea id="import-intro" name="intro" rows={3} required className="block w-full text-xs rounded border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 px-3 py-2 outline-none focus:ring-1 focus:ring-accent resize-none" placeholder="과제 설명을 입력하세요..." />
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label htmlFor="import-starttime" className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5 flex items-center gap-1.5"><Clock size={10} /> 제출 시작 일시</label>
+              <input id="import-starttime" name="starttime" className="block w-full text-xs rounded border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 px-3 py-2 outline-none" placeholder="YYYY-MM-DD HH:MM:SS" />
+            </div>
+            <div>
+              <label htmlFor="import-deadline" className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5 flex items-center gap-1.5"><Clock size={10} /> 마감 일시</label>
+              <input id="import-deadline" name="deadline" className="block w-full text-xs rounded border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 px-3 py-2 outline-none" placeholder="YYYY-MM-DD HH:MM:SS" />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            {[
+              { name: 'problem_file', label: '문제 설명 파일', accept: '' },
+              { name: 'input_zip', label: '입력 ZIP', accept: '.zip' },
+              { name: 'output_zip', label: '출력 ZIP', accept: '.zip' },
+            ].map((field) => (
+              <div key={field.name}>
+                <label htmlFor={`import-${field.name}`} className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">{field.label}</label>
+                <input
+                  id={`import-${field.name}`}
+                  name={field.name}
+                  type="file"
+                  accept={field.accept || undefined}
+                  required
+                  className="block w-full text-[11px] rounded border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 px-3 py-2 outline-none file:mr-3 file:rounded file:border-0 file:bg-slate-200 dark:file:bg-slate-800 file:px-2 file:py-1 file:text-[10px] file:font-bold"
+                />
+              </div>
+            ))}
+          </div>
+
+          <div className="p-4 rounded bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800">
+            <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3">Allowed Languages</h3>
+            <div className="flex flex-wrap gap-4">
+              {LANGUAGE_OPTIONS.map((language) => (
+                <label key={language} className="flex items-center gap-2 text-xs font-medium cursor-pointer group">
+                  <input type="checkbox" name={`language_${language}`} defaultChecked className="rounded border-slate-300 text-accent focus:ring-accent" />
+                  <span className="text-slate-600 dark:text-slate-400 group-hover:text-slate-900 transition-colors">{language.toUpperCase()}</span>
+                </label>
+              ))}
+              <label className="flex items-center gap-2 text-xs font-medium cursor-pointer group">
+                <input type="checkbox" name="isLint" className="rounded border-slate-300 text-accent focus:ring-accent" />
+                <span className="text-slate-600 dark:text-slate-400 group-hover:text-slate-900 transition-colors">Lint Score</span>
+              </label>
+            </div>
+          </div>
+
+          <button type="submit" disabled={isImporting} className="btn-flat h-11 px-6 flex items-center justify-center gap-2 shadow-sm disabled:opacity-50">
+            {isImporting ? <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <Upload size={16} />}
+            <span>과제 가져오기</span>
+          </button>
+        </form>
+      </section>
     </div>
   );
 }

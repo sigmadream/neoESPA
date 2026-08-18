@@ -11,6 +11,7 @@ from sqlmodel import Session, select
 from ..models.schemas import (
     GradingRule,
     Homework,
+    HomeworkTestCaseRecord,
     ProblemAsset,
     ProblemRevision,
     ProblemTestCase,
@@ -25,6 +26,7 @@ from .code_runner import (
     CodeRunnerService,
     NsJailCodeRunner,
     RunnerExecutionResult,
+    SubprocessCodeRunner,
 )
 from .sandbox import NsJailLimits
 from .lint_pipeline import LintPipelineService
@@ -185,13 +187,53 @@ class GradingService:
                 process_count=revision.process_limit,
                 output_bytes=revision.output_limit_kb * 1024,
             )
+
+        prepared_context = None
+        prepared = None
+        if isinstance(self.runner, SubprocessCodeRunner):
+            prepared_context = self.runner.prepare_code(
+                submission.language,
+                source_text,
+                source_name=submission.original_filename,
+                timeout_seconds=timeout_seconds,
+                limits=sandbox_limits,
+            )
+            prepared = prepared_context.__enter__()
+            compile_log = self._merge_logs(prepared.compile_result)
+            if compile_log:
+                compile_logs.append(compile_log)
+            if not prepared.compile_result.succeeded:
+                execution = RunnerExecutionResult(
+                    language=prepared.language,
+                    source_name=prepared.source_name,
+                    workspace=str(prepared.workspace),
+                    compile_result=prepared.compile_result,
+                    run_result=None,
+                    status=(
+                        "timeout"
+                        if prepared.compile_result.timed_out
+                        else "compile_error"
+                    ),
+                )
+                self._apply_execution_result(submission, result, execution)
+                result.total_case_count = len(test_cases)
+                result.passed_case_count = 0
+                prepared_context.__exit__(None, None, None)
+                return
+
         for case_index, test_case in enumerate(test_cases):
             if progress_callback is not None:
                 # The callback may commit the same session so the lease update
                 # is visible to another coordinator. Partial case rows are
                 # safe: every retry clears them before grading starts.
                 progress_callback(case_index, len(test_cases), timeout_seconds)
-            if sandbox_limits is not None and isinstance(
+            if prepared is not None:
+                execution = self.runner.execute_prepared(
+                    prepared,
+                    input_data=test_case.input_data,
+                    timeout_seconds=timeout_seconds,
+                )
+            elif sandbox_limits is not None and isinstance(
                 self.runner, NsJailCodeRunner
             ):
                 execution = self.runner.run_code_with_limits(
@@ -215,7 +257,7 @@ class GradingService:
                 raise ValueError("Runner returned no compile result")
 
             compile_log = self._merge_logs(compile_result)
-            if compile_log:
+            if compile_log and prepared is None:
                 compile_logs.append(f"[{test_case.case_name}] {compile_log}")
 
             if not compile_result.succeeded:
@@ -283,6 +325,9 @@ class GradingService:
                 execution.status == "runtime_error" and run_status != "timeout"
             ):
                 run_status = "failed"
+
+        if prepared_context is not None:
+            prepared_context.__exit__(None, None, None)
 
         if group_case_scores:
             total_score, _group_scores = calculate_group_score(
@@ -480,6 +525,24 @@ class GradingService:
         session: Session,
         homework_num: int,
     ) -> list[HomeworkTestCase]:
+        records = session.exec(
+            select(HomeworkTestCaseRecord)
+            .where(HomeworkTestCaseRecord.homework_num == homework_num)
+            .order_by(HomeworkTestCaseRecord.position)
+        ).all()
+        if records:
+            return [
+                HomeworkTestCase(
+                    case_index=record.position,
+                    case_name=record.case_name,
+                    input_data=record.input_text,
+                    expected_output=record.expected_output,
+                    is_hidden=record.is_hidden,
+                    score=record.score,
+                )
+                for record in records
+            ]
+
         rule = session.exec(
             select(GradingRule)
             .where(

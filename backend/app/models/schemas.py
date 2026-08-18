@@ -2,8 +2,11 @@ from datetime import UTC, datetime
 from enum import StrEnum
 from typing import Optional
 
-from sqlalchemy import Column, Index, Text, UniqueConstraint
+from sqlalchemy import Column, Index, Integer, Text, UniqueConstraint
+from pydantic import field_validator
 from sqlmodel import Field, SQLModel
+
+from ..core.password_policy import validate_password
 
 
 def utc_now() -> datetime:
@@ -44,12 +47,19 @@ class User(UserProfile, table=True):
 
     ps: str = Field(max_length=255)
     is_active: bool = Field(default=True)
+    token_version: int = Field(
+        default=0,
+        ge=0,
+        sa_column=Column(Integer, nullable=False, server_default="0"),
+    )
     created_at: datetime = Field(default_factory=utc_now)
     updated_at: datetime = Field(default_factory=utc_now)
 
 
 class UserCreate(UserProfile):
     ps: str
+
+    _validate_password = field_validator("ps")(validate_password)
 
 
 class UserLogin(SQLModel):
@@ -61,6 +71,7 @@ class UserRead(UserProfile):
     is_active: bool
     created_at: datetime
     updated_at: datetime
+    capabilities: list[str] = Field(default_factory=list)
 
 
 class UserProfileUpdate(SQLModel):
@@ -78,6 +89,8 @@ class PasswordChangeRequest(SQLModel):
     current_password: str
     new_password: str
 
+    _validate_new_password = field_validator("new_password")(validate_password)
+
 
 class UserStatusUpdate(SQLModel):
     is_active: bool
@@ -85,6 +98,8 @@ class UserStatusUpdate(SQLModel):
 
 class AdminPasswordResetRequest(SQLModel):
     new_password: str
+
+    _validate_new_password = field_validator("new_password")(validate_password)
 
 
 class UserRoleUpdate(SQLModel):
@@ -208,6 +223,8 @@ class AdminInvitationAccept(SQLModel):
     phone: str = Field(max_length=50)
     password: str = Field(min_length=8, max_length=255)
 
+    _validate_password = field_validator("password")(validate_password)
+
 
 class AdminAuthAssurance(SQLModel, table=True):
     __tablename__ = "admin_auth_assurance"
@@ -233,6 +250,11 @@ class AdminUserWrite(UserProfile):
     ps: Optional[str] = None
     is_active: bool = True
 
+    @field_validator("ps")
+    @classmethod
+    def validate_optional_password(cls, value: str | None) -> str | None:
+        return validate_password(value) if value is not None else None
+
 
 class AdminBootstrapToken(SQLModel, table=True):
     __tablename__ = "admin_bootstrap_tokens"
@@ -253,11 +275,17 @@ class AdminBootstrapCreate(SQLModel):
     email: str = Field(min_length=3, max_length=255)
     password: str = Field(min_length=12)
 
+    _validate_password = field_validator("password")(validate_password)
+
 
 class BulkUserCreateRequest(SQLModel):
     users: list[AdminUserWrite] = []
     default_password: str = "welcome1234"
     skip_existing: bool = True
+
+    _validate_default_password = field_validator("default_password")(
+        validate_password
+    )
 
 
 class BulkUserCreateResult(SQLModel):
@@ -1454,6 +1482,34 @@ class GradingRule(SQLModel, table=True):
     updated_at: datetime = Field(default_factory=utc_now)
 
 
+class HomeworkTestCaseRecord(SQLModel, table=True):
+    __tablename__ = "homework_testcases"
+    __table_args__ = (
+        UniqueConstraint(
+            "homework_num", "case_name", name="uq_homework_testcase_name"
+        ),
+        UniqueConstraint(
+            "homework_num", "position", name="uq_homework_testcase_position"
+        ),
+        Index(
+            "ix_homework_testcases_homework_position",
+            "homework_num",
+            "position",
+        ),
+    )
+
+    id: Optional[int] = Field(default=None, primary_key=True)
+    homework_num: int = Field(foreign_key="homework.num", nullable=False)
+    case_name: str = Field(max_length=120)
+    position: int = Field(ge=1)
+    input_text: str = Field(sa_column=Column(Text, nullable=False))
+    expected_output: str = Field(sa_column=Column(Text, nullable=False))
+    score: float = Field(default=0.0, ge=0)
+    is_hidden: bool = Field(default=False)
+    created_at: datetime = Field(default_factory=utc_now)
+    updated_at: datetime = Field(default_factory=utc_now)
+
+
 class SystemSetting(SQLModel, table=True):
     __tablename__ = "system_settings"
 
@@ -1861,7 +1917,7 @@ class CollabParticipant(SQLModel, table=True):
     session_id: int = Field(foreign_key="collab_sessions.id", nullable=False)
     user_id: str = Field(foreign_key="users.id", nullable=False)
     role: str = Field(default="member", max_length=30)
-    can_edit: bool = Field(default=True)
+    can_edit: bool = Field(default=False)
     joined_at: datetime = Field(default_factory=utc_now)
     left_at: Optional[datetime] = Field(default=None)
 

@@ -4,6 +4,7 @@ from datetime import UTC, datetime
 from sqlmodel import Session, select
 
 from ..models.schemas import AdminUserWrite, User
+from ..core.password_policy import validate_password
 from .auth_service import AuthService
 
 VALID_EMAIL_PATTERN = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
@@ -18,6 +19,7 @@ ADMIN_ROLES = {
     "support",
     "viewer",
 }
+STAFF_ROLES = {"super_admin", "admin", "instructor", "ta"}
 MANAGEABLE_USER_ROLES = ADMIN_ROLES | {"student"}
 
 
@@ -67,6 +69,10 @@ def create_managed_user(
     password = (payload.ps or default_password or "").strip()
     if not password:
         raise UserManagementError(f"Password is required for user {payload.id}")
+    try:
+        validate_password(password)
+    except ValueError as error:
+        raise UserManagementError(str(error)) from error
 
     now = datetime.now(UTC)
     return User(

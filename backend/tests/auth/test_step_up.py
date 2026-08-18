@@ -19,7 +19,7 @@ def test_password_step_up_issues_short_lived_assurance_token(
     assert claims["step_up_until"] > claims["auth_time"]
 
 
-def test_required_mfa_fails_closed_until_provider_verifies_factor(
+def test_password_step_up_remains_available_when_mfa_is_required(
     client, session, create_user, login_user, auth_headers
 ):
     create_user("admin-mfa", 9002, "admin-password", role="admin")
@@ -38,5 +38,23 @@ def test_required_mfa_fails_closed_until_provider_verifies_factor(
         json={"password": "admin-password"},
         headers=auth_headers(token),
     )
+    assert response.status_code == 200
+    claims = AuthService.decode_token(response.json()["access_token"])
+    assert claims is not None
+    assert claims["amr"] == ["pwd"]
+
+
+def test_sensitive_action_requires_step_up_even_without_mfa_configuration(
+    client, create_user, login_user, auth_headers
+):
+    create_user("admin-sensitive", 9003, "admin-password", role="admin")
+    token = login_user("admin-sensitive", "admin-password")
+
+    response = client.patch(
+        "/api/admin/users/admin-sensitive/status",
+        json={"is_active": True},
+        headers=auth_headers(token),
+    )
+
     assert response.status_code == 403
-    assert "provider" in response.json()["detail"]
+    assert "step-up authentication is required" in response.json()["detail"]

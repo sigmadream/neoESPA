@@ -2,6 +2,8 @@ from fastapi.testclient import TestClient
 from sqlmodel import Session, select
 
 from app.models.schemas import SystemEventLog, User
+from app.core.config import settings
+from app.services.login_rate_limiter import login_rate_limiter
 
 
 def test_password_change_invalidates_old_password(
@@ -22,10 +24,31 @@ def test_password_change_invalidates_old_password(
     # login_user returns None if login fails
     old_token = login_user("pwuser", "old-password")
     new_token = login_user("pwuser", "new-password")
+    old_session = client.get("/api/users/me", headers=auth_headers(token))
 
     assert change_response.status_code == 200
     assert old_token is None
     assert new_token is not None
+    assert old_session.status_code == 401
+
+
+def test_login_uses_http_only_same_site_cookie(client: TestClient, create_user):
+    create_user("cookie-user", 20240207, "cookie-password")
+
+    response = client.post(
+        "/api/auth/login",
+        json={"id": "cookie-user", "ps": "cookie-password"},
+    )
+    cookie = response.headers["set-cookie"].lower()
+    cookie_authenticated = client.get("/api/users/me")
+
+    assert "httponly" in cookie
+    assert "samesite=strict" in cookie
+    assert cookie_authenticated.status_code == 200
+
+    logout = client.post("/api/auth/logout")
+    assert logout.status_code == 204
+    assert client.get("/api/users/me").status_code == 401
 
 
 def test_inactive_user_cannot_login(
@@ -35,6 +58,11 @@ def test_inactive_user_cannot_login(
     create_user("admin-user", 10000012, "admin-pass", role="admin")
 
     admin_token = login_user("admin-user", "admin-pass")
+    admin_token = client.post(
+        "/api/auth/step-up",
+        json={"password": "admin-pass"},
+        headers=auth_headers(admin_token),
+    ).json()["access_token"]
     deactivate_response = client.patch(
         "/api/admin/users/managed-user/status",
         json={"is_active": False},
@@ -84,7 +112,7 @@ def test_register_creates_user_and_event_log(
         json={
             "id": "fresh-user",
             "sid": 20240205,
-            "ps": "password",
+            "ps": "password-1",
             "name": "Fresh User",
             "phone": "010-4444-4444",
             "email": "fresh-user@example.com",
@@ -108,7 +136,7 @@ def test_register_rejects_invalid_email_policy(client: TestClient):
         json={
             "id": "invalid-email",
             "sid": 20240204,
-            "ps": "password",
+            "ps": "password-1",
             "name": "Invalid Email",
             "phone": "010-3333-3333",
             "email": "invalid-email-format",
@@ -120,3 +148,47 @@ def test_register_rejects_invalid_email_policy(client: TestClient):
         response.json()["detail"]
         == "Email does not satisfy the registration policy"
     )
+
+
+def test_registration_rejects_weak_password(client: TestClient):
+    response = client.post(
+        "/api/auth/register",
+        json={
+            "id": "weak-password",
+            "sid": 20240206,
+            "ps": "a",
+            "name": "Weak Password",
+            "phone": "010-5555-5555",
+            "email": "weak@example.com",
+        },
+    )
+
+    assert response.status_code == 422
+    assert response.json()["field_errors"][0]["field"] == "ps"
+
+
+def test_login_rate_limit_blocks_repeated_failures(client, monkeypatch):
+    monkeypatch.setattr(settings, "LOGIN_RATE_LIMIT_COUNT", 2)
+    monkeypatch.setattr(settings, "LOGIN_RATE_LIMIT_WINDOW_SECONDS", 60)
+    keys = ("account:rate-limited-user", "client:testclient")
+    login_rate_limiter.clear(keys)
+    try:
+        first = client.post(
+            "/api/auth/login",
+            json={"id": "rate-limited-user", "ps": "wrong-password"},
+        )
+        second = client.post(
+            "/api/auth/login",
+            json={"id": "rate-limited-user", "ps": "wrong-password"},
+        )
+        blocked = client.post(
+            "/api/auth/login",
+            json={"id": "rate-limited-user", "ps": "wrong-password"},
+        )
+    finally:
+        login_rate_limiter.clear(keys)
+
+    assert first.status_code == 401
+    assert second.status_code == 401
+    assert blocked.status_code == 429
+    assert blocked.headers["retry-after"] == "60"

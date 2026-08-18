@@ -1,19 +1,46 @@
 from fastapi import APIRouter, Depends, Query
-from sqlmodel import Session
-from datetime import datetime
+from sqlmodel import Session, select
+from datetime import UTC, datetime
 
 from ...api.dependencies import require_capability
 from ...api.runtime import observability_service
 from ...core.db import get_session
+from ...core.config import settings
 from ...models.schemas import (
     AdminDashboardRead,
     AuditLogRead,
     SystemEventLogRead,
     User,
+    JudgeWorker,
 )
 from ..observability.helpers import build_admin_dashboard
 
 router = APIRouter()
+
+
+@router.get("/admin/health/judge")
+def get_detailed_judge_health(
+    _: User = Depends(require_capability("observability:read")),
+    session: Session = Depends(get_session),
+):
+    now = datetime.now(UTC)
+    online_workers = []
+    for worker in session.exec(select(JudgeWorker)).all():
+        heartbeat = worker.heartbeat_at
+        if heartbeat.tzinfo is None:
+            heartbeat = heartbeat.replace(tzinfo=UTC)
+        if (
+            worker.status in {"online", "draining"}
+            and (now - heartbeat).total_seconds() <= 60
+        ):
+            online_workers.append(worker.worker_id)
+    available = settings.AUTOMATIC_GRADING_AVAILABLE and bool(online_workers)
+    return {
+        "status": "ready" if available else "not_ready",
+        "automatic_grading_enabled": settings.AUTO_GRADING_ENABLED,
+        "sandbox_ready": settings.SANDBOX_READY,
+        "online_workers": online_workers,
+    }
 
 
 @router.get("/admin/dashboard", response_model=AdminDashboardRead)

@@ -19,6 +19,7 @@ from ..models.schemas import (
     ProblemRevision,
     ProblemAsset,
     ProblemTestCase,
+    PlagiarismRun,
     TestCaseGroup,
     Submission,
     SubmissionResult,
@@ -461,6 +462,51 @@ class JudgeJobService:
         session.commit()
         return self.complete(
             session, job.id or 0, worker_id, generation, report
+        )
+
+    def process_plagiarism_job(
+        self, session: Session, job: JudgeJob, worker_id: str
+    ) -> JudgeJob:
+        from .plagiarism_service import PlagiarismService
+
+        generation = job.lease_generation
+        self.start(session, job, worker_id, generation)
+        payload = json.loads(job.payload_json)
+        run = session.get(PlagiarismRun, int(payload.get("run_id", 0)))
+        if run is None:
+            return self.fail(
+                session,
+                job.id or 0,
+                worker_id,
+                generation,
+                "Plagiarism run not found",
+            )
+        try:
+            completed_run = PlagiarismService().process_run(session, run)
+        except Exception as error:
+            session.rollback()
+            failed_run = session.get(PlagiarismRun, run.id)
+            if failed_run is not None:
+                failed_run.status = "failed"
+                failed_run.summary = str(error)[:1000]
+                session.add(failed_run)
+                session.commit()
+            return self.fail(
+                session,
+                job.id or 0,
+                worker_id,
+                generation,
+                str(error),
+            )
+        return self.complete(
+            session,
+            job.id or 0,
+            worker_id,
+            generation,
+            {
+                "run_id": completed_run.id,
+                "flagged_pair_count": completed_run.flagged_pair_count,
+            },
         )
 
     def process_grading_job(
